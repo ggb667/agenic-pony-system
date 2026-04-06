@@ -57,6 +57,19 @@ EOF
 )"
 }
 
+write_shell_launcher_if_missing() {
+  local path="${1:?missing launcher path}"
+  local personality="${2:?missing personality}"
+  write_file_if_missing "$path" "$(cat <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$AGENIC_PROJECT_ROOT"
+exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/start-session.sh" "$personality"
+EOF
+)"
+  chmod +x "$path"
+}
+
 write_status_if_missing() {
   local slug="${1:?missing worker slug}"
   local branch_verified="yes"
@@ -152,6 +165,22 @@ EOF
 )"
 chmod +x "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/start-session.sh"
 
+write_shell_launcher_if_missing "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team-twi" "TWILIGHT_SPARKLE"
+write_shell_launcher_if_missing "$AGENIC_PROJECT_PONY_BIN_DIR/pony-aj" "APPLEJACK"
+write_file_if_missing "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team" "$(cat <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$AGENIC_PROJECT_ROOT"
+printf '%s\n' "Project-local launcher set:"
+printf '%s\n' "- ./pony/bin/pony-team-twi"
+printf '%s\n' "- ./pony/bin/pony-aj"
+printf '%s\n' ""
+printf '%s\n' "Warp users can use the generated project-specific launch configurations under:"
+printf '%s\n' "./pony/launch.configs"
+EOF
+)"
+chmod +x "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team"
+
 write_file_if_missing "$AGENIC_TEAM_COORDINATION_DIR/assignment.registry.tsv" "$(cat <<EOF
 assignment_id	worker_label	personality	repo	branch	worktree	workfile	promptfile	scope
 aj	AJ	APPLEJACK	$AGENIC_PROJECT_NAME	$AGENIC_PROJECT_BRANCH	$AGENIC_PROJECT_ROOT	$AGENIC_PROJECT_PONY_WORK_DIR/aj.md	$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/aj.txt	unassigned
@@ -209,5 +238,6 @@ Bootstrapped project-local pony state.
 - project_root: $AGENIC_PROJECT_ROOT
 - branch: $AGENIC_PROJECT_BRANCH
 - pony_root: $AGENIC_PROJECT_PONY_DIR
+- shell_launchers: $AGENIC_PROJECT_PONY_BIN_DIR/pony-team, $AGENIC_PROJECT_PONY_BIN_DIR/pony-team-twi, $AGENIC_PROJECT_PONY_BIN_DIR/pony-aj
 EOF
 write_file_if_missing "$AGENIC_PROJECT_PONY_LINUX_SHELL_MARKER" ""

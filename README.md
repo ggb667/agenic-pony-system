@@ -99,6 +99,14 @@ Or explicitly:
 /path/to/agenic-pony-system/scripts/install-warp-launch-configs.sh /path/to/project
 ```
 
+After project install, the project-local shell launchers live under:
+
+```text
+<project>/pony/bin/pony-team
+<project>/pony/bin/pony-team-twi
+<project>/pony/bin/pony-aj
+```
+
 ## Optional Zsh Support
 
 The shell hook is optional convenience, not infrastructure.
