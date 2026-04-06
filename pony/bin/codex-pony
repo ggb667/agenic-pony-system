@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+agenic_root="$(cd "$script_dir/../.." && pwd)"
+source "$agenic_root/pony/scripts/pony-paths.sh"
+
+project_root="$(detect_project_root "${PWD}")"
+load_project_paths "$project_root"
+
+if [[ ! -f "$AGENIC_PROJECT_PONY_CONFIG_PATH" ]]; then
+  "$agenic_root/scripts/install-project.sh" "$project_root" >/dev/null
+  load_project_paths "$project_root"
+fi
+
+if [[ -n "${WARP_LAUNCH_CONFIG_DIR:-}" || -d /mnt/c/Users/"$USER"/AppData/Roaming/warp/Warp/data/launch_configurations ]]; then
+  if [[ ! -f "$AGENIC_PROJECT_PONY_WINDOWS_WARP_MARKER" ]]; then
+    "$agenic_root/scripts/install-warp-launch-configs.sh" "$project_root" >/dev/null || true
+  fi
+fi
+
+if ! command -v codex >/dev/null 2>&1; then
+  echo "ERROR: codex is not available on PATH" >&2
+  exit 1
+fi
+
+exec codex "$@"

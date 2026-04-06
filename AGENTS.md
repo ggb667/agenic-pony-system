@@ -7,7 +7,7 @@ This repository contains the standalone Agenic Pony System. It is not tied to Ha
 ## Rules
 
 - Keep all project runtime state outside this repo unless it is a reusable template.
-- Default per-project state root: `.agenic-pony/` under the target project root.
+- Default per-project runtime root: `pony/` under the target project root.
 - Do not bake in Handshake paths, task state, prompts, or coordination files.
 - If a script needs to know the target project, detect the current git repo root first and fall back to the current directory.
 - If a script needs branch context, use the current branch of the target project worktree.

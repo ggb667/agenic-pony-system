@@ -1,68 +1,134 @@
 # Agenic Pony System
 
-Standalone bootstrap and launch tooling for a pony-flavored multi-agent workflow.
+Pony-flavored multi-agent project orchestration for people who like expressive tools and serious engineering.
 
-This repo is intentionally project-agnostic. It does not carry Handshake coordination state, workfiles, or launch bindings.
+This repository is the reusable system layer. The live runtime belongs inside each target project's `pony/` tree, so multiple projects can run in parallel without leaking coordination state into each other.
 
-## What It Does
+## Why This Exists
 
-- installs Warp launch configurations for a chosen project
-- creates blank project-local coordination state under `.agenic-pony/`
-- starts pony sessions against the current project worktree
-- keeps workers on the current project branch when launched inside a git repo
+Most multi-agent setups fail in one of two ways:
 
-## Project State
+- they feel cute but collapse under real software coordination
+- they are technically serious but joyless to operate
 
-Per-project state lives in the target project, not in this repo:
+Agenic Pony System aims for both:
+
+- a clear, inspectable runtime model
+- project-local state and launchers
+- explicit queueing and stopping points
+- operator-friendly pony identity, prompts, and transcript cues
+
+If you like ponies, great. If you are a senior engineer who cares about reproducibility, isolation, and debuggability, that part is not optional.
+
+## Core Ideas
+
+- project-local runtime under `<project>/pony/`
+- one reusable system repo, many isolated project installs
+- explicit queue-driven execution
+- transparent agent-originated requests
+- launch surfaces for Warp and shell-based workflows
+
+## Project Layout
+
+The active runtime lives in the target project, not here.
+
+Expected shape:
 
 ```text
-<project-root>/.agenic-pony/
-  agent-work/
-  team.coordination/
+<project-root>/
+  pony/
+    agents/
+    team.coordination/
+    launch.prompts/
+    launch.configs/
+    scripts/
+    work/
+    worktrees/
+    pony.system.config.yaml
 ```
 
-That keeps every new project blank by default and prevents state leakage across repos.
+That structure mirrors the real operating layout refined in live project use.
+
+## What The Reusable System Provides
+
+- project bootstrap scripts
+- project-specific Warp launcher generation
+- project-local shell launcher generation
+- reusable pony prompts
+- root-detection and install logic for `codex-pony`
+- design docs for runtime behavior and installation
+
+## Current Direction
+
+`codex-pony` is intended to become the bootstrap boundary:
+
+- detect the enclosing project root
+- check whether the project's `pony/` system is installed
+- provision missing pieces when needed
+- launch into the correct project-local runtime
+
+That keeps runtime identity tied to the actual repo being worked on.
+
+## Warp And Shell Launching
+
+The safest model is project-specific launchers.
+
+Examples:
+
+- `Handshake Pony Team`
+- `Project A Pony Team`
+- `Project B Pony Team`
+
+Each launcher binds to one explicit project root. That avoids ambiguous cross-project detection when multiple repos are open at once.
+
+Shell launchers should exist too, so the system is not Warp-dependent.
 
 ## Quick Start
 
-From the target project:
+From inside a target project:
 
 ```bash
-/home/ggb66/dev/agenic-pony-system/scripts/install-warp-launch-configs.sh
+/path/to/agenic-pony-system/scripts/install-project.sh
+/path/to/agenic-pony-system/scripts/install-warp-launch-configs.sh
 ```
 
 Or explicitly:
 
 ```bash
-/home/ggb66/dev/agenic-pony-system/scripts/install-warp-launch-configs.sh /path/to/project
+/path/to/agenic-pony-system/scripts/install-project.sh /path/to/project
+/path/to/agenic-pony-system/scripts/install-warp-launch-configs.sh /path/to/project
 ```
 
-That will:
+## Optional Zsh Support
 
-1. detect the project root and current branch
-2. create `.agenic-pony/` if it does not exist
-3. install Warp launch configs for the project
+The shell hook is optional convenience, not infrastructure.
 
-## Direct Launch
+Recommended one-line `.zshrc` pattern:
 
-```bash
-/home/ggb66/dev/agenic-pony-system/pony/scripts/start-session.sh TWILIGHT_SPARKLE /path/to/project
-/home/ggb66/dev/agenic-pony-system/pony/scripts/start-session.sh APPLEJACK /path/to/project
+```zsh
+[[ -f ./pony/scripts/pony.zsh.support.zsh ]] && source ./pony/scripts/pony.zsh.support.zsh
 ```
+
+That keeps shell sugar project-local and avoids a giant home-directory alias block.
 
 ## Assumptions
 
 - `codex` is available on `PATH`
-- Warp launch configurations live at:
+- Git is available
+- Warp launch configurations, when used on Windows/WSL, live at:
   `/mnt/c/Users/$USER/AppData/Roaming/warp/Warp/data/launch_configurations`
   or a custom `WARP_LAUNCH_CONFIG_DIR`
-
-## Notes
-
-- The generated launch configs point all ponies at the active project root.
-- No project-specific state is committed here unless you choose to add templates later.
 
 ## Design Docs
 
 - `docs/runtime-loop.md`: queue-driven runtime, stopping points, and pending-agent request behavior
 - `docs/project-installation.md`: project root detection, project-local pony layout, launcher markers, and optional shell support
+
+## Status
+
+This repo is early, but the design direction is concrete:
+
+- keep the runtime project-local
+- keep scheduling and stopping behavior explicit
+- keep agent requests visible to the user
+- keep the system fun without sacrificing operator clarity

@@ -16,12 +16,18 @@ PONIES = [
     ("spike", "Spike", "blue", "SPIKE"),
 ]
 
+MODE_FILTERS = {
+    "team": {"twi", "aj", "pinkie", "fs", "rarity", "rd", "spike"},
+    "twi": {"twi"},
+    "aj": {"aj"},
+}
+
 
 def render_tab(agenic_root: Path, project_root: Path, slug: str, title: str, color: str, personality: str, focused: bool) -> list[str]:
     command = (
         f"zsh -lc 'cd {shlex.quote(str(project_root))} && "
-        f"{shlex.quote(str(agenic_root / 'pony/scripts/start-session.sh'))} "
-        f"{shlex.quote(personality)} {shlex.quote(str(project_root))}'"
+        f"{shlex.quote(str(project_root / 'pony/scripts/start-session.sh'))} "
+        f"{shlex.quote(personality)}'"
     )
     lines = [
         f"      - title: {title}",
@@ -42,18 +48,23 @@ def render_tab(agenic_root: Path, project_root: Path, slug: str, title: str, col
 
 def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
     project_name = project_root.name
+    mode_titles = {
+        "team": f"{project_name} Pony Team",
+        "twi": f"{project_name} Pony Team TWI",
+        "aj": f"{project_name} Pony AJ",
+    }
     lines = [
         "# AGENIC_PONYSHOW: true",
         "# AGENIC_PONYSHOW_ROLE: baseline_config",
-        f"# Project-local state root: {project_root}/.agenic-pony",
-        f"name: Agenic Pony {project_name}",
+        f"# Project-local pony root: {project_root}/pony",
+        f"name: {mode_titles[mode]}",
         "active_window_index: 0",
         "windows:",
         "  - active_tab_index: 0",
         "    tabs:",
     ]
     for slug, title, color, personality in PONIES:
-        if mode == "twi" and slug != "twi":
+        if slug not in MODE_FILTERS[mode]:
             continue
         lines.extend(render_tab(agenic_root, project_root, slug, title, color, personality, focused=slug == "twi"))
         lines.append("")
@@ -64,7 +75,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--agenic-root", required=True)
     parser.add_argument("--project-root", required=True)
-    parser.add_argument("--mode", choices=("team", "twi"), default="team")
+    parser.add_argument("--mode", choices=("team", "twi", "aj"), default="team")
     args = parser.parse_args()
 
     agenic_root = Path(args.agenic_root).resolve()
