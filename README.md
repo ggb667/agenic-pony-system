@@ -61,3 +61,7 @@ That will:
 
 - The generated launch configs point all ponies at the active project root.
 - No project-specific state is committed here unless you choose to add templates later.
+
+## Design Docs
+
+- `docs/runtime-loop.md`: queue-driven runtime, stopping points, and pending-agent request behavior
