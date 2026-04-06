@@ -65,3 +65,4 @@ That will:
 ## Design Docs
 
 - `docs/runtime-loop.md`: queue-driven runtime, stopping points, and pending-agent request behavior
+- `docs/project-installation.md`: project root detection, project-local pony layout, launcher markers, and optional shell support
