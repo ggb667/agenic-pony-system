@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$script_dir/../scripts/pony-paths.sh"
+load_project_paths "${AGENIC_PROJECT_ROOT:-$PWD}"
+
+mail_dir="$AGENIC_TEAM_COORDINATION_DIR"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  pony-mail send <to> <subject> <body...>
+  pony-mail read <who>
+  pony-mail clear <who>
+EOF
+}
+
+normalize_name() {
+  case "${1:-}" in
+    twi|twilight|twilight_sparkle) printf 'twi' ;;
+    fs|fluttershy|shy|flutters) printf 'fs' ;;
+    pinkie|pinkie_pie) printf 'pinkie' ;;
+    rarity|rares) printf 'rarity' ;;
+    rd|rainbow|rainbow_dash|dash) printf 'rd' ;;
+    aj|applejack) printf 'aj' ;;
+    spike) printf 'spike' ;;
+    *) printf '%s' "${1:-}" ;;
+  esac
+}
+
+mailbox_path() {
+  printf '%s/%s.mailbox.md\n' "$mail_dir" "$(normalize_name "$1")"
+}
+
+init_mailbox() {
+  local who="${1:?missing mailbox name}"
+  local mailbox="${2:?missing mailbox path}"
+  local upper_name
+  upper_name="$(printf '%s' "$who" | tr '[:lower:]' '[:upper:]')"
+  cat >"$mailbox" <<EOF
+# ${upper_name} MAILBOX
+
+## Pending Items
+- none
+
+EOF
+}
+
+mkdir -p "$mail_dir"
+
+case "${1:-}" in
+  send)
+    [[ $# -ge 4 ]] || { usage >&2; exit 1; }
+    shift
+    to="$(normalize_name "$1")"
+    shift
+    subject="$1"
+    shift
+    from="$(normalize_name "${PERSONALITY:-unknown}")"
+    body="$*"
+    mailbox="$(mailbox_path "$to")"
+    timestamp="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+    [[ -s "$mailbox" ]] || init_mailbox "$to" "$mailbox"
+    {
+      printf -- '- DATE: %s\n' "$timestamp"
+      printf -- '- FROM: %s\n' "$from"
+      printf -- '- SUBJECT: %s\n' "$subject"
+      printf -- '- BODY: %s\n' "$body"
+      printf -- '\n'
+    } >>"$mailbox"
+    ;;
+  read)
+    [[ $# -eq 2 ]] || { usage >&2; exit 1; }
+    who="$(normalize_name "$2")"
+    mailbox="$(mailbox_path "$who")"
+    [[ -s "$mailbox" ]] || init_mailbox "$who" "$mailbox"
+    cat "$mailbox"
+    ;;
+  clear)
+    [[ $# -eq 2 ]] || { usage >&2; exit 1; }
+    who="$(normalize_name "$2")"
+    mailbox="$(mailbox_path "$who")"
+    init_mailbox "$who" "$mailbox"
+    ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac
