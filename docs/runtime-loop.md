@@ -39,7 +39,7 @@ This includes:
 - agent-originated approval or escalation requests
 - any other queued prompt created by an agent
 
-At the runtime layer, Twilight is not special. All Codex agents use the same agent-prompt mechanism.
+At the queue and runtime layer, agent-originated prompts follow the same envelope and scheduling rules. Twilight is still a source-repo special case in `agenic-pony-system`: only the Twilight launcher should be treated as live in the agenic source repo, while worker-launch validation happens in installed project-local runtimes such as `Handshake/pony`.
 
 ## Queue Model
 
@@ -122,6 +122,31 @@ Examples that are not stopping points:
 - required clarification questions
 - any other request where the run is waiting on necessary user input
 
+## Idle Sentinel
+
+At a stopping point, the active pony should end its response with one exact idle marker and nothing after it.
+
+Examples:
+
+- Partial idle:
+  `Ω`
+- Full idle:
+  `Twilight Sparkle is reading a book and awaiting new prompt instructions. Ω`
+  `Applejack is bucking apples and awaiting new prompt instructions. Ω`
+  `Pinkie Pie is baking a cake and awaiting new prompt instructions. Ω`
+  `Rarity is sewing a dress and awaiting new prompt instructions. Ω`
+  `Spike is reading a comic and awaiting new prompt instructions. Ω`
+  `Fluttershy is feeding her animals and awaiting new prompt instructions. Ω`
+  `Rainbow Dash is practicing tricks and awaiting new prompt instructions. Ω`
+
+Rules:
+
+- the line-editor host may suspend the TUI only when a valid idle marker appears at the end of the active response
+- `Ω` by itself means partial idle: safe stopping point, but more work could continue later
+- the long activity sentence ending in `Ω` means full idle: genuinely awaiting a new prompt
+- the agent must not emit either idle marker when it still needs required user input
+- approvals, escalations, and required clarification questions must not include either idle marker
+
 ## Draft Preservation
 
 While in `idle`, the user may have a partially typed draft in the line editor.
@@ -137,6 +162,19 @@ Requirements:
 - the draft text must be restorable unchanged
 - if the editor supports it, cursor and edit state should also be restored
 - queued notices must not destroy, overwrite, or silently submit the user's draft
+
+## Editor UX Requirement
+
+The parked host experience should feel like Codex, not like a shell transcript.
+
+Requirements:
+
+- scrolling backward should move line by line without pane redraw jumps or mixed shell noise
+- Codex output history and parked-editor input must not share one messy inline transcript
+- the parked host should present a real editor surface, not a raw shell prompt
+- resuming from idle should preserve a stable reading history instead of appending shell job-control artifacts like `zsh: suspended`
+
+In practice, this means the final host should prefer a dedicated editor surface such as the `prompt_toolkit` host over a reclaimed shell prompt, and it should avoid forcing Codex into degraded inline rendering modes that damage scrollback quality.
 
 Empty input is not a special case because no submission occurs until Enter is pressed.
 

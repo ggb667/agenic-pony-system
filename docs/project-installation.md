@@ -19,6 +19,21 @@ Not:
 - `gitRepoA/.agenic-pony/...`
 - `gitRepoB/.agenic-pony/...`
 
+## Source And Installed Roles
+
+`agenic-pony-system` is the reusable source of truth for launcher/runtime behavior, prompts, install logic, and design docs.
+
+A target project such as `Handshake` is the installed runtime and validation surface.
+
+That means:
+
+- source changes should land in `agenic-pony-system`
+- installed copies under `<project-root>/pony/` should be refreshed to match when those text or runtime surfaces are mirrored there
+- runtime tests should be exercised from the target project's `pony/` tree
+- `codex-rs` changes are only for Codex-specific UI behavior such as pony prompt symbol or color work
+
+Twilight is a special case in the source repo: the agenic source installation should keep the live launcher set focused on Twilight coordinator work, while worker launcher behavior is validated from project-local installs. When the runtime is operating inside an installed target project, that target project's `pony/team.coordination`, `pony/work`, and project files are the live local state for that run.
+
 ## Project Root Detection
 
 `codex-pony` should determine the active project by walking upward from the current directory.
@@ -186,7 +201,7 @@ Project-specific launcher generation is the primary mechanism that guarantees th
 
 ## Current Direction
 
-The standalone `agenic-pony-system` repository should be treated as reusable tooling and templates.
+The standalone `agenic-pony-system` repository should be treated as reusable tooling, templates, and source docs.
 
 The active runtime structure should still be generated into each target project's `pony/` tree.
 
