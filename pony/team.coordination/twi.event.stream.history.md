@@ -4,6 +4,7 @@
 - pending_review_needed_content: none
 
 ## Recent Events
+- reconciled the dirty coordinator preflight hold into deliberate canonical state and prepared those Twi coordination updates to be committed so normal coordination can resume from a clean worktree
 - reconciled the dirty coordinator worktree into a deliberate source state by repairing the duplicated `scripts/bootstrap-project.sh`, adding local ignore rules for disposable runtime artifacts, and revalidating the runnable shell and Python entrypoints
 - patched the worker host so the parked prompt_toolkit editor now takes ownership of `/dev/tty`, resets terminal mode before drawing, re-enters immediately after a resumed Codex suspends again, and is invoked once more at startup if Codex is already parked
 - refreshed the Handshake `main` install with that new immediate editor-loop startup path so the next retest hits the current agenic source runtime instead of an older parked-shell copy
