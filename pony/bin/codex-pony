@@ -20,11 +20,16 @@ if [[ -n "${WARP_LAUNCH_CONFIG_DIR:-}" || -d /mnt/c/Users/"$USER"/AppData/Roamin
   fi
 fi
 
-codex_bin=""
-if [[ -x /tmp/codex-pony-target/debug/codex-tui ]]; then
-  codex_bin="/tmp/codex-pony-target/debug/codex-tui"
-elif command -v codex >/dev/null 2>&1; then
-  codex_bin="codex"
+preferred_repo_codex="/home/ggb66/dev/codex/codex-rs/target/debug/codex-tui"
+codex_bin="${CODEX_PONY_BIN:-}"
+if [[ -z "$codex_bin" ]]; then
+  if [[ -x "$preferred_repo_codex" ]]; then
+    codex_bin="$preferred_repo_codex"
+  elif command -v codex >/dev/null 2>&1; then
+    codex_bin="codex"
+  elif [[ -x /tmp/codex-pony-target/debug/codex-tui ]]; then
+    codex_bin="/tmp/codex-pony-target/debug/codex-tui"
+  fi
 fi
 
 if [[ -z "$codex_bin" ]]; then

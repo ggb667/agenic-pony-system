@@ -229,6 +229,16 @@ fi
 set_status_context "$status_file" "${git_branch:-unknown}" "$pwd_now" "yes"
 
 if (( is_coordinator )); then
+  if [[ "$rootdir" != "$AGENIC_PROJECT_ROOT" ]]; then
+    if [[ -n "$git_status" ]]; then
+      set_push_status "$status_file" "project_local_runtime_state"
+    else
+      set_push_status "$status_file" "clean_local_branch"
+    fi
+    printf 'ESCALATE_TWI\n'
+    exit 0
+  fi
+
   if [[ -n "$git_status" ]]; then
     set_push_status "$status_file" "uncommitted_local_changes"
     update_field "STATUS" "HOLD" "$status_file"
