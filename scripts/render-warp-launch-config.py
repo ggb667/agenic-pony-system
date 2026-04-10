@@ -46,13 +46,24 @@ def render_tab(agenic_root: Path, project_root: Path, slug: str, title: str, col
     return lines
 
 
+def display_project_name(project_root: Path) -> str:
+    return project_root.name.replace("-", " ").replace("_", " ").title()
+
+
 def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
-    project_name = project_root.name
-    mode_titles = {
-        "team": f"{project_name} Pony Team",
-        "twi": f"{project_name} Pony Team TWI",
-        "aj": f"{project_name} Pony AJ",
-    }
+    project_name = display_project_name(project_root)
+    if project_name.endswith("Pony System"):
+        mode_titles = {
+            "team": f"{project_name} Team",
+            "twi": f"{project_name} Twi",
+            "aj": f"{project_name} AJ",
+        }
+    else:
+        mode_titles = {
+            "team": f"{project_name} Pony Team",
+            "twi": f"{project_name} Pony Twi",
+            "aj": f"{project_name} Pony AJ",
+        }
     lines = [
         "# AGENIC_PONYSHOW: true",
         "# AGENIC_PONYSHOW_ROLE: baseline_config",
@@ -65,6 +76,8 @@ def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
     ]
     for slug, title, color, personality in PONIES:
         if slug not in MODE_FILTERS[mode]:
+            continue
+        if project_root == agenic_root and slug == "aj":
             continue
         lines.extend(render_tab(agenic_root, project_root, slug, title, color, personality, focused=slug == "twi"))
         lines.append("")

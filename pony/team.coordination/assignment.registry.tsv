@@ -1,0 +1,8 @@
+assignment_id	worker_label	personality	repo	branch	worktree	workfile	promptfile	scope
+aj	AJ	APPLEJACK	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/aj.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/aj.txt	unassigned
+pinkie	Pinkie	PINKIE_PIE	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/pinkie.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/pinkie.txt	unassigned
+fs	FS	FLUTTERSHY	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/fs.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/fs.txt	unassigned
+rarity	Rarity	RARITY	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/rarity.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/rarity.txt	unassigned
+rd	RD	RAINBOW_DASH	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/rd.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/rd.txt	unassigned
+spike	Spike	SPIKE	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/spike.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/spike.txt	unassigned
+twi	Twilight	TWILIGHT_SPARKLE	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/coordinator-twi.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/twi.txt	coordinate the team

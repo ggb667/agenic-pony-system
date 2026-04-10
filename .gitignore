@@ -1,0 +1,10 @@
+.venv-ponyhost/
+**/__pycache__/
+pony/agents/
+pony/runtime/
+pony/launch.configs/
+pony/README.md
+pony/pony.system.config.yaml
+pony/pony.system.configured.*
+pony/vendor/
+pony/bin/pony-team-twi

@@ -4,6 +4,7 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 agenic_root="$(cd "$script_dir/../.." && pwd)"
 source "$agenic_root/pony/scripts/pony-paths.sh"
+source "$agenic_root/pony/bin/codex-prompt-style.sh"
 
 project_root="$(detect_project_root "${PWD}")"
 load_project_paths "$project_root"
@@ -19,9 +20,35 @@ if [[ -n "${WARP_LAUNCH_CONFIG_DIR:-}" || -d /mnt/c/Users/"$USER"/AppData/Roamin
   fi
 fi
 
-if ! command -v codex >/dev/null 2>&1; then
+codex_bin=""
+if [[ -x /tmp/codex-pony-target/debug/codex-tui ]]; then
+  codex_bin="/tmp/codex-pony-target/debug/codex-tui"
+elif command -v codex >/dev/null 2>&1; then
+  codex_bin="codex"
+fi
+
+if [[ -z "$codex_bin" ]]; then
   echo "ERROR: codex is not available on PATH" >&2
   exit 1
 fi
 
-exec codex "$@"
+if [[ -x "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/queue-runtime.sh" ]]; then
+  "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/queue-runtime.sh" init >/dev/null
+fi
+
+codex_args=()
+if glyph="$(codex_prompt_glyph_for_personality "${PERSONALITY:-}" 2>/dev/null)"; then
+  codex_args+=(-c "tui.prompt_glyph=\"$glyph\"")
+fi
+if background="$(codex_prompt_background_for_personality "${PERSONALITY:-}" 2>/dev/null)"; then
+  codex_args+=(-c "tui.prompt_background=\"$background\"")
+fi
+if [[ -n "${CODEX_PONY_PID_FILE:-}" ]]; then
+  printf '%s\n' "$$" >"$CODEX_PONY_PID_FILE"
+fi
+
+if [[ -n "${CODEX_PONY_IDLE_MONITOR_SCRIPT:-}" ]] && [[ -n "${TMUX_PANE:-}" ]] && [[ -n "${glyph:-}" ]]; then
+  "$CODEX_PONY_IDLE_MONITOR_SCRIPT" "$TMUX_PANE" "$$" "$glyph" "${CODEX_PONY_TMUX_SOCKET_PATH:-}" "${CODEX_PONY_IDLE_SENTINEL:-}" "${CODEX_PONY_PARTIAL_IDLE_SENTINEL:-Ω}" >/dev/null 2>&1 &
+fi
+
+exec "$codex_bin" "${codex_args[@]}" "$@"

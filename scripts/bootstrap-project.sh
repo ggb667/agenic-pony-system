@@ -4,6 +4,11 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/../pony/scripts/pony-paths.sh"
 
+source_pony_root="$pony_root"
+source_pony_bin_dir="$pony_bin_dir"
+source_pony_scripts_dir="$pony_scripts_dir"
+source_pony_launch_prompts_dir="$pony_launch_prompts_dir"
+
 target_root="${1:-$PWD}"
 load_project_paths "$target_root"
 
@@ -25,6 +30,19 @@ copy_file_if_missing() {
   if [[ ! -e "$target_path" ]]; then
     cp "$source_path" "$target_path"
   fi
+}
+
+write_managed_executable() {
+  local path="${1:?missing path}"
+  local content="${2-}"
+  printf '%s' "$content" >"$path"
+  chmod +x "$path"
+}
+
+write_managed_file() {
+  local path="${1:?missing path}"
+  local content="${2-}"
+  printf '%s' "$content" >"$path"
 }
 
 write_workfile_if_missing() {
@@ -57,17 +75,25 @@ EOF
 )"
 }
 
+is_agenic_source_project() {
+  [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]
+}
+
 write_shell_launcher_if_missing() {
   local path="${1:?missing launcher path}"
   local personality="${2:?missing personality}"
-  write_file_if_missing "$path" "$(cat <<EOF
+  write_managed_executable "$path" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$AGENIC_PROJECT_ROOT"
-exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/start-session.sh" "$personality"
+exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/launch-in-pony-shell.sh" "$personality"
 EOF
 )"
-  chmod +x "$path"
+}
+
+remove_if_exists() {
+  local path="${1:?missing path}"
+  rm -f "$path"
 }
 
 write_status_if_missing() {
@@ -117,69 +143,99 @@ $agenic_root/scripts/bootstrap-project.sh
 EOF
 )"
 
-write_project_config_if_missing
-
-for prompt_template in "$pony_launch_prompts_dir"/*.txt; do
-  copy_file_if_missing "$prompt_template" "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/$(basename "$prompt_template")"
-done
-
-write_file_if_missing "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/pony.zsh.support.zsh" "$(cat <<EOF
-[[ -x ./pony/bin/codex-pony ]] || return 0
-
-twilight()   { export PERSONALITY=TWILIGHT_SPARKLE; }
-twi()        { export PERSONALITY=TWILIGHT_SPARKLE; }
-rainbow()    { export PERSONALITY=RAINBOW_DASH; }
-rd()         { export PERSONALITY=RAINBOW_DASH; }
-dash()       { export PERSONALITY=RAINBOW_DASH; }
-dashie()     { export PERSONALITY=RAINBOW_DASH; }
-pinkie()     { export PERSONALITY=PINKIE_PIE; }
-rarity()     { export PERSONALITY=RARITY; }
-rares()      { export PERSONALITY=RARITY; }
-applejack()  { export PERSONALITY=APPLEJACK; }
-aj()         { export PERSONALITY=APPLEJACK; }
-shy()        { export PERSONALITY=FLUTTERSHY; }
-fluttershy() { export PERSONALITY=FLUTTERSHY; }
-flutters()   { export PERSONALITY=FLUTTERSHY; }
-spike()      { export PERSONALITY=SPIKE; }
-w()          { export WORKING_ON="\$1"; }
-clearwork()  { unset WORKING_ON; }
-clearpony()  { unset PERSONALITY; }
-clearrole()  { unset PERSONALITY WORKING_ON; }
-codexpony()  { ./pony/bin/codex-pony "\$@"; }
+write_file_if_missing "$AGENIC_PROJECT_PONY_RUNTIME_STATE_PATH" "$(cat <<EOF
+idle
 EOF
 )"
 
-write_file_if_missing "$AGENIC_PROJECT_PONY_BIN_DIR/codex-pony" "$(cat <<EOF
+write_file_if_missing "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH" ""
+write_file_if_missing "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_SEEN_PATH" ""
+write_file_if_missing "$AGENIC_PROJECT_PONY_RUNTIME_ACTIVE_PROMPT_PATH" ""
+write_file_if_missing "$AGENIC_PROJECT_PONY_RUNTIME_DRAFT_PATH" ""
+
+write_project_config_if_missing
+
+for prompt_template in "$source_pony_launch_prompts_dir"/*.txt; do
+  copy_file_if_missing "$prompt_template" "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/$(basename "$prompt_template")"
+done
+
+if [[ -d "$source_pony_root/assets" ]] && [[ "$source_pony_root/assets" != "$AGENIC_PROJECT_PONY_ASSETS_DIR" ]]; then
+  cp -R "$source_pony_root/assets/." "$AGENIC_PROJECT_PONY_ASSETS_DIR/"
+fi
+
+if ! is_agenic_source_project && [[ -d "$agenic_root/vendor/prompt_toolkit" ]]; then
+  rm -rf "$AGENIC_PROJECT_PONY_VENDOR_DIR/prompt_toolkit"
+  cp -R "$agenic_root/vendor/prompt_toolkit" "$AGENIC_PROJECT_PONY_VENDOR_DIR/"
+fi
+
+for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart; do
+  if [[ -f "$source_pony_bin_dir/$managed_bin" ]]; then
+    write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/$managed_bin" "$(cat "$source_pony_bin_dir/$managed_bin")"
+  fi
+done
+
+for managed_script in \
+  codex-tmux-monitor.sh \
+  pony-paths.sh \
+  enter-twi-session.sh \
+  enter-worker-and-codex.sh \
+  enter-worker-from-prompt-file.sh \
+  enter-worker-shell.sh \
+  launch-worker.sh \
+  pony-line-editor.py \
+  pony-session-host.py \
+  start-session.sh \
+  warm-codex-tui.sh \
+  watch-twi.sh \
+  worker-postflight.sh \
+  worker-preflight.sh
+do
+  if [[ -f "$source_pony_scripts_dir/$managed_script" ]]; then
+    write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/$managed_script" "$(cat "$source_pony_scripts_dir/$managed_script")"
+  fi
+done
+
+write_managed_file "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/pony.zsh.support.zsh" "$(cat "$source_pony_scripts_dir/pony.zsh.support.zsh")"
+write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/launch-in-pony-shell.sh" "$(cat "$source_pony_scripts_dir/launch-in-pony-shell.sh")"
+write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/queue-runtime.sh" "$(cat "$source_pony_scripts_dir/queue-runtime.sh")"
+
+if ! is_agenic_source_project; then
+  write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/codex-pony" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 exec "$agenic_root/pony/bin/codex-pony" "\$@"
 EOF
 )"
-chmod +x "$AGENIC_PROJECT_PONY_BIN_DIR/codex-pony"
 
-write_file_if_missing "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/start-session.sh" "$(cat <<EOF
+  write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/start-session.sh" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 exec "$agenic_root/pony/scripts/start-session.sh" "\${1:?missing personality}" "$AGENIC_PROJECT_ROOT"
 EOF
 )"
-chmod +x "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/start-session.sh"
+fi
 
 write_shell_launcher_if_missing "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team-twi" "TWILIGHT_SPARKLE"
-write_shell_launcher_if_missing "$AGENIC_PROJECT_PONY_BIN_DIR/pony-aj" "APPLEJACK"
-write_file_if_missing "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team" "$(cat <<EOF
+if ! is_agenic_source_project; then
+  write_shell_launcher_if_missing "$AGENIC_PROJECT_PONY_BIN_DIR/pony-aj" "APPLEJACK"
+  write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$AGENIC_PROJECT_ROOT"
 printf '%s\n' "Project-local launcher set:"
 printf '%s\n' "- ./pony/bin/pony-team-twi"
-printf '%s\n' "- ./pony/bin/pony-aj"
+if [[ -x ./pony/bin/pony-aj ]]; then
+  printf '%s\n' "- ./pony/bin/pony-aj"
+fi
 printf '%s\n' ""
 printf '%s\n' "Warp users can use the generated project-specific launch configurations under:"
 printf '%s\n' "./pony/launch.configs"
 EOF
 )"
-chmod +x "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team"
+else
+  remove_if_exists "$AGENIC_PROJECT_PONY_BIN_DIR/pony-aj"
+  remove_if_exists "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team"
+fi
 
 write_file_if_missing "$AGENIC_TEAM_COORDINATION_DIR/assignment.registry.tsv" "$(cat <<EOF
 assignment_id	worker_label	personality	repo	branch	worktree	workfile	promptfile	scope
@@ -233,11 +289,12 @@ EOF
 
 write_file_if_missing "$AGENIC_TEAM_COORDINATION_DIR/twi.review-needed" ""
 
+write_file_if_missing "$AGENIC_PROJECT_PONY_LINUX_SHELL_MARKER" ""
+
 cat <<EOF
 Bootstrapped project-local pony state.
 - project_root: $AGENIC_PROJECT_ROOT
 - branch: $AGENIC_PROJECT_BRANCH
 - pony_root: $AGENIC_PROJECT_PONY_DIR
-- shell_launchers: $AGENIC_PROJECT_PONY_BIN_DIR/pony-team, $AGENIC_PROJECT_PONY_BIN_DIR/pony-team-twi, $AGENIC_PROJECT_PONY_BIN_DIR/pony-aj
+- shell_launchers: $AGENIC_PROJECT_PONY_BIN_DIR/pony-team-twi$(if ! is_agenic_source_project; then printf ', %s, %s' "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team" "$AGENIC_PROJECT_PONY_BIN_DIR/pony-aj"; fi)
 EOF
-write_file_if_missing "$AGENIC_PROJECT_PONY_LINUX_SHELL_MARKER" ""

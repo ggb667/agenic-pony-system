@@ -38,6 +38,7 @@ Expected shape:
 <project-root>/
   pony/
     agents/
+    assets/
     team.coordination/
     launch.prompts/
     launch.configs/
@@ -54,6 +55,7 @@ That structure mirrors the real operating layout refined in live project use.
 - project bootstrap scripts
 - project-specific Warp launcher generation
 - project-local shell launcher generation
+- reusable pony audio assets and local alert wrappers
 - reusable pony prompts
 - root-detection and install logic for `codex-pony`
 - design docs for runtime behavior and installation
@@ -105,6 +107,9 @@ After project install, the project-local shell launchers live under:
 <project>/pony/bin/pony-team
 <project>/pony/bin/pony-team-twi
 <project>/pony/bin/pony-aj
+<project>/pony/bin/ponyalert
+<project>/pony/bin/ponydone
+<project>/pony/assets/voices/
 ```
 
 ## Optional Zsh Support
