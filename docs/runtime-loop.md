@@ -176,6 +176,8 @@ Requirements:
 
 In practice, this means the final host should prefer a dedicated editor surface such as the `prompt_toolkit` host over a reclaimed shell prompt, and it should avoid forcing Codex into degraded inline rendering modes that damage scrollback quality.
 
+When a shell launcher is used as the entrypoint, that launcher shell must still preload the pony prompt identity before starting the session host. If the foreground host is interrupted or suspended, control should fall back to a branded pony shell prompt instead of a raw project shell that requires a manual recovery command such as `tia`.
+
 Empty input is not a special case because no submission occurs until Enter is pressed.
 
 Cancelled input is simply cancelled input.

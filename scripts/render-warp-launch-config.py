@@ -26,11 +26,7 @@ MODE_FILTERS = {
 
 
 def render_tab(agenic_root: Path, project_root: Path, slug: str, title: str, color: str, personality: str, focused: bool) -> list[str]:
-    command = (
-        f"zsh -lc 'cd {shlex.quote(str(project_root))} && "
-        f"{shlex.quote(str(project_root / 'pony/scripts/start-session.sh'))} "
-        f"{shlex.quote(personality)}'"
-    )
+    command = shlex.quote(str(project_root / "pony/scripts/launch-in-pony-shell.sh")) + " " + shlex.quote(personality)
     lines = [
         f"      - title: {title}",
         f"        color: {color}",

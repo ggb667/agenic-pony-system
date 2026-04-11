@@ -154,6 +154,7 @@ Those launchers should:
 - bind to the owning project root
 - use the same project-local `pony/` structure
 - avoid requiring Warp
+- preload the selected pony shell identity before handing control to the session host so `Ctrl-C` or `Ctrl-Z` falls back to a branded pony prompt instead of a raw shell
 
 ## Optional `.zshrc` Support
 
