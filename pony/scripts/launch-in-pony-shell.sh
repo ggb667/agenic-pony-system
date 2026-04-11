@@ -2,8 +2,11 @@
 set -euo pipefail
 
 personality="${1:?missing personality}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+launch_project_root="$(cd "$script_dir/../.." && pwd)"
 
 case "$personality" in
+  PRINCESS_CELESTIA_SOL_INVICTUS) pony_func="celestia" ;;
   TWILIGHT_SPARKLE) pony_func="twi" ;;
   APPLEJACK) pony_func="aj" ;;
   PINKIE_PIE) pony_func="pinkie" ;;
@@ -15,7 +18,7 @@ case "$personality" in
 esac
 
 export AGENIC_LAUNCH_PERSONALITY="$personality"
-export AGENIC_PROJECT_ROOT="/home/ggb66/dev/agenic-pony-system"
+export AGENIC_PROJECT_ROOT="$launch_project_root"
 export PONY_FUNC="$pony_func"
 
 exec zsh -ic '

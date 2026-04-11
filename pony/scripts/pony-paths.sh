@@ -38,6 +38,7 @@ project_slug() {
 
 worker_slug_for_personality() {
   case "${1:-}" in
+    TIA|CELESTIA|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'celestia\n' ;;
     AJ|APPLEJACK) printf 'aj\n' ;;
     FS|FLUTTERSHY|SHY|FLUTTERS) printf 'fs\n' ;;
     PINKIE|PINKIE_PIE) printf 'pinkie\n' ;;
@@ -51,6 +52,7 @@ worker_slug_for_personality() {
 
 worker_label_for_slug() {
   case "${1:-}" in
+    celestia) printf 'Princess Celestia Sol Invictus\n' ;;
     aj) printf 'AJ\n' ;;
     fs) printf 'FS\n' ;;
     pinkie) printf 'Pinkie\n' ;;
@@ -64,6 +66,7 @@ worker_label_for_slug() {
 
 worker_personality_for_slug() {
   case "${1:-}" in
+    celestia) printf 'PRINCESS_CELESTIA_SOL_INVICTUS\n' ;;
     aj) printf 'APPLEJACK\n' ;;
     fs) printf 'FLUTTERSHY\n' ;;
     pinkie) printf 'PINKIE_PIE\n' ;;
@@ -77,6 +80,7 @@ worker_personality_for_slug() {
 
 workfile_name_for_slug() {
   case "${1:-}" in
+    celestia) printf 'governor-celestia.md\n' ;;
     twi) printf 'coordinator-twi.md\n' ;;
     *) printf '%s.md\n' "${1:?missing worker slug}" ;;
   esac
@@ -84,6 +88,7 @@ workfile_name_for_slug() {
 
 worker_slug_for_label() {
   case "${1:-}" in
+    Princess\ Celestia\ Sol\ Invictus) printf 'celestia\n' ;;
     AJ) printf 'aj\n' ;;
     FS) printf 'fs\n' ;;
     Pinkie) printf 'pinkie\n' ;;
@@ -97,6 +102,7 @@ worker_slug_for_label() {
 
 idle_sentinel_for_personality() {
   case "${1:-}" in
+    TIA|CELESTIA|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'Princess Celestia is tending the sun and awaiting new prompt instructions. Ω\n' ;;
     AJ|APPLEJACK) printf 'Applejack is bucking apples and awaiting new prompt instructions. Ω\n' ;;
     FS|FLUTTERSHY|SHY|FLUTTERS) printf 'Fluttershy is feeding her animals and awaiting new prompt instructions. Ω\n' ;;
     PINKIE|PINKIE_PIE) printf 'Pinkie Pie is baking a cake and awaiting new prompt instructions. Ω\n' ;;

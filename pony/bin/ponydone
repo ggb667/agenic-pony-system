@@ -8,6 +8,7 @@ personality="${1:-${PERSONALITY:-}}"
 personality="$(printf '%s' "$personality" | tr '[:lower:]' '[:upper:]')"
 
 case "$personality" in
+  TIA|CELESTIA|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) prefix="twilight_sparkle_" ;;
   TWI|TWILIGHT|TWILIGHT_SPARKLE) prefix="twilight_sparkle_" ;;
   DASH|DASHIE|RAINBOW|RD|RAINBOW_DASH) prefix="rainbow_dash_" ;;
   PINKIE|PINKIE_PIE) prefix="pinkie_pie_" ;;

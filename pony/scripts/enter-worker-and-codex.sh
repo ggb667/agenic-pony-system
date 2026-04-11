@@ -54,7 +54,7 @@ case "$preflight_result" in
     exit 0
     ;;
   BLOCKED_DIRTY_FIX_FIRST)
-    if [[ "$PERSONALITY" == 'TWILIGHT_SPARKLE' ]]; then
+    if [[ "$PERSONALITY" == 'TWILIGHT_SPARKLE' || "$PERSONALITY" == 'PRINCESS_CELESTIA_SOL_INVICTUS' ]]; then
       profile='twi_coordinator'
       prompt="$(dirty_fix_first_prompt)"
     else
@@ -66,7 +66,7 @@ case "$preflight_result" in
     profile='worker_mini'
     ;;
   ESCALATE_TWI)
-    if [[ "$PERSONALITY" == 'TWILIGHT_SPARKLE' ]]; then
+    if [[ "$PERSONALITY" == 'TWILIGHT_SPARKLE' || "$PERSONALITY" == 'PRINCESS_CELESTIA_SOL_INVICTUS' ]]; then
       profile='twi_coordinator'
     else
       echo 'Preflight: ESCALATE_TWI. Worker Codex not launched.'

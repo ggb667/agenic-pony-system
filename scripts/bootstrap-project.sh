@@ -156,7 +156,7 @@ write_file_if_missing "$AGENIC_PROJECT_PONY_RUNTIME_DRAFT_PATH" ""
 write_project_config_if_missing
 
 for prompt_template in "$source_pony_launch_prompts_dir"/*.txt; do
-  copy_file_if_missing "$prompt_template" "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/$(basename "$prompt_template")"
+  write_managed_file "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/$(basename "$prompt_template")" "$(cat "$prompt_template")"
 done
 
 if [[ -d "$source_pony_root/assets" ]] && [[ "$source_pony_root/assets" != "$AGENIC_PROJECT_PONY_ASSETS_DIR" ]]; then
@@ -164,7 +164,7 @@ if [[ -d "$source_pony_root/assets" ]] && [[ "$source_pony_root/assets" != "$AGE
 fi
 
 if ! is_agenic_source_project && [[ -d "$agenic_root/vendor/prompt_toolkit" ]]; then
-  rm -rf "$AGENIC_PROJECT_PONY_VENDOR_DIR/prompt_toolkit"
+  command rm -rf "$AGENIC_PROJECT_PONY_VENDOR_DIR/prompt_toolkit"
   cp -R "$agenic_root/vendor/prompt_toolkit" "$AGENIC_PROJECT_PONY_VENDOR_DIR/"
 fi
 

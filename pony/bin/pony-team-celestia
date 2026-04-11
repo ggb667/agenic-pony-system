@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "/home/ggb66/dev/agenic-pony-system"
+exec "/home/ggb66/dev/agenic-pony-system/pony/scripts/launch-in-pony-shell.sh" "PRINCESS_CELESTIA_SOL_INVICTUS"

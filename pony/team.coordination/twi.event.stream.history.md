@@ -4,6 +4,12 @@
 - pending_review_needed_content: none
 
 ## Recent Events
+- switched the agenic source-repo Warp special case from Twi-only to Celestia-only, so source installs now write a dedicated Celestia launch configuration and remove the old agenic Twi Warp launcher
+- split startup prompt assembly into an always-on pony behavior layer plus an optional reusable coordination layer controlled by `AGENIC_PONY_DISABLE_REUSABLE_PROMPT=1`, so pony voice, ponyalert behavior, and idle sentinels survive when coordination defaults are turned off
+- made `scripts/install-project.sh` rerun bootstrap for installed target repos so managed launchers, scripts, and prompt templates self-refresh instead of staying stale forever
+- fixed `pony/scripts/launch-in-pony-shell.sh` to bind itself to the repo it lives in, which keeps installed-project shell launchers from yanking sessions back into the agenic source repo
+- rewrote the reusable Twilight launch prompt to read project-local coordinator state first, stay inside the active repo by default, and preserve the agenic-source special case only when actually launched inside `agenic-pony-system`
+- restored execute permission on `scripts/bootstrap-project.sh`, which unblocked `scripts/install-project.sh` and fresh project-local installs again
 - reconciled the dirty coordinator preflight hold into deliberate canonical state and prepared those Twi coordination updates to be committed so normal coordination can resume from a clean worktree
 - reconciled the dirty coordinator worktree into a deliberate source state by repairing the duplicated `scripts/bootstrap-project.sh`, adding local ignore rules for disposable runtime artifacts, and revalidating the runnable shell and Python entrypoints
 - patched the worker host so the parked prompt_toolkit editor now takes ownership of `/dev/tty`, resets terminal mode before drawing, re-enters immediately after a resumed Codex suspends again, and is invoked once more at startup if Codex is already parked

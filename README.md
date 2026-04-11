@@ -67,9 +67,15 @@ That structure mirrors the real operating layout refined in live project use.
 - detect the enclosing project root
 - check whether the project's `pony/` system is installed
 - provision missing pieces when needed
+- refresh managed project-local launcher/runtime files on rerun so stale installs heal automatically
 - launch into the correct project-local runtime
 
 That keeps runtime identity tied to the actual repo being worked on.
+
+The pony behavior layer is separate from reusable coordination instructions:
+
+- pony voice, alerts, and idle-sentinel behavior stay on
+- reusable launch-prompt coordination defaults can be disabled per run with `AGENIC_PONY_DISABLE_REUSABLE_PROMPT=1`
 
 ## Warp And Shell Launching
 

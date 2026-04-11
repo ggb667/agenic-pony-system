@@ -11,8 +11,4 @@ if [[ "$resolved_target_root" == "$agenic_root" ]]; then
   exit 0
 fi
 
-if [[ -f "$existing_pony_root/pony.system.config.yaml" ]] && [[ -d "$existing_pony_root/scripts" ]]; then
-  exit 0
-fi
-
 "$script_dir/bootstrap-project.sh" "$resolved_target_root"

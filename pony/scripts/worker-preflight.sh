@@ -156,7 +156,9 @@ status_worktree=""
 
 if [[ -n "$worker_slug" ]]; then
   status_file="$(pony_worker_status_path "$worker_slug")"
-  [[ "$worker_slug" == "twi" ]] && is_coordinator=1
+  if [[ "$worker_slug" == "twi" || "$worker_slug" == "celestia" ]]; then
+    is_coordinator=1
+  fi
 fi
 
 if [[ -n "$assignment_row" ]]; then

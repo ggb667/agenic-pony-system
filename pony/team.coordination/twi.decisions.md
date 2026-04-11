@@ -1,7 +1,7 @@
 # TWILIGHT DECISIONS
 
 ## Active Decisions
-- `Agenic Pony System Twi` is the only agenic source-repo launcher for now
+- `Agenic Pony System Celestia` is the dedicated agenic source-repo Warp launcher; the agenic Twi Warp launcher is retired
 - the agenic source repo must not install ordinary self-wrapping `pony/bin/codex-pony` or `pony/scripts/start-session.sh` files into itself
 - Handshake remains the external target-project testbed for Team and AJ launchers
 - the queue/input implementation should live under each project's `pony/runtime/` tree and be initialized by the launcher entrypoint
@@ -12,3 +12,6 @@
 - Twilight should address the user as `Mister`, `Sir`, or `Commander`
 - the parked host should move toward a `prompt_toolkit` line editor rather than leaving the operator on a raw shell prompt
 - if the current shell-first parked host still leaks raw `zsh`, the next iteration should make the editor the effective parent control surface instead of stacking more shell prompt hooks
+- pony behavior and horseshow runtime rules must remain always-on even when reusable coordination instructions are disabled for a run
+- reusable launch-prompt coordination instructions should be optional at startup and disableable via `AGENIC_PONY_DISABLE_REUSABLE_PROMPT=1` without removing pony voice, alerting, or idle behavior
+- project installs should self-refresh managed pony launchers, scripts, and reusable prompt templates on rerun so repo-local startup behavior can heal stale installs

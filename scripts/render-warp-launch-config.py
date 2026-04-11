@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 PONIES = [
+    ("celestia", "TIA", "yellow", "PRINCESS_CELESTIA_SOL_INVICTUS"),
     ("twi", "TWI", "magenta", "TWILIGHT_SPARKLE"),
     ("aj", "AJ", "yellow", "APPLEJACK"),
     ("pinkie", "Pinkie", "red", "PINKIE_PIE"),
@@ -20,6 +21,7 @@ MODE_FILTERS = {
     "team": {"twi", "aj", "pinkie", "fs", "rarity", "rd", "spike"},
     "twi": {"twi"},
     "aj": {"aj"},
+    "celestia": {"celestia"},
 }
 
 
@@ -57,12 +59,14 @@ def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
             "team": f"{project_name} Team",
             "twi": f"{project_name} Twi",
             "aj": f"{project_name} AJ",
+            "celestia": f"{project_name} Celestia",
         }
     else:
         mode_titles = {
             "team": f"{project_name} Pony Team",
             "twi": f"{project_name} Pony Twi",
             "aj": f"{project_name} Pony AJ",
+            "celestia": f"{project_name} Pony Celestia",
         }
     lines = [
         "# AGENIC_PONYSHOW: true",
@@ -79,7 +83,7 @@ def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
             continue
         if project_root == agenic_root and slug == "aj":
             continue
-        lines.extend(render_tab(agenic_root, project_root, slug, title, color, personality, focused=slug == "twi"))
+        lines.extend(render_tab(agenic_root, project_root, slug, title, color, personality, focused=slug in {"twi", "celestia"}))
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -88,7 +92,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--agenic-root", required=True)
     parser.add_argument("--project-root", required=True)
-    parser.add_argument("--mode", choices=("team", "twi", "aj"), default="team")
+    parser.add_argument("--mode", choices=("team", "twi", "aj", "celestia"), default="team")
     args = parser.parse_args()
 
     agenic_root = Path(args.agenic_root).resolve()

@@ -32,7 +32,7 @@ That means:
 - runtime tests should be exercised from the target project's `pony/` tree
 - `codex-rs` changes are only for Codex-specific UI behavior such as pony prompt symbol or color work
 
-Twilight is a special case in the source repo: the agenic source installation should keep the live launcher set focused on Twilight coordinator work, while worker launcher behavior is validated from project-local installs. When the runtime is operating inside an installed target project, that target project's `pony/team.coordination`, `pony/work`, and project files are the live local state for that run.
+The source repo has its own special case: the agenic source installation should keep the live Warp launcher set focused on source-repo governance and coordination work, with Celestia as the dedicated source-repo Warp launcher while Twilight remains the coordinator. Worker launcher behavior is validated from project-local installs. When the runtime is operating inside an installed target project, that target project's `pony/team.coordination`, `pony/work`, and project files are the live local state for that run.
 
 ## Project Root Detection
 
@@ -74,6 +74,11 @@ If the project is not provisioned:
 - it should bootstrap the required `pony/` structure
 - it should generate the local launcher/configuration artifacts required for the current platform
 - it should then continue the requested launch flow
+
+If the project is already provisioned:
+
+- it should still refresh managed launcher/runtime files from the reusable system layer
+- it must preserve project-local coordination state and workfiles while updating managed scripts and prompts
 
 This makes `codex-pony` the installation boundary as well as the runtime entrypoint.
 
@@ -185,6 +190,22 @@ It should not be responsible for:
 - acting as the primary installation mechanism
 
 The real installation and bootstrap logic belongs in `codex-pony` and project-local provisioning scripts.
+
+## Behavior Versus Coordination Instructions
+
+Pony behavior and reusable coordination defaults are separate concerns.
+
+Always-on behavior should include:
+
+- pony identity and user-facing voice
+- pony alert behavior for approvals/escalations
+- idle sentinel behavior
+
+Reusable coordination instructions should remain optional so operators can disable them for a run without stripping away the pony runtime flavor.
+
+Recommended runtime switch:
+
+- `AGENIC_PONY_DISABLE_REUSABLE_PROMPT=1`
 
 ## Parallel Project Isolation
 
