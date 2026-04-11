@@ -15,25 +15,35 @@ AGENIC_PROJECT_PONY_RUNTIME_DRAFT_PATH="$AGENIC_PROJECT_PONY_RUNTIME_DIR/user.dr
 AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH="$AGENIC_PROJECT_PONY_RUNTIME_DIR/pending.notice"
 AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_SEEN_PATH="$AGENIC_PROJECT_PONY_RUNTIME_DIR/pending.notice.seen"
 
-twilight()   { export PERSONALITY=TWILIGHT_SPARKLE; }
-twi()        { export PERSONALITY=TWILIGHT_SPARKLE; }
-rainbow()    { export PERSONALITY=RAINBOW_DASH; }
-rd()         { export PERSONALITY=RAINBOW_DASH; }
-dash()       { export PERSONALITY=RAINBOW_DASH; }
-dashie()     { export PERSONALITY=RAINBOW_DASH; }
-pinkie()     { export PERSONALITY=PINKIE_PIE; }
-rarity()     { export PERSONALITY=RARITY; }
-rares()      { export PERSONALITY=RARITY; }
-applejack()  { export PERSONALITY=APPLEJACK; }
-aj()         { export PERSONALITY=APPLEJACK; }
-shy()        { export PERSONALITY=FLUTTERSHY; }
-fluttershy() { export PERSONALITY=FLUTTERSHY; }
-flutters()   { export PERSONALITY=FLUTTERSHY; }
-spike()      { export PERSONALITY=SPIKE; }
-w()          { export WORKING_ON="$1"; }
-clearwork()  { unset WORKING_ON; }
-clearpony()  { unset PERSONALITY; }
-clearrole()  { unset PERSONALITY WORKING_ON; }
+pony_prompt_reload() {
+  command -v p10k >/dev/null 2>&1 || return 0
+  p10k reload >/dev/null 2>&1 || true
+}
+
+twilight()   { export PERSONALITY=TWILIGHT_SPARKLE; pony_prompt_reload; }
+twi()        { export PERSONALITY=TWILIGHT_SPARKLE; pony_prompt_reload; }
+celestia()   { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
+tia()        { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
+celly()      { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
+sunbutt()    { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
+sol()        { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
+rainbow()    { export PERSONALITY=RAINBOW_DASH; pony_prompt_reload; }
+rd()         { export PERSONALITY=RAINBOW_DASH; pony_prompt_reload; }
+dash()       { export PERSONALITY=RAINBOW_DASH; pony_prompt_reload; }
+dashie()     { export PERSONALITY=RAINBOW_DASH; pony_prompt_reload; }
+pinkie()     { export PERSONALITY=PINKIE_PIE; pony_prompt_reload; }
+rarity()     { export PERSONALITY=RARITY; pony_prompt_reload; }
+rares()      { export PERSONALITY=RARITY; pony_prompt_reload; }
+applejack()  { export PERSONALITY=APPLEJACK; pony_prompt_reload; }
+aj()         { export PERSONALITY=APPLEJACK; pony_prompt_reload; }
+shy()        { export PERSONALITY=FLUTTERSHY; pony_prompt_reload; }
+fluttershy() { export PERSONALITY=FLUTTERSHY; pony_prompt_reload; }
+flutters()   { export PERSONALITY=FLUTTERSHY; pony_prompt_reload; }
+spike()      { export PERSONALITY=SPIKE; pony_prompt_reload; }
+w()          { export WORKING_ON="$1"; pony_prompt_reload; }
+clearwork()  { unset WORKING_ON; pony_prompt_reload; }
+clearpony()  { unset PERSONALITY; pony_prompt_reload; }
+clearrole()  { unset PERSONALITY WORKING_ON; pony_prompt_reload; }
 codexpony()  { ./pony/bin/codex-pony "$@"; }
 ponyruntime() { ./pony/scripts/queue-runtime.sh "$@"; }
 ponyqueue()  { ./pony/scripts/queue-runtime.sh list; }
@@ -75,7 +85,12 @@ if [[ -o interactive ]]; then
     printf '%s' "$BUFFER" >| "$AGENIC_PROJECT_PONY_RUNTIME_DRAFT_PATH"
   }
 
+  pony_runtime_draft_clear_submitted() {
+    : >| "$AGENIC_PROJECT_PONY_RUNTIME_DRAFT_PATH"
+  }
+
   add-zsh-hook precmd pony_runtime_sync_notice
+  add-zsh-hook preexec pony_runtime_draft_clear_submitted
   zle -N zle-line-init pony_runtime_draft_restore
   zle -N zle-line-finish pony_runtime_draft_save
 fi

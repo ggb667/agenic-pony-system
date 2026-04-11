@@ -36,6 +36,7 @@ def parse_args() -> argparse.Namespace:
 
 def prompt_label_for(personality: str) -> str:
     labels = {
+        "PRINCESS_CELESTIA_SOL_INVICTUS": "Princess Celestia Sol Invictus",
         "TWILIGHT_SPARKLE": "✶ Twilight",
         "APPLEJACK": "🍎 Applejack",
         "PINKIE_PIE": "🎈 Pinkie",
@@ -45,6 +46,44 @@ def prompt_label_for(personality: str) -> str:
         "SPIKE": "🐲 Spike",
     }
     return labels.get(personality, personality)
+
+
+def celestia_prompt_fragments() -> list[tuple[str, str]]:
+    colors = ["#3D9DC4", "#48BAA9", "#7A9BDE", "#D085D0"]
+    title = "Princess Celestia Sol Invictus"
+    fragments: list[tuple[str, str]] = [("fg:#3D9DC4 bold", "☀ ")]
+    color_index = 0
+    pair_index = 0
+    current_text = ""
+
+    def flush_current_text() -> None:
+        nonlocal current_text
+        if not current_text:
+            return
+        fragments.append((f"fg:{colors[color_index]} bold", current_text))
+        current_text = ""
+
+    for char in title:
+        if char.isspace():
+            flush_current_text()
+            fragments.append(("class:prompt", char))
+            continue
+        current_text += char
+        pair_index += 1
+        if pair_index == 2:
+            flush_current_text()
+            pair_index = 0
+            color_index = (color_index + 1) % len(colors)
+
+    flush_current_text()
+    fragments.append(("class:prompt", " > "))
+    return fragments
+
+
+def prompt_fragments_for(personality: str) -> list[tuple[str, str]]:
+    if personality == "PRINCESS_CELESTIA_SOL_INVICTUS":
+        return celestia_prompt_fragments()
+    return [("class:prompt", f"{prompt_label_for(personality)} > ")]
 
 
 def dirty_fix_first_prompt(project_root: str, initial_prompt: str) -> str:
@@ -99,13 +138,13 @@ class PonySessionHost:
         if result == "READY_NO_LLM":
             return None, "", "editor_only"
         if result == "BLOCKED_DIRTY_FIX_FIRST":
-            if self.personality == "TWILIGHT_SPARKLE":
+            if self.personality in {"TWILIGHT_SPARKLE", "PRINCESS_CELESTIA_SOL_INVICTUS"}:
                 return "twi_coordinator", dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt), "launch"
             return None, "Only Twilight may continue from BLOCKED_DIRTY_FIX_FIRST.", "editor_only"
         if result == "ESCALATE_MINI":
             return "worker_mini", self.initial_prompt, "launch"
         if result == "ESCALATE_TWI":
-            if self.personality == "TWILIGHT_SPARKLE":
+            if self.personality in {"TWILIGHT_SPARKLE", "PRINCESS_CELESTIA_SOL_INVICTUS"}:
                 return "twi_coordinator", self.initial_prompt, "launch"
             return None, "Preflight: ESCALATE_TWI. Worker Codex not launched.", "editor_only"
         return None, f"Preflight error: unexpected result '{result}'.", "editor_only"
@@ -166,8 +205,6 @@ class PonySessionHost:
 
         style = Style.from_dict({"prompt": "bold", "toolbar": "reverse"})
         session = PromptSession(history=FileHistory(str(self.history_path)))
-        prompt_label = f"{prompt_label_for(self.personality)} > "
-
         if self.startup_action == "launch" and self.bootstrap_profile:
             self.kill_existing_session()
             self.create_session(self.bootstrap_prompt, self.bootstrap_profile)
@@ -179,7 +216,7 @@ class PonySessionHost:
             toolbar = notice_text or "Enter submits to the parked pony session. Ctrl-C exits the host."
             try:
                 text = session.prompt(
-                    [("class:prompt", prompt_label)],
+                    prompt_fragments_for(self.personality),
                     default=default_text,
                     style=style,
                     bottom_toolbar=toolbar,

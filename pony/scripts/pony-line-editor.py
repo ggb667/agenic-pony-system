@@ -25,6 +25,7 @@ def parse_args() -> argparse.Namespace:
 
 def prompt_label_for(personality: str) -> str:
     labels = {
+        "PRINCESS_CELESTIA_SOL_INVICTUS": "Princess Celestia Sol Invictus",
         "TWILIGHT_SPARKLE": "✶ Twilight",
         "APPLEJACK": "🍎 Applejack",
         "PINKIE_PIE": "🎈 Pinkie",
@@ -34,6 +35,44 @@ def prompt_label_for(personality: str) -> str:
         "SPIKE": "🐲 Spike",
     }
     return labels.get(personality, personality)
+
+
+def celestia_prompt_fragments() -> list[tuple[str, str]]:
+    colors = ["#3D9DC4", "#48BAA9", "#7A9BDE", "#D085D0"]
+    title = "Princess Celestia Sol Invictus"
+    fragments: list[tuple[str, str]] = [("fg:#3D9DC4 bold", "☀ ")]
+    color_index = 0
+    pair_index = 0
+    current_text = ""
+
+    def flush_current_text() -> None:
+        nonlocal current_text
+        if not current_text:
+            return
+        fragments.append((f"fg:{colors[color_index]} bold", current_text))
+        current_text = ""
+
+    for char in title:
+        if char.isspace():
+            flush_current_text()
+            fragments.append(("class:prompt", char))
+            continue
+        current_text += char
+        pair_index += 1
+        if pair_index == 2:
+            flush_current_text()
+            pair_index = 0
+            color_index = (color_index + 1) % len(colors)
+
+    flush_current_text()
+    fragments.append(("class:prompt", " > "))
+    return fragments
+
+
+def prompt_fragments_for(personality: str) -> list[tuple[str, str]]:
+    if personality == "PRINCESS_CELESTIA_SOL_INVICTUS":
+        return celestia_prompt_fragments()
+    return [("class:prompt", f"{prompt_label_for(personality)} > ")]
 
 
 def main() -> int:
@@ -65,12 +104,10 @@ def main() -> int:
     )
 
     toolbar = notice_text or "Enter submits to the parked pony session. Ctrl-C leaves the session parked."
-    prompt_label = f"{prompt_label_for(args.personality)} > "
-
     session = PromptSession(history=FileHistory(str(history_path)))
     try:
       text = session.prompt(
-          [("class:prompt", prompt_label)],
+          prompt_fragments_for(args.personality),
           default=draft_text,
           style=style,
           bottom_toolbar=toolbar,
