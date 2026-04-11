@@ -1,4 +1,5 @@
 assignment_id	worker_label	personality	repo	branch	worktree	workfile	promptfile	scope
+celestia	Princess Celestia Sol Invictus	PRINCESS_CELESTIA_SOL_INVICTUS	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/governor-celestia.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/celestia.txt	source-repo governance
 aj	AJ	APPLEJACK	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/aj.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/aj.txt	unassigned
 pinkie	Pinkie	PINKIE_PIE	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/pinkie.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/pinkie.txt	unassigned
 fs	FS	FLUTTERSHY	agenic-pony-system	main	/home/ggb66/dev/agenic-pony-system	/home/ggb66/dev/agenic-pony-system/pony/work/fs.md	/home/ggb66/dev/agenic-pony-system/pony/launch.prompts/fs.txt	unassigned

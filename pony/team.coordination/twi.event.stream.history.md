@@ -4,6 +4,8 @@
 - pending_review_needed_content: none
 
 ## Recent Events
+- committed the coherent Celestia source-governance launcher change as `ea270e4`, removed the stray root-level helper file, and returned the source repo to a deliberate clean worktree state
+- aligned `multi.agent.control.md`, the assignment registry, and Celestia/Twilight status text with the committed source-repo Celestia governance policy so runtime control files no longer contradict the launcher/docs decision
 - switched the agenic source-repo Warp special case from Twi-only to Celestia-only, so source installs now write a dedicated Celestia launch configuration and remove the old agenic Twi Warp launcher
 - split startup prompt assembly into an always-on pony behavior layer plus an optional reusable coordination layer controlled by `AGENIC_PONY_DISABLE_REUSABLE_PROMPT=1`, so pony voice, ponyalert behavior, and idle sentinels survive when coordination defaults are turned off
 - made `scripts/install-project.sh` rerun bootstrap for installed target repos so managed launchers, scripts, and prompt templates self-refresh instead of staying stale forever
