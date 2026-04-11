@@ -4,6 +4,7 @@
 - pending_review_needed_content: none
 
 ## Recent Events
+- changed the Celestia source-repo launch path so generated Warp configs now enter through `pony/scripts/launch-in-pony-shell.sh`, and that launcher now starts from a Celestia-branded interactive shell that auto-submits `start-session.sh` as its first command
 - cleared the ignored source-repo runtime residue (`.venv-ponyhost`, generated `pony/` install outputs, and Python caches), confirmed the worktree is back to a deliberate clean-preflight state, and resumed normal Celestia/Twilight coordination
 - committed the coherent Celestia source-governance launcher change as `ea270e4`, removed the stray root-level helper file, and returned the source repo to a deliberate clean worktree state
 - aligned `multi.agent.control.md`, the assignment registry, and Celestia/Twilight status text with the committed source-repo Celestia governance policy so runtime control files no longer contradict the launcher/docs decision
