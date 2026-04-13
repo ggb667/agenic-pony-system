@@ -8,7 +8,7 @@ personality="${1:-${PERSONALITY:-TWILIGHT_SPARKLE}}"
 personality="$(printf '%s' "$personality" | tr '[:lower:]' '[:upper:]')"
 
 case "$personality" in
-  TIA|CELESTIA|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS)
+  TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS)
     prefix="twilight_sparkle_"
     voice_label="celestia->twilight_sparkle"
     ;;

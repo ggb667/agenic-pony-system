@@ -50,8 +50,7 @@ prompt="$initial_prompt"
 
 case "$preflight_result" in
   READY_NO_LLM)
-    echo 'Preflight: READY_NO_LLM. Codex not launched.'
-    exit 0
+    profile=""
     ;;
   BLOCKED_DIRTY_FIX_FIRST)
     if [[ "$PERSONALITY" == 'TWILIGHT_SPARKLE' || "$PERSONALITY" == 'PRINCESS_CELESTIA_SOL_INVICTUS' ]]; then

@@ -141,6 +141,12 @@ Each generated Warp launcher should:
 - start in that project's working directory
 - use the project's `pony/` files and coordination state
 
+Default policy:
+
+- ordinary target-project installs generate one project-specific Warp team launcher by default
+- the agenic source repo remains the special case with the dedicated Celestia launcher
+- per-pony Warp launchers such as Twi or AJ are not installed by default for ordinary target projects
+
 This is preferred over a single generic launcher that tries to infer project identity from Warp context at launch time.
 
 ## Shell Launchers
@@ -181,6 +187,7 @@ The project-local support script should be considered optional sugar.
 It may provide:
 
 - short pony identity aliases
+- stable short-hands for established personas, such as `princess` for Celestia
 - `WORKING_ON` helpers
 - a small `codexpony` wrapper
 

@@ -136,7 +136,7 @@ class PonySessionHost:
         )
         result = preflight.stdout.strip() or "ESCALATE_TWI"
         if result == "READY_NO_LLM":
-            return None, "", "editor_only"
+            return None, self.initial_prompt, "launch"
         if result == "BLOCKED_DIRTY_FIX_FIRST":
             if self.personality in {"TWILIGHT_SPARKLE", "PRINCESS_CELESTIA_SOL_INVICTUS"}:
                 return "twi_coordinator", dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt), "launch"
@@ -205,7 +205,7 @@ class PonySessionHost:
 
         style = Style.from_dict({"prompt": "bold", "toolbar": "reverse"})
         session = PromptSession(history=FileHistory(str(self.history_path)))
-        if self.startup_action == "launch" and self.bootstrap_profile:
+        if self.startup_action == "launch":
             self.kill_existing_session()
             self.create_session(self.bootstrap_prompt, self.bootstrap_profile)
             self.attach()

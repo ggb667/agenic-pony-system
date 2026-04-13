@@ -203,6 +203,7 @@ if ! is_agenic_source_project; then
   write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/codex-pony" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
+export AGENIC_PONY_SOURCE_ROOT="$agenic_root"
 exec "$agenic_root/pony/bin/codex-pony" "\$@"
 EOF
 )"
@@ -210,6 +211,7 @@ EOF
   write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/start-session.sh" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
+export AGENIC_PONY_SOURCE_ROOT="$agenic_root"
 exec "$agenic_root/pony/scripts/start-session.sh" "\${1:?missing personality}" "$AGENIC_PROJECT_ROOT"
 EOF
 )"

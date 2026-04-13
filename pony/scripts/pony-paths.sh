@@ -2,7 +2,38 @@
 set -euo pipefail
 
 pony_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-agenic_root="$(cd "$pony_script_dir/../.." && pwd)"
+
+resolve_agenic_root() {
+  local script_dir="${1:?missing script dir}"
+  local candidate_root
+  local project_wrapper
+  local wrapped_bin
+
+  candidate_root="$(cd "$script_dir/../.." && pwd)"
+  if [[ -x "$candidate_root/scripts/install-project.sh" ]]; then
+    printf '%s\n' "$candidate_root"
+    return 0
+  fi
+
+  if [[ -n "${AGENIC_PONY_SOURCE_ROOT:-}" ]] && [[ -x "${AGENIC_PONY_SOURCE_ROOT}/scripts/install-project.sh" ]]; then
+    cd "$AGENIC_PONY_SOURCE_ROOT" && pwd
+    return 0
+  fi
+
+  project_wrapper="$candidate_root/pony/bin/codex-pony"
+  if [[ -f "$project_wrapper" ]]; then
+    wrapped_bin="$(sed -n 's#^exec "\(.*\)/pony/bin/codex-pony" "\$@"$#\1/pony/bin/codex-pony#p' "$project_wrapper" | head -n 1)"
+    if [[ -n "$wrapped_bin" ]] && [[ -x "$wrapped_bin" ]]; then
+      cd "$(dirname "$wrapped_bin")/../.." && pwd
+      return 0
+    fi
+  fi
+
+  printf '%s\n' "$candidate_root"
+}
+
+agenic_root="$(resolve_agenic_root "$pony_script_dir")"
+export AGENIC_PONY_SOURCE_ROOT="$agenic_root"
 pony_root="$agenic_root/pony"
 pony_bin_dir="$pony_root/bin"
 pony_scripts_dir="$pony_root/scripts"
@@ -38,7 +69,7 @@ project_slug() {
 
 worker_slug_for_personality() {
   case "${1:-}" in
-    TIA|CELESTIA|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'celestia\n' ;;
+    TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'celestia\n' ;;
     AJ|APPLEJACK) printf 'aj\n' ;;
     FS|FLUTTERSHY|SHY|FLUTTERS) printf 'fs\n' ;;
     PINKIE|PINKIE_PIE) printf 'pinkie\n' ;;
@@ -88,7 +119,7 @@ workfile_name_for_slug() {
 
 worker_slug_for_label() {
   case "${1:-}" in
-    Princess\ Celestia\ Sol\ Invictus) printf 'celestia\n' ;;
+    Princess|Princess\ Celestia|Princess\ Celestia\ Sol\ Invictus) printf 'celestia\n' ;;
     AJ) printf 'aj\n' ;;
     FS) printf 'fs\n' ;;
     Pinkie) printf 'pinkie\n' ;;
@@ -102,7 +133,7 @@ worker_slug_for_label() {
 
 idle_sentinel_for_personality() {
   case "${1:-}" in
-    TIA|CELESTIA|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'Princess Celestia is tending the sun and awaiting new prompt instructions. Ω\n' ;;
+    TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'Princess Celestia is tending the sun and awaiting new prompt instructions. Ω\n' ;;
     AJ|APPLEJACK) printf 'Applejack is bucking apples and awaiting new prompt instructions. Ω\n' ;;
     FS|FLUTTERSHY|SHY|FLUTTERS) printf 'Fluttershy is feeding her animals and awaiting new prompt instructions. Ω\n' ;;
     PINKIE|PINKIE_PIE) printf 'Pinkie Pie is baking a cake and awaiting new prompt instructions. Ω\n' ;;

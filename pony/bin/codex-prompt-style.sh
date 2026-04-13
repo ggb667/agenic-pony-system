@@ -2,7 +2,7 @@
 
 codex_prompt_glyph_for_personality() {
   case "${1:-}" in
-    TIA|CELESTIA|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' "☀︎'" ;;
+    TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' "☀︎'" ;;
     TWI|TWILIGHT|TWILIGHT_SPARKLE) printf '%s\n' '✶' ;;
     AJ|APPLEJACK) printf '%s\n' '🍎' ;;
     PINKIE|PINKIE_PIE) printf '%s\n' '🎈' ;;
@@ -16,7 +16,7 @@ codex_prompt_glyph_for_personality() {
 
 codex_prompt_background_for_personality() {
   case "${1:-}" in
-    TIA|CELESTIA|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' '#FDF5B7' ;;
+    TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' '#FDF5B7' ;;
     TWI|TWILIGHT|TWILIGHT_SPARKLE) printf '%s\n' '#c79dd7' ;;
     AJ|APPLEJACK) printf '%s\n' '#fff4a3' ;;
     PINKIE|PINKIE_PIE) printf '%s\n' '#f0afd1' ;;

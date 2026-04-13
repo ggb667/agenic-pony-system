@@ -23,6 +23,7 @@ pony_prompt_reload() {
 twilight()   { export PERSONALITY=TWILIGHT_SPARKLE; pony_prompt_reload; }
 twi()        { export PERSONALITY=TWILIGHT_SPARKLE; pony_prompt_reload; }
 celestia()   { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
+princess()   { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
 tia()        { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
 celly()      { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
 sunbutt()    { export PERSONALITY=PRINCESS_CELESTIA_SOL_INVICTUS; pony_prompt_reload; }
