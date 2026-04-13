@@ -47,6 +47,24 @@ Preferred behavior:
 
 This keeps pony runtime state tied to the actual project the user is working in.
 
+## Source Resolver
+
+Installed target projects must not depend on the original local `agenic-pony-system` checkout remaining on disk forever.
+
+Each installed project should therefore keep enough source metadata in `pony/pony.system.config.yaml` to resolve the reusable system layer later:
+
+- `agenic_system_repo`
+- `agenic_system_ref`
+- `agenic_system_root` as a fallback hint
+
+Preferred launch-time behavior:
+
+1. use `AGENIC_PONY_SOURCE_ROOT` if the operator explicitly set it
+2. otherwise use a managed cache of the configured GitHub repo/ref outside the target project
+3. fall back to the originally configured local source root only if the cache is unavailable
+
+This keeps target-project installs refreshable even when the original source checkout is missing.
+
 ## Project-Local Pony Layout
 
 The reusable system may live in its own repository, but the active project must own the runtime layout.

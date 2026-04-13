@@ -65,14 +65,22 @@ EOF
 }
 
 write_project_config_if_missing() {
+  local source_repo
+  source_repo="$(git -C "$agenic_root" remote get-url origin 2>/dev/null || true)"
+  [[ -n "$source_repo" ]] || source_repo="https://github.com/ggb667/agenic-pony-system.git"
   write_file_if_missing "$AGENIC_PROJECT_PONY_CONFIG_PATH" "$(cat <<EOF
 project_name: $AGENIC_PROJECT_NAME
 project_root: $AGENIC_PROJECT_ROOT
 branch: $AGENIC_PROJECT_BRANCH
 launcher_prefix: $AGENIC_PROJECT_NAME Pony
 agenic_system_root: $agenic_root
+agenic_system_repo: $source_repo
+agenic_system_ref: main
 EOF
 )"
+  grep -q '^agenic_system_root:' "$AGENIC_PROJECT_PONY_CONFIG_PATH" || printf '%s\n' "agenic_system_root: $agenic_root" >>"$AGENIC_PROJECT_PONY_CONFIG_PATH"
+  grep -q '^agenic_system_repo:' "$AGENIC_PROJECT_PONY_CONFIG_PATH" || printf '%s\n' "agenic_system_repo: $source_repo" >>"$AGENIC_PROJECT_PONY_CONFIG_PATH"
+  grep -q '^agenic_system_ref:' "$AGENIC_PROJECT_PONY_CONFIG_PATH" || printf '%s\n' "agenic_system_ref: main" >>"$AGENIC_PROJECT_PONY_CONFIG_PATH"
 }
 
 is_agenic_source_project() {
@@ -184,6 +192,7 @@ for managed_script in \
   launch-worker.sh \
   pony-line-editor.py \
   pony-session-host.py \
+  resolve-system-root.sh \
   start-session.sh \
   warm-codex-tui.sh \
   watch-twi.sh \
@@ -203,16 +212,18 @@ if ! is_agenic_source_project; then
   write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/codex-pony" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-export AGENIC_PONY_SOURCE_ROOT="$agenic_root"
-exec "$agenic_root/pony/bin/codex-pony" "\$@"
+source_root="\$("$AGENIC_PROJECT_PONY_SCRIPTS_DIR/resolve-system-root.sh" "$AGENIC_PROJECT_ROOT")"
+export AGENIC_PONY_SOURCE_ROOT="\$source_root"
+exec "\$source_root/pony/bin/codex-pony" "\$@"
 EOF
 )"
 
   write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/start-session.sh" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-export AGENIC_PONY_SOURCE_ROOT="$agenic_root"
-exec "$agenic_root/pony/scripts/start-session.sh" "\${1:?missing personality}" "$AGENIC_PROJECT_ROOT"
+source_root="\$("$AGENIC_PROJECT_PONY_SCRIPTS_DIR/resolve-system-root.sh" "$AGENIC_PROJECT_ROOT")"
+export AGENIC_PONY_SOURCE_ROOT="\$source_root"
+exec "\$source_root/pony/scripts/start-session.sh" "\${1:?missing personality}" "$AGENIC_PROJECT_ROOT"
 EOF
 )"
 fi

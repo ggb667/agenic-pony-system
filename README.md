@@ -77,6 +77,14 @@ The pony behavior layer is separate from reusable coordination instructions:
 - pony voice, alerts, and idle-sentinel behavior stay on
 - reusable launch-prompt coordination defaults can be disabled per run with `AGENIC_PONY_DISABLE_REUSABLE_PROMPT=1`
 
+Installed target-project launchers should not require the original local source checkout to remain present:
+
+- target-project `pony.system.config.yaml` records the upstream agenic system repo and ref
+- project-local wrappers resolve a usable source root at launch time
+- they prefer an explicit `AGENIC_PONY_SOURCE_ROOT` override when provided
+- otherwise they can use a managed GitHub-backed source cache under `~/.local/share/agenic-pony-system/`
+- if that cache is unavailable, they may still fall back to the originally configured local source root
+
 ## Warp And Shell Launching
 
 The safest model is project-specific launchers.
