@@ -26,7 +26,7 @@ class PromptGlyphTests(unittest.TestCase):
             text=True,
         )
 
-        self.assertEqual(result.stdout, "☀︎  \n")
+        self.assertEqual(result.stdout, "☀︎  \n")
 
     def test_installed_codex_pony_passes_spaced_celestia_glyph(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -73,7 +73,7 @@ class PromptGlyphTests(unittest.TestCase):
             )
 
             captured_args = json.loads(captured_args_path.read_text(encoding="utf-8"))
-            self.assertIn('tui.prompt_glyph="☀︎  "', captured_args)
+            self.assertIn('tui.prompt_glyph="☀︎  "', captured_args)
 
 
 if __name__ == "__main__":

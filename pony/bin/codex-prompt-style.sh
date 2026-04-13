@@ -2,7 +2,7 @@
 
 codex_prompt_glyph_for_personality() {
   case "${1:-}" in
-    TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' '☀︎  ' ;;
+    TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' '☀︎  ' ;;
     TWI|TWILIGHT|TWILIGHT_SPARKLE) printf '%s\n' '✶' ;;
     AJ|APPLEJACK) printf '%s\n' '🍎' ;;
     PINKIE|PINKIE_PIE) printf '%s\n' '🎈' ;;
