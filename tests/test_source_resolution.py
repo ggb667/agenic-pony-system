@@ -81,10 +81,15 @@ class SourceResolutionTests(unittest.TestCase):
             tmp = Path(tmpdir)
             project_root = tmp / "project"
             fake_source = tmp / "configured-source"
+            empty_cache_dir = tmp / "empty-cache"
+            empty_cache_dir.mkdir()
             make_fake_source(fake_source)
             self.write_project_config(project_root, str(fake_source))
 
-            resolved = self.run_resolver(project_root, self.clean_env())
+            resolved = self.run_resolver(
+                project_root,
+                {**self.clean_env(), "AGENIC_PONY_SOURCE_CACHE_DIR": str(empty_cache_dir)},
+            )
 
             self.assertEqual(resolved, str(fake_source))
 

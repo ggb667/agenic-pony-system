@@ -78,9 +78,56 @@ agenic_system_repo: $source_repo
 agenic_system_ref: main
 EOF
 )"
-  grep -q '^agenic_system_root:' "$AGENIC_PROJECT_PONY_CONFIG_PATH" || printf '%s\n' "agenic_system_root: $agenic_root" >>"$AGENIC_PROJECT_PONY_CONFIG_PATH"
-  grep -q '^agenic_system_repo:' "$AGENIC_PROJECT_PONY_CONFIG_PATH" || printf '%s\n' "agenic_system_repo: $source_repo" >>"$AGENIC_PROJECT_PONY_CONFIG_PATH"
-  grep -q '^agenic_system_ref:' "$AGENIC_PROJECT_PONY_CONFIG_PATH" || printf '%s\n' "agenic_system_ref: main" >>"$AGENIC_PROJECT_PONY_CONFIG_PATH"
+  python3 - "$AGENIC_PROJECT_PONY_CONFIG_PATH" "$agenic_root" "$source_repo" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+agenic_root = sys.argv[2]
+source_repo = sys.argv[3]
+text = path.read_text(encoding="utf-8")
+lines = text.splitlines()
+result = []
+seen_root = False
+seen_repo = False
+seen_ref = False
+
+for line in lines:
+    if line.startswith("agenic_system_root:") and "agenic_system_repo:" in line:
+        left, right = line.split("agenic_system_repo:", 1)
+        line = left.rstrip()
+        if line:
+            result.append(f"agenic_system_root: {agenic_root}")
+            seen_root = True
+        result.append(f"agenic_system_repo: {source_repo}")
+        seen_repo = True
+        continue
+    if line.startswith("agenic_system_root:"):
+        if not seen_root:
+            result.append(f"agenic_system_root: {agenic_root}")
+            seen_root = True
+        continue
+    if line.startswith("agenic_system_repo:"):
+        if not seen_repo:
+            result.append(f"agenic_system_repo: {source_repo}")
+            seen_repo = True
+        continue
+    if line.startswith("agenic_system_ref:"):
+        if not seen_ref:
+            result.append("agenic_system_ref: main")
+            seen_ref = True
+        continue
+    result.append(line)
+
+if not seen_root:
+    result.append(f"agenic_system_root: {agenic_root}")
+if not seen_repo:
+    result.append(f"agenic_system_repo: {source_repo}")
+if not seen_ref:
+    result.append("agenic_system_ref: main")
+
+path.write_text("\n".join(result) + "\n", encoding="utf-8")
+PY
 }
 
 is_agenic_source_project() {

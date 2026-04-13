@@ -75,6 +75,28 @@ class PromptGlyphTests(unittest.TestCase):
             captured_args = json.loads(captured_args_path.read_text(encoding="utf-8"))
             self.assertIn('tui.prompt_glyph="☀︎"', captured_args)
 
+    def test_installed_wrappers_are_shell_valid(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            subprocess.run(
+                ["bash", "-n", str(project_root / "pony/bin/codex-pony")],
+                check=True,
+                cwd=project_root,
+            )
+            subprocess.run(
+                ["bash", "-n", str(project_root / "pony/scripts/start-session.sh")],
+                check=True,
+                cwd=project_root,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

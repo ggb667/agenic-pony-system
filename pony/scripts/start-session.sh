@@ -7,9 +7,18 @@ project_hint="${2:-$PWD}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 agenic_root="$(cd "$script_dir/../.." && pwd)"
 source "$script_dir/pony-paths.sh"
+current_script="$script_dir/$(basename "${BASH_SOURCE[0]}")"
+target_project_root="$(detect_project_root "$project_hint")"
 
-"$agenic_root/scripts/install-project.sh" "$project_hint" >/dev/null
-load_project_paths "$project_hint"
+"$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null
+
+project_start_session="$target_project_root/pony/scripts/start-session.sh"
+if [[ "$target_project_root" != "$agenic_root" ]] && [[ "${AGENIC_PONY_REFRESH_REEXEC:-0}" != "1" ]] && [[ -x "$project_start_session" ]] && [[ "$current_script" != "$project_start_session" ]]; then
+  export AGENIC_PONY_REFRESH_REEXEC=1
+  exec "$project_start_session" "$personality" "$target_project_root"
+fi
+
+load_project_paths "$target_project_root"
 
 worker_slug="$(worker_slug_for_personality "$personality")"
 workfile="$AGENIC_PROJECT_PONY_WORK_DIR/$(workfile_name_for_slug "$worker_slug")"
