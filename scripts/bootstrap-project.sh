@@ -164,8 +164,8 @@ if [[ -d "$source_pony_root/assets" ]] && [[ "$source_pony_root/assets" != "$AGE
 fi
 
 if ! is_agenic_source_project && [[ -d "$agenic_root/vendor/prompt_toolkit" ]]; then
-  command rm -rf "$AGENIC_PROJECT_PONY_VENDOR_DIR/prompt_toolkit"
-  cp -R "$agenic_root/vendor/prompt_toolkit" "$AGENIC_PROJECT_PONY_VENDOR_DIR/"
+  mkdir -p "$AGENIC_PROJECT_PONY_VENDOR_DIR/prompt_toolkit"
+  cp -R "$agenic_root/vendor/prompt_toolkit/." "$AGENIC_PROJECT_PONY_VENDOR_DIR/prompt_toolkit/"
 fi
 
 for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart; do

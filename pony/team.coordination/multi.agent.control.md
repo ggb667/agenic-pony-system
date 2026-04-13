@@ -5,4 +5,5 @@ Coordinator focus for agenic-pony-system on main:
 - keep source-repo governance changes focused on launcher policy, prompt policy, coordinator policy, docs, and source-of-truth structure
 - keep tactical project coordination pushed down to Twilight instead of absorbing it into Celestia governance work
 - keep external target-project installs working, especially Handshake
+- keep target-project bootstrap/install hygiene from dirtying repos by default when generating local `pony/` runtime state
 - implement the queue/input runtime behavior from `docs/runtime-loop.md`

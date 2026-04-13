@@ -9,8 +9,8 @@ personality="$(printf '%s' "$personality" | tr '[:lower:]' '[:upper:]')"
 
 case "$personality" in
   TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS)
-    prefix="twilight_sparkle_"
-    voice_label="celestia->twilight_sparkle"
+    prefix="princess_celestia_"
+    voice_label="princess_celestia"
     ;;
   TWI|TWILIGHT|TWILIGHT_SPARKLE)
     prefix="twilight_sparkle_"
@@ -45,6 +45,11 @@ case "$personality" in
     voice_label="twilight_sparkle"
     ;;
 esac
+
+if [ "$prefix" = "princess_celestia_" ] && ! find "$voices_dir" -maxdepth 1 -type f -iname "${prefix}*.wav" | read -r _; then
+  prefix="twilight_sparkle_"
+  voice_label="celestia->twilight_sparkle"
+fi
 
 printf 'ponyalert voice: %s\n' "$voice_label" >&2
 

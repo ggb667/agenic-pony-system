@@ -8,7 +8,7 @@ personality="${1:-${PERSONALITY:-}}"
 personality="$(printf '%s' "$personality" | tr '[:lower:]' '[:upper:]')"
 
 case "$personality" in
-  TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) prefix="twilight_sparkle_" ;;
+  TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) prefix="princess_celestia_" ;;
   TWI|TWILIGHT|TWILIGHT_SPARKLE) prefix="twilight_sparkle_" ;;
   DASH|DASHIE|RAINBOW|RD|RAINBOW_DASH) prefix="rainbow_dash_" ;;
   PINKIE|PINKIE_PIE) prefix="pinkie_pie_" ;;
@@ -18,6 +18,10 @@ case "$personality" in
   SPIKE) prefix="spike_" ;;
   *) prefix="twilight_sparkle_" ;;
 esac
+
+if [ "$prefix" = "princess_celestia_" ] && ! find "$voices_dir" -maxdepth 1 -type f -iname "${prefix}*.wav" | read -r _; then
+  prefix="twilight_sparkle_"
+fi
 
 pony_debug() {
   if [ "${PONYDEBUG:-0}" = "1" ]; then
