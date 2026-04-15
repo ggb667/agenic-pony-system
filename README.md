@@ -50,6 +50,8 @@ Expected shape:
 
 That structure mirrors the real operating layout refined in live project use.
 
+For git-backed target projects, ordinary worker ponies are provisioned into linked worktrees under `pony/worktrees/<slug>/` so they do not all operate from the coordinator's root checkout. Twilight remains anchored to the main project worktree unless a later feature intentionally changes that policy.
+
 ## What The Reusable System Provides
 
 - project bootstrap scripts
@@ -82,8 +84,8 @@ Installed target-project launchers should not require the original local source 
 - target-project `pony.system.config.yaml` records the upstream agenic system repo and ref
 - project-local wrappers resolve a usable source root at launch time
 - they prefer an explicit `AGENIC_PONY_SOURCE_ROOT` override when provided
-- otherwise they can use a managed GitHub-backed source cache under `~/.local/share/agenic-pony-system/`
-- if that cache is unavailable, they may still fall back to the originally configured local source root
+- otherwise they prefer the configured local source root from `pony.system.config.yaml` when it still exists
+- if that local root is unavailable, they can use a managed GitHub-backed source cache under `~/.local/share/agenic-pony-system/`
 
 ## Warp And Shell Launching
 

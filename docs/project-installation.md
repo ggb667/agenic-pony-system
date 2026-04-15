@@ -60,8 +60,8 @@ Each installed project should therefore keep enough source metadata in `pony/pon
 Preferred launch-time behavior:
 
 1. use `AGENIC_PONY_SOURCE_ROOT` if the operator explicitly set it
-2. otherwise use a managed cache of the configured GitHub repo/ref outside the target project
-3. fall back to the originally configured local source root only if the cache is unavailable
+2. otherwise prefer the originally configured local source root when it still exists
+3. if that local root is unavailable, use a managed cache of the configured GitHub repo/ref outside the target project
 
 This keeps target-project installs refreshable even when the original source checkout is missing.
 
@@ -82,6 +82,14 @@ Expected project-local structure:
 ```
 
 The precise contents may expand over time, but the key rule is that runtime state and launcher glue live under the project's `pony/` tree.
+
+For git-backed installs, the default worker policy is:
+
+- Twilight stays in the main project worktree as coordinator
+- ordinary workers get linked git worktrees under `pony/worktrees/<slug>/`
+- those worker worktrees are the paths recorded in `pony/team.coordination/assignment.registry.tsv`
+
+This keeps coordinator control and worker execution separated without requiring separate top-level clones outside the project-local pony tree.
 
 ## Installation Responsibility
 

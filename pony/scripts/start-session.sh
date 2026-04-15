@@ -141,8 +141,14 @@ if [[ "$personality" == "TWILIGHT_SPARKLE" ]]; then
   exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/enter-twi-session.sh" "$runtime_promptfile"
 fi
 
+assignment_row="$(resolve_worker_assignment_by_personality "$personality")"
+worker_rootdir="$AGENIC_PROJECT_ROOT"
+if [[ -n "$assignment_row" ]]; then
+  IFS=$'\t' read -r workfile worker_rootdir <<<"$assignment_row"
+fi
+
 exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/enter-worker-from-prompt-file.sh" \
   "$personality" \
   "$workfile" \
-  "$AGENIC_PROJECT_ROOT" \
+  "$worker_rootdir" \
   "$runtime_promptfile"

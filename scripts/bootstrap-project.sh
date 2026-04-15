@@ -64,6 +64,37 @@ EOF
 )"
 }
 
+project_supports_worker_worktrees() {
+  if is_agenic_source_project; then
+    return 1
+  fi
+  git -C "$AGENIC_PROJECT_ROOT" rev-parse --show-toplevel >/dev/null 2>&1 || return 1
+  [[ "$AGENIC_PROJECT_BRANCH" != "no-git-branch" ]]
+}
+
+ensure_worker_worktree() {
+  local slug="${1:?missing worker slug}"
+  local worktree_dir
+  local branch_name
+
+  worktree_dir="$(worker_worktree_for_slug "$slug")"
+  branch_name="$(worker_branch_for_slug "$slug")"
+
+  [[ "$worktree_dir" != "$AGENIC_PROJECT_ROOT" ]] || return 0
+  project_supports_worker_worktrees || return 0
+
+  if git -C "$worktree_dir" rev-parse --show-toplevel >/dev/null 2>&1; then
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$worktree_dir")"
+  if git -C "$AGENIC_PROJECT_ROOT" show-ref --verify --quiet "refs/heads/$branch_name"; then
+    git -C "$AGENIC_PROJECT_ROOT" worktree add "$worktree_dir" "$branch_name" >/dev/null
+  else
+    git -C "$AGENIC_PROJECT_ROOT" worktree add -b "$branch_name" "$worktree_dir" HEAD >/dev/null
+  fi
+}
+
 write_project_config_if_missing() {
   local source_repo
   source_repo="$(git -C "$agenic_root" remote get-url origin 2>/dev/null || true)"
@@ -153,14 +184,18 @@ remove_if_exists() {
 
 write_status_if_missing() {
   local slug="${1:?missing worker slug}"
+  local worker_branch
+  local worker_worktree
   local branch_verified="yes"
-  if [[ "$AGENIC_PROJECT_BRANCH" == "no-git-branch" ]]; then
+  worker_branch="$(worker_branch_for_slug "$slug")"
+  worker_worktree="$(worker_worktree_for_slug "$slug")"
+  if [[ "$worker_branch" == "no-git-branch" ]]; then
     branch_verified="n/a"
   fi
   write_file_if_missing "$AGENIC_TEAM_COORDINATION_DIR/${slug}.status.md" "$(cat <<EOF
 AUDIENCE: EVERYONE
-BRANCH: $AGENIC_PROJECT_BRANCH
-WORKTREE: $AGENIC_PROJECT_ROOT
+BRANCH: $worker_branch
+WORKTREE: $worker_worktree
 BRANCH_VERIFIED: $branch_verified
 STATUS: WAITING
 PUSH_STATUS: clean_local_branch
@@ -172,6 +207,132 @@ QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
 EOF
 )"
+}
+
+heal_status_assignment_if_default() {
+  local slug="${1:?missing worker slug}"
+  local status_file="$AGENIC_TEAM_COORDINATION_DIR/${slug}.status.md"
+  local worker_branch
+  local worker_worktree
+  local current_branch
+  local current_worktree
+
+  [[ -f "$status_file" ]] || return 0
+  worker_branch="$(worker_branch_for_slug "$slug")"
+  worker_worktree="$(worker_worktree_for_slug "$slug")"
+  [[ "$worker_worktree" != "$AGENIC_PROJECT_ROOT" ]] || return 0
+
+  current_branch="$(sed -n 's/^BRANCH: //p' "$status_file" | head -n 1)"
+  current_worktree="$(sed -n 's/^WORKTREE: //p' "$status_file" | head -n 1)"
+
+  if [[ "$current_branch" == "$AGENIC_PROJECT_BRANCH" ]] && [[ "$current_worktree" == "$AGENIC_PROJECT_ROOT" ]]; then
+    python3 - "$status_file" "$worker_branch" "$worker_worktree" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+branch = sys.argv[2]
+worktree = sys.argv[3]
+lines = path.read_text(encoding="utf-8").splitlines()
+result = []
+for line in lines:
+    if line.startswith("BRANCH: "):
+        result.append(f"BRANCH: {branch}")
+    elif line.startswith("WORKTREE: "):
+        result.append(f"WORKTREE: {worktree}")
+    elif line.startswith("BRANCH_VERIFIED: "):
+        result.append("BRANCH_VERIFIED: yes")
+    else:
+        result.append(line)
+path.write_text("\n".join(result) + "\n", encoding="utf-8")
+PY
+  fi
+}
+
+sync_assignment_registry() {
+  local registry_path="$AGENIC_TEAM_COORDINATION_DIR/assignment.registry.tsv"
+  python3 - "$registry_path" "$AGENIC_PROJECT_NAME" "$AGENIC_PROJECT_BRANCH" "$AGENIC_PROJECT_ROOT" "$AGENIC_PROJECT_PONY_WORK_DIR" "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR" "$AGENIC_PROJECT_PONY_WORKTREES_DIR" <<'PY'
+import csv
+import io
+import sys
+from pathlib import Path
+
+(
+    registry_path,
+    project_name,
+    project_branch,
+    project_root,
+    work_dir,
+    prompts_dir,
+    worktrees_dir,
+) = sys.argv[1:]
+
+path = Path(registry_path)
+fieldnames = [
+    "assignment_id",
+    "worker_label",
+    "personality",
+    "repo",
+    "branch",
+    "worktree",
+    "workfile",
+    "promptfile",
+    "scope",
+]
+managed = {
+    "aj": ("AJ", "APPLEJACK", f"pony/aj/{project_branch}", f"{worktrees_dir}/aj", f"{work_dir}/aj.md", f"{prompts_dir}/aj.txt", "unassigned"),
+    "pinkie": ("Pinkie", "PINKIE_PIE", f"pony/pinkie/{project_branch}", f"{worktrees_dir}/pinkie", f"{work_dir}/pinkie.md", f"{prompts_dir}/pinkie.txt", "unassigned"),
+    "fs": ("FS", "FLUTTERSHY", f"pony/fs/{project_branch}", f"{worktrees_dir}/fs", f"{work_dir}/fs.md", f"{prompts_dir}/fs.txt", "unassigned"),
+    "rarity": ("Rarity", "RARITY", f"pony/rarity/{project_branch}", f"{worktrees_dir}/rarity", f"{work_dir}/rarity.md", f"{prompts_dir}/rarity.txt", "unassigned"),
+    "rd": ("RD", "RAINBOW_DASH", f"pony/rd/{project_branch}", f"{worktrees_dir}/rd", f"{work_dir}/rd.md", f"{prompts_dir}/rd.txt", "unassigned"),
+    "spike": ("Spike", "SPIKE", f"pony/spike/{project_branch}", f"{worktrees_dir}/spike", f"{work_dir}/spike.md", f"{prompts_dir}/spike.txt", "unassigned"),
+    "twi": ("Twilight", "TWILIGHT_SPARKLE", project_branch, project_root, f"{work_dir}/coordinator-twi.md", f"{prompts_dir}/twi.txt", "coordinate the team"),
+}
+
+if project_branch == "no-git-branch":
+    managed = {
+        key: (
+            label,
+            personality,
+            project_branch,
+            project_root,
+            workfile,
+            promptfile,
+            scope,
+        )
+        for key, (label, personality, _branch, _worktree, workfile, promptfile, scope) in managed.items()
+    }
+
+rows = []
+if path.exists():
+    rows = list(csv.DictReader(path.open(encoding="utf-8"), delimiter="\t"))
+
+by_id = {row["assignment_id"]: row for row in rows}
+ordered = []
+for assignment_id in ["aj", "pinkie", "fs", "rarity", "rd", "spike", "twi"]:
+    label, personality, branch, worktree, workfile, promptfile, default_scope = managed[assignment_id]
+    row = by_id.get(assignment_id, {})
+    scope = row.get("scope") or default_scope
+    ordered.append(
+        {
+            "assignment_id": assignment_id,
+            "worker_label": label,
+            "personality": personality,
+            "repo": project_name,
+            "branch": branch,
+            "worktree": worktree,
+            "workfile": workfile,
+            "promptfile": promptfile,
+            "scope": scope,
+        }
+    )
+
+buf = io.StringIO()
+writer = csv.DictWriter(buf, fieldnames=fieldnames, delimiter="\t", lineterminator="\n")
+writer.writeheader()
+writer.writerows(ordered)
+path.write_text(buf.getvalue(), encoding="utf-8")
+PY
 }
 
 write_mailbox_if_missing() {
@@ -268,9 +429,11 @@ EOF
   write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/start-session.sh" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-source_root="\$("$AGENIC_PROJECT_PONY_SCRIPTS_DIR/resolve-system-root.sh" "$AGENIC_PROJECT_ROOT")"
+project_root="$AGENIC_PROJECT_ROOT"
+resolver="\$project_root/pony/scripts/resolve-system-root.sh"
+source_root="\$("\$resolver" "\$project_root")"
 export AGENIC_PONY_SOURCE_ROOT="\$source_root"
-exec "\$source_root/pony/scripts/start-session.sh" "\${1:?missing personality}" "$AGENIC_PROJECT_ROOT"
+exec "\$source_root/pony/scripts/start-session.sh" "\${1:?missing personality}" "\$project_root"
 EOF
 )"
 fi
@@ -297,21 +460,16 @@ else
   remove_if_exists "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team"
 fi
 
-write_file_if_missing "$AGENIC_TEAM_COORDINATION_DIR/assignment.registry.tsv" "$(cat <<EOF
-assignment_id	worker_label	personality	repo	branch	worktree	workfile	promptfile	scope
-aj	AJ	APPLEJACK	$AGENIC_PROJECT_NAME	$AGENIC_PROJECT_BRANCH	$AGENIC_PROJECT_ROOT	$AGENIC_PROJECT_PONY_WORK_DIR/aj.md	$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/aj.txt	unassigned
-pinkie	Pinkie	PINKIE_PIE	$AGENIC_PROJECT_NAME	$AGENIC_PROJECT_BRANCH	$AGENIC_PROJECT_ROOT	$AGENIC_PROJECT_PONY_WORK_DIR/pinkie.md	$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/pinkie.txt	unassigned
-fs	FS	FLUTTERSHY	$AGENIC_PROJECT_NAME	$AGENIC_PROJECT_BRANCH	$AGENIC_PROJECT_ROOT	$AGENIC_PROJECT_PONY_WORK_DIR/fs.md	$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/fs.txt	unassigned
-rarity	Rarity	RARITY	$AGENIC_PROJECT_NAME	$AGENIC_PROJECT_BRANCH	$AGENIC_PROJECT_ROOT	$AGENIC_PROJECT_PONY_WORK_DIR/rarity.md	$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/rarity.txt	unassigned
-rd	RD	RAINBOW_DASH	$AGENIC_PROJECT_NAME	$AGENIC_PROJECT_BRANCH	$AGENIC_PROJECT_ROOT	$AGENIC_PROJECT_PONY_WORK_DIR/rd.md	$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/rd.txt	unassigned
-spike	Spike	SPIKE	$AGENIC_PROJECT_NAME	$AGENIC_PROJECT_BRANCH	$AGENIC_PROJECT_ROOT	$AGENIC_PROJECT_PONY_WORK_DIR/spike.md	$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/spike.txt	unassigned
-twi	Twilight	TWILIGHT_SPARKLE	$AGENIC_PROJECT_NAME	$AGENIC_PROJECT_BRANCH	$AGENIC_PROJECT_ROOT	$AGENIC_PROJECT_PONY_WORK_DIR/coordinator-twi.md	$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/twi.txt	coordinate the team
-EOF
-)"
+for slug in aj pinkie fs rarity rd spike; do
+  ensure_worker_worktree "$slug"
+done
+
+sync_assignment_registry
 
 for slug in aj pinkie fs rarity rd spike twi; do
   write_workfile_if_missing "$slug"
   write_status_if_missing "$slug"
+  heal_status_assignment_if_default "$slug"
   write_mailbox_if_missing "$slug"
 done
 

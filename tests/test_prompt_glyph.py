@@ -97,6 +97,48 @@ class PromptGlyphTests(unittest.TestCase):
                 cwd=project_root,
             )
 
+    def test_git_project_bootstrap_provisions_worker_worktrees_and_worker_assignment_uses_them(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+            (project_root / "README.md").write_text("sample\n", encoding="utf-8")
+
+            subprocess.run(["git", "init", "-b", "main"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.name", "Test User"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], check=True, cwd=project_root)
+            subprocess.run(["git", "add", "README.md"], check=True, cwd=project_root)
+            subprocess.run(["git", "commit", "-m", "init"], check=True, cwd=project_root)
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            registry_text = (project_root / "pony/team.coordination/assignment.registry.tsv").read_text(encoding="utf-8")
+            self.assertIn(f"pony/aj/main\t{project_root / 'pony/worktrees/aj'}", registry_text)
+            self.assertIn(f"main\t{project_root}", registry_text)
+            self.assertTrue((project_root / "pony/worktrees/aj/.git").exists())
+
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-lc",
+                    (
+                        f"source {project_root / 'pony/scripts/pony-paths.sh'} && "
+                        f"load_project_paths {project_root} && "
+                        "resolve_worker_assignment_by_personality APPLEJACK"
+                    ),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            workfile, worktree = result.stdout.strip().split("\t")
+            self.assertEqual(workfile, str(project_root / "pony/work/aj.md"))
+            self.assertEqual(worktree, str(project_root / "pony/worktrees/aj"))
+
 
 if __name__ == "__main__":
     unittest.main()

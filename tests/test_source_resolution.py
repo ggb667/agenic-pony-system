@@ -93,6 +93,23 @@ class SourceResolutionTests(unittest.TestCase):
 
             self.assertEqual(resolved, str(fake_source))
 
+    def test_configured_root_beats_cache_when_both_valid(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            project_root = tmp / "project"
+            fake_source = tmp / "configured-source"
+            cache_source = tmp / "cache-source"
+            make_fake_source(fake_source)
+            make_fake_source(cache_source)
+            self.write_project_config(project_root, str(fake_source))
+
+            resolved = self.run_resolver(
+                project_root,
+                {**self.clean_env(), "AGENIC_PONY_SOURCE_CACHE_ROOT": str(cache_source)},
+            )
+
+            self.assertEqual(resolved, str(fake_source))
+
     def test_cache_root_used_when_configured_root_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
