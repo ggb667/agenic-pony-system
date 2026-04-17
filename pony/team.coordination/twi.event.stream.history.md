@@ -4,6 +4,7 @@
 - pending_review_needed_content: none
 
 ## Recent Events
+- hardened `pony/scripts/launch-in-pony-shell.sh` so the first startup handoff now runs `start-session.sh` directly from a one-shot shell-init hook instead of typing a synthesized command into the interactive buffer, which removes a fragile quoting/parsing path for installed target-project launches such as EVH Rarity
 - changed the Celestia source-repo launch path so generated Warp configs now enter through `pony/scripts/launch-in-pony-shell.sh`, and that launcher now starts from a Celestia-branded interactive shell that auto-submits `start-session.sh` as its first command
 - cleared the ignored source-repo runtime residue (`.venv-ponyhost`, generated `pony/` install outputs, and Python caches), confirmed the worktree is back to a deliberate clean-preflight state, and resumed normal Celestia/Twilight coordination
 - committed the coherent Celestia source-governance launcher change as `ea270e4`, removed the stray root-level helper file, and returned the source repo to a deliberate clean worktree state

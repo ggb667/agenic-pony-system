@@ -7,3 +7,4 @@ Coordinator focus for agenic-pony-system on main:
 - keep external target-project installs working, especially Handshake
 - keep target-project bootstrap/install hygiene from dirtying repos by default when generating local `pony/` runtime state
 - implement the queue/input runtime behavior from `docs/runtime-loop.md`
+- keep shell launch startup robust by invoking `start-session.sh` directly rather than typing a synthesized command into the interactive buffer

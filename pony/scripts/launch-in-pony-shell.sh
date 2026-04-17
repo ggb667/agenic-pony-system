@@ -28,6 +28,7 @@ mkdir -p "$launcher_home"
 cat >"$launcher_home/.zshrc" <<'EOF'
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 [[ -f ~/.zshrc ]] && source ~/.zshrc || true
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 cd "${AGENIC_PROJECT_ROOT}"
 [[ -f ./pony/scripts/pony.zsh.support.zsh ]] && source ./pony/scripts/pony.zsh.support.zsh || true
 
@@ -46,11 +47,25 @@ _agenic_pony_apply_identity
 
 if [[ -z "${AGENIC_PONY_AUTORAN:-}" ]]; then
   export AGENIC_PONY_AUTORAN=1
+  if zle -la | grep -Fxq zle-line-init; then
+    zle -A zle-line-init _agenic_pony_previous_line_init
+  fi
   _agenic_pony_launch_once() {
-    zle -D zle-line-init
-    BUFFER="./pony/scripts/start-session.sh ${(q)AGENIC_LAUNCH_PERSONALITY} ${(q)AGENIC_PROJECT_ROOT}"
-    CURSOR=${#BUFFER}
-    zle accept-line
+    if zle -la | grep -Fxq _agenic_pony_previous_line_init; then
+      zle _agenic_pony_previous_line_init -- "$@"
+    fi
+    if [[ -n "${AGENIC_PONY_AUTORAN_DONE:-}" ]]; then
+      return 0
+    fi
+    export AGENIC_PONY_AUTORAN_DONE=1
+    if zle -la | grep -Fxq _agenic_pony_previous_line_init; then
+      zle -A _agenic_pony_previous_line_init zle-line-init
+    else
+      zle -D zle-line-init
+    fi
+    zle -I
+    ./pony/scripts/start-session.sh "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}" </dev/tty >/dev/tty 2>&1
+    zle reset-prompt
   }
   zle -N zle-line-init _agenic_pony_launch_once
 fi
