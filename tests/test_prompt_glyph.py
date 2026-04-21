@@ -119,6 +119,14 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn(f"pony/aj/main\t{project_root / 'pony/worktrees/aj'}", registry_text)
             self.assertIn(f"main\t{project_root}", registry_text)
             self.assertTrue((project_root / "pony/worktrees/aj/.git").exists())
+            self.assertIn(
+                f'project_root="{project_root}"',
+                (project_root / "pony/worktrees/aj/pony/scripts/start-session.sh").read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                f'source "{project_root}/pony/scripts/pony.zsh.support.zsh"',
+                (project_root / "pony/worktrees/aj/pony/scripts/pony.zsh.support.zsh").read_text(encoding="utf-8"),
+            )
 
             result = subprocess.run(
                 [

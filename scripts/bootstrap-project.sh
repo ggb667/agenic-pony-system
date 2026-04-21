@@ -146,6 +146,79 @@ ensure_worker_worktree() {
   fi
 }
 
+sync_worker_worktree_runtime() {
+  local slug="${1:?missing worker slug}"
+  local worktree_dir
+  local worktree_pony_dir
+  local worktree_pony_bin_dir
+  local worktree_pony_scripts_dir
+
+  worktree_dir="$(worker_worktree_for_slug "$slug")"
+  [[ "$worktree_dir" != "$AGENIC_PROJECT_ROOT" ]] || return 0
+  project_supports_worker_worktrees || return 0
+  [[ -d "$worktree_dir" ]] || return 0
+
+  worktree_pony_dir="$worktree_dir/pony"
+  worktree_pony_bin_dir="$worktree_pony_dir/bin"
+  worktree_pony_scripts_dir="$worktree_pony_dir/scripts"
+  mkdir -p "$worktree_pony_bin_dir" "$worktree_pony_scripts_dir"
+
+  write_managed_file "$worktree_pony_dir/README.md" "$(cat <<EOF
+# pony
+
+Worker-worktree pony wrappers for $AGENIC_PROJECT_NAME.
+
+These wrappers delegate to the owning project runtime at:
+$AGENIC_PROJECT_ROOT/pony
+EOF
+)"
+
+  write_managed_file "$worktree_pony_dir/pony.system.config.yaml" "$(cat <<EOF
+project_name: $AGENIC_PROJECT_NAME
+project_root: $AGENIC_PROJECT_ROOT
+branch: $AGENIC_PROJECT_BRANCH
+launcher_prefix: $AGENIC_PROJECT_NAME Pony
+agenic_system_root: $agenic_root
+agenic_system_repo: $(git -C "$agenic_root" remote get-url origin 2>/dev/null || printf '%s' "https://github.com/ggb667/agenic-pony-system.git")
+agenic_system_ref: main
+EOF
+)"
+
+  write_managed_executable "$worktree_pony_scripts_dir/resolve-system-root.sh" "$(cat "$source_pony_scripts_dir/resolve-system-root.sh")"
+
+  write_managed_executable "$worktree_pony_scripts_dir/start-session.sh" "$(cat <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+project_root="$AGENIC_PROJECT_ROOT"
+resolver="\$project_root/pony/scripts/resolve-system-root.sh"
+unset AGENIC_PONY_SOURCE_ROOT
+source_root="\$("\$resolver" "\$project_root")"
+export AGENIC_PONY_SOURCE_ROOT="\$source_root"
+exec "\$source_root/pony/scripts/start-session.sh" "\${1:?missing personality}" "\$project_root"
+EOF
+)"
+
+  write_managed_executable "$worktree_pony_scripts_dir/launch-in-pony-shell.sh" "$(cat <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec "$AGENIC_PROJECT_ROOT/pony/scripts/launch-in-pony-shell.sh" "\${1:?missing personality}"
+EOF
+)"
+
+  write_managed_file "$worktree_pony_scripts_dir/pony.zsh.support.zsh" "$(cat <<EOF
+export AGENIC_PROJECT_ROOT="$AGENIC_PROJECT_ROOT"
+source "$AGENIC_PROJECT_ROOT/pony/scripts/pony.zsh.support.zsh"
+EOF
+)"
+
+  write_managed_executable "$worktree_pony_bin_dir/codex-pony" "$(cat <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec "$AGENIC_PROJECT_ROOT/pony/bin/codex-pony" "\$@"
+EOF
+)"
+}
+
 write_project_config_if_missing() {
   local source_repo
   source_repo="$(git -C "$agenic_root" remote get-url origin 2>/dev/null || true)"
@@ -518,6 +591,7 @@ fi
 
 for slug in aj pinkie fs rarity rd spike; do
   ensure_worker_worktree "$slug"
+  sync_worker_worktree_runtime "$slug"
 done
 
 sync_assignment_registry
