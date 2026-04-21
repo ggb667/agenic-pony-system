@@ -40,6 +40,25 @@ field_is_empty() {
   [[ -z "$value" || "$value" == "none" || "$value" == "no decision needed." || "$value" == "no decision needed" || "$value" == "n/a" ]]
 }
 
+workfile_indicates_waiting_for_concrete_task() {
+  local work_status="$1"
+  local work_scope="$2"
+  local normalized_status
+  local normalized_scope
+
+  normalized_status="$(printf '%s\n' "$work_status" | normalize_field)"
+  normalized_scope="$(printf '%s\n' "$work_scope" | normalize_field)"
+
+  case "$normalized_status" in
+    blank|waiting|unassigned)
+      return 0
+      ;;
+  esac
+
+  [[ -z "$normalized_scope" || "$normalized_scope" == "unassigned" ]] && return 0
+  return 1
+}
+
 status_indicates_ready_no_llm() {
   local status_value="$1"
   local next_step="$2"
@@ -260,9 +279,16 @@ questions_for_twi="$(field_block "QUESTIONS_FOR_TWI" "$status_file")"
 status_value="$(field_block "STATUS" "$status_file")"
 next_step="$(field_block "NEXT_STEP" "$status_file")"
 blockers="$(field_block "BLOCKERS" "$status_file")"
+work_status="$(field_block "Status" "$workfile")"
+work_scope="$(field_block "Scope" "$workfile")"
 
 if ! field_is_empty "$decision_needed" || ! field_is_empty "$questions_for_twi"; then
   printf 'ESCALATE_TWI\n'
+  exit 0
+fi
+
+if workfile_indicates_waiting_for_concrete_task "$work_status" "$work_scope"; then
+  printf 'READY_KEEP_LIVE\n'
   exit 0
 fi
 

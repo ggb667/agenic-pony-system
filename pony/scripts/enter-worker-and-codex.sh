@@ -26,6 +26,22 @@ dirty_fix_first_prompt() {
   fi
 }
 
+waiting_for_task_notice() {
+  local scope_text=""
+  scope_text="$(awk '
+    index($0, "Scope:") == 1 {
+      sub("^Scope: ?", "", $0)
+      print
+      exit
+    }
+  ' "$workfile")"
+  if [[ -n "$scope_text" && "$scope_text" != "unassigned" ]]; then
+    printf 'Preflight: no concrete task is assigned yet for %s. Scope is %s. Remain live at the Codex prompt and wait for Twilight or the user to hand you the next specific task.\n' "$PERSONALITY" "$scope_text"
+  else
+    printf 'Preflight: no concrete task is assigned yet for %s. Remain live at the Codex prompt and wait for Twilight or the user to hand you the next specific task.\n' "$PERSONALITY"
+  fi
+}
+
 workfile="$(resolve_path "$workfile")"
 rootdir="$(resolve_path "$rootdir")"
 
@@ -51,6 +67,11 @@ prompt="$initial_prompt"
 case "$preflight_result" in
   READY_NO_LLM)
     profile=""
+    ;;
+  READY_KEEP_LIVE)
+    profile='worker_mini'
+    prompt=""
+    printf '%s\n' "$(waiting_for_task_notice)"
     ;;
   BLOCKED_DIRTY_FIX_FIRST)
     if [[ "$PERSONALITY" == 'TWILIGHT_SPARKLE' ]]; then
