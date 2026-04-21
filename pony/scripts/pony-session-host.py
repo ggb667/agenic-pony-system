@@ -91,11 +91,19 @@ def dirty_fix_first_prompt(project_root: str, initial_prompt: str) -> str:
         f"Coordinator preflight detected a dirty worktree in {project_root}. "
         "First, inspect and reconcile or put away the pending local changes in that repo. "
         "Do not ignore them or defer that cleanup. After the worktree is in a deliberate state, "
-        "continue with normal Twilight coordination behavior."
+        "continue with normal coordination behavior for the active pony."
     )
     if initial_prompt:
         return f"{cleanup_prompt}\n\n{initial_prompt}"
     return cleanup_prompt
+
+
+def coordinator_profile_for(personality: str) -> str | None:
+    if personality == "TWILIGHT_SPARKLE":
+        return "twi_coordinator"
+    if personality == "PRINCESS_CELESTIA_SOL_INVICTUS":
+        return "celestia_coordinator"
+    return None
 
 
 class PonySessionHost:
@@ -138,14 +146,16 @@ class PonySessionHost:
         if result == "READY_NO_LLM":
             return None, self.initial_prompt, "launch"
         if result == "BLOCKED_DIRTY_FIX_FIRST":
-            if self.personality in {"TWILIGHT_SPARKLE", "PRINCESS_CELESTIA_SOL_INVICTUS"}:
-                return "twi_coordinator", dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt), "launch"
+            profile = coordinator_profile_for(self.personality)
+            if profile is not None:
+                return profile, dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt), "launch"
             return None, "Only Twilight may continue from BLOCKED_DIRTY_FIX_FIRST.", "editor_only"
         if result == "ESCALATE_MINI":
             return "worker_mini", self.initial_prompt, "launch"
         if result == "ESCALATE_TWI":
-            if self.personality in {"TWILIGHT_SPARKLE", "PRINCESS_CELESTIA_SOL_INVICTUS"}:
-                return "twi_coordinator", self.initial_prompt, "launch"
+            profile = coordinator_profile_for(self.personality)
+            if profile is not None:
+                return profile, self.initial_prompt, "launch"
             return None, "Preflight: ESCALATE_TWI. Worker Codex not launched.", "editor_only"
         return None, f"Preflight error: unexpected result '{result}'.", "editor_only"
 

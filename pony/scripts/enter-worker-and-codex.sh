@@ -18,7 +18,7 @@ resolve_path() {
 
 dirty_fix_first_prompt() {
   local cleanup_prompt=""
-  cleanup_prompt="Coordinator preflight detected a dirty worktree in ${rootdir}. First, inspect and reconcile or put away the pending local changes in that repo. Do not ignore them or defer that cleanup. After the worktree is in a deliberate state, continue with normal Twilight coordination behavior."
+  cleanup_prompt="Coordinator preflight detected a dirty worktree in ${rootdir}. First, inspect and reconcile or put away the pending local changes in that repo. Do not ignore them or defer that cleanup. After the worktree is in a deliberate state, continue with normal coordination behavior for the active pony."
   if [[ -n "$initial_prompt" ]]; then
     printf '%s\n\n%s\n' "$cleanup_prompt" "$initial_prompt"
   else
