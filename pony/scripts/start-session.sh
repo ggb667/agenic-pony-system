@@ -134,8 +134,8 @@ else
 fi
 runtime_prompt+="Installed launcher markers live under: $AGENIC_PROJECT_PONY_DIR"
 runtime_prompt+=$'\n\n'
-runtime_prompt+="Alert rule: before any real user-facing approval request or escalation request, run ponyalert $personality."$'\n'
-runtime_prompt+="Done rule: before entering an Ω idle state because the current task is done, run ponydone $personality."$'\n\n'
+runtime_prompt+="Alert rule: before any real user-facing approval request or escalation request, run $AGENIC_PROJECT_PONY_BIN_DIR/ponyalert $personality."$'\n'
+runtime_prompt+="Done rule: before entering an Ω idle state because the current task is done, run $AGENIC_PROJECT_PONY_BIN_DIR/ponydone $personality."$'\n\n'
 runtime_prompt+="Idle-sentinel rule:"$'\n'
 runtime_prompt+="- At a partial idle stopping point, where more work could continue later but no required user answer is pending, end your response with exactly this line and nothing after it:"$'\n'
 runtime_prompt+="  $partial_idle"$'\n'

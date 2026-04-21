@@ -7,14 +7,14 @@ from pathlib import Path
 
 
 PONIES = [
-    ("celestia", "TIA", "yellow", "PRINCESS_CELESTIA_SOL_INVICTUS"),
-    ("twi", "TWI", "magenta", "TWILIGHT_SPARKLE"),
-    ("aj", "AJ", "yellow", "APPLEJACK"),
-    ("pinkie", "Pinkie", "red", "PINKIE_PIE"),
-    ("fs", "FS", "green", "FLUTTERSHY"),
-    ("rarity", "Rarity", "white", "RARITY"),
-    ("rd", "RD", "cyan", "RAINBOW_DASH"),
-    ("spike", "Spike", "blue", "SPIKE"),
+    ("celestia", "Tia ☀︎", "yellow", "PRINCESS_CELESTIA_SOL_INVICTUS"),
+    ("twi", "Twilight ✶", "magenta", "TWILIGHT_SPARKLE"),
+    ("aj", "Applejack 🍎", "yellow", "APPLEJACK"),
+    ("pinkie", "Pinkie 🎈", "red", "PINKIE_PIE"),
+    ("fs", "Fluttershy 🦋", "green", "FLUTTERSHY"),
+    ("rarity", "Rarity 💎", "white", "RARITY"),
+    ("rd", "Rainbow Dash ⚡", "cyan", "RAINBOW_DASH"),
+    ("spike", "Spike 🐲", "blue", "SPIKE"),
 ]
 
 MODE_FILTERS = {
