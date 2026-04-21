@@ -76,6 +76,25 @@ class SourceResolutionTests(unittest.TestCase):
 
             self.assertEqual(resolved, str(fake_source))
 
+    def test_live_repo_root_wins_over_env_when_resolving_from_source_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            fake_source = tmp / "env-source"
+            make_fake_source(fake_source)
+            empty_cache_dir = tmp / "empty-cache"
+            empty_cache_dir.mkdir()
+
+            resolved = self.run_resolver(
+                REPO_ROOT,
+                {
+                    **self.clean_env(),
+                    "AGENIC_PONY_SOURCE_ROOT": str(fake_source),
+                    "AGENIC_PONY_SOURCE_CACHE_DIR": str(empty_cache_dir),
+                },
+            )
+
+            self.assertEqual(resolved, str(REPO_ROOT))
+
     def test_configured_root_used_when_valid(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
