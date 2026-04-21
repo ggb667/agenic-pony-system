@@ -96,6 +96,15 @@ class PromptGlyphTests(unittest.TestCase):
                 check=True,
                 cwd=project_root,
             )
+            launch_script = (project_root / "pony/scripts/launch-in-pony-shell.sh").read_text(encoding="utf-8")
+            self.assertIn(
+                'source_root="$(./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"',
+                launch_script,
+            )
+            self.assertIn(
+                '"${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}"',
+                launch_script,
+            )
 
     def test_git_project_bootstrap_provisions_worker_worktrees_and_worker_assignment_uses_them(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -68,7 +68,9 @@ _agenic_pony_log "after identity apply: pwd=$PWD personality=${PERSONALITY:-unse
 if [[ -z "${AGENIC_PONY_AUTORAN:-}" ]]; then
   export AGENIC_PONY_AUTORAN=1
   _agenic_pony_log "autorun start-session: personality=${AGENIC_LAUNCH_PERSONALITY} project=${AGENIC_PROJECT_ROOT}"
-  ./pony/scripts/start-session.sh "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}" </dev/tty >/dev/tty 2>&1
+  source_root="$(./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"
+  export AGENIC_PONY_SOURCE_ROOT="${source_root}"
+  "${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}" </dev/tty >/dev/tty 2>&1
 fi
 EOF
 
