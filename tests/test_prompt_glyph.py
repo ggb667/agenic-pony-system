@@ -139,6 +139,36 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertEqual(workfile, str(project_root / "pony/work/aj.md"))
             self.assertEqual(worktree, str(project_root / "pony/worktrees/aj"))
 
+    def test_git_project_bootstrap_keeps_generated_pony_tree_out_of_status_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+            (project_root / "README.md").write_text("sample\n", encoding="utf-8")
+
+            subprocess.run(["git", "init", "-b", "main"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.name", "Test User"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], check=True, cwd=project_root)
+            subprocess.run(["git", "add", "README.md"], check=True, cwd=project_root)
+            subprocess.run(["git", "commit", "-m", "init"], check=True, cwd=project_root)
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            status_result = subprocess.run(
+                ["git", "status", "--short"],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+            )
+            exclude_text = (project_root / ".git" / "info" / "exclude").read_text(encoding="utf-8")
+
+            self.assertEqual(status_result.stdout, "")
+            self.assertIn("/pony/", exclude_text)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -45,6 +45,57 @@ write_managed_file() {
   printf '%s' "$content" >"$path"
 }
 
+ensure_git_exclude_rule() {
+  local pattern="${1:?missing pattern}"
+  git -C "$AGENIC_PROJECT_ROOT" rev-parse --show-toplevel >/dev/null 2>&1 || return 0
+
+  local exclude_path
+  exclude_path="$(git -C "$AGENIC_PROJECT_ROOT" rev-parse --git-path info/exclude)"
+  if [[ "$exclude_path" != /* ]]; then
+    exclude_path="$AGENIC_PROJECT_ROOT/$exclude_path"
+  fi
+  mkdir -p "$(dirname "$exclude_path")"
+  local begin_marker="# BEGIN AGENIC PONY MANAGED RULES"
+  local end_marker="# END AGENIC PONY MANAGED RULES"
+  local existing=""
+  if [[ -f "$exclude_path" ]]; then
+    existing="$(cat "$exclude_path")"
+  fi
+
+  python3 - "$exclude_path" "$begin_marker" "$end_marker" "$pattern" "$existing" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+begin = sys.argv[2]
+end = sys.argv[3]
+pattern = sys.argv[4]
+existing = sys.argv[5]
+
+lines = existing.splitlines()
+result = []
+inside = False
+
+for line in lines:
+    if line == begin:
+        inside = True
+        continue
+    if line == end:
+        inside = False
+        continue
+    if not inside:
+        result.append(line)
+
+while result and result[-1] == "":
+    result.pop()
+
+if result:
+    result.append("")
+result.extend([begin, pattern, end, ""])
+path.write_text("\n".join(result), encoding="utf-8")
+PY
+}
+
 write_workfile_if_missing() {
   local slug="${1:?missing worker slug}"
   local title
@@ -384,6 +435,10 @@ if ! is_agenic_source_project && [[ -d "$agenic_root/vendor/prompt_toolkit" ]]; 
   cp -R "$agenic_root/vendor/prompt_toolkit/." "$AGENIC_PROJECT_PONY_VENDOR_DIR/prompt_toolkit/"
 fi
 
+if ! is_agenic_source_project; then
+  ensure_git_exclude_rule "/pony/"
+fi
+
 for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart; do
   if [[ -f "$source_pony_bin_dir/$managed_bin" ]]; then
     write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/$managed_bin" "$(cat "$source_pony_bin_dir/$managed_bin")"
@@ -397,6 +452,7 @@ for managed_script in \
   enter-worker-and-codex.sh \
   enter-worker-from-prompt-file.sh \
   enter-worker-shell.sh \
+  launch-debug.sh \
   launch-worker.sh \
   pony-line-editor.py \
   pony-session-host.py \

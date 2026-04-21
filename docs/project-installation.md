@@ -91,6 +91,11 @@ For git-backed installs, the default worker policy is:
 
 This keeps coordinator control and worker execution separated without requiring separate top-level clones outside the project-local pony tree.
 
+For git-backed target projects, bootstrap/install should also manage a local Git
+exclude rule for `/pony/` by default so generated project-local runtime state,
+launchers, and worker worktrees do not appear as untracked repo churn during
+ordinary project work. This is installation policy, not a manual cleanup step.
+
 ## Installation Responsibility
 
 `codex-pony` should be able to detect whether the current project is already provisioned.

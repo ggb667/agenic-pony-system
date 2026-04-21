@@ -32,6 +32,10 @@ If you like ponies, great. If you are a senior engineer who cares about reproduc
 
 The active runtime lives in the target project, not here.
 
+For git-backed target projects, install/bootstrap also writes a managed `info/exclude`
+rule for `/pony/` by default so the generated local runtime does not show up as
+untracked churn in ordinary project work.
+
 Expected shape:
 
 ```text
@@ -127,6 +131,10 @@ After project install, the project-local shell launchers live under:
 <project>/pony/bin/ponydone
 <project>/pony/assets/voices/
 ```
+
+For git-backed projects, these generated `pony/` install outputs are ignored by
+default through a managed local Git exclude entry. If a team wants to version
+that tree deliberately, they can remove or adjust the managed `/pony/` exclude.
 
 ## Optional Zsh Support
 
