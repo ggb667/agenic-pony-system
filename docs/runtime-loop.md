@@ -115,6 +115,10 @@ Examples that are stopping points:
 - "If you want, Commander, I can draft the concrete state machine and message schema next in the new repo."
 - any similar handoff where more work could continue, but no required data is being requested
 
+Special worker-launch exception:
+
+- when a non-coordinator worker has just launched, reads local state, and finds `blank`, `WAITING`, or `unassigned`, it should report that status but remain live at the Codex prompt for immediate follow-up input rather than emitting an idle sentinel and parking itself
+
 Examples that are not stopping points:
 
 - approval requests
