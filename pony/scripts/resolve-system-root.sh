@@ -73,10 +73,23 @@ configured_ref="$(config_value agenic_system_ref "$config_path")"
 repo_url="${configured_repo:-$default_repo}"
 ref="${configured_ref:-$default_ref}"
 cache_root="$(cache_root_for_repo "$repo_url" "$ref")"
+candidate_root="$(cd "$script_dir/../.." && pwd)"
+
+if [[ "$project_root" == "$candidate_root" ]] && valid_source_root "$candidate_root"; then
+  pony_launch_debug "resolved from live source candidate root: $candidate_root"
+  cd "$candidate_root" && pwd
+  exit 0
+fi
 
 if valid_source_root "${AGENIC_PONY_SOURCE_ROOT:-}"; then
   pony_launch_debug "resolved from env override: ${AGENIC_PONY_SOURCE_ROOT}"
   cd "$AGENIC_PONY_SOURCE_ROOT" && pwd
+  exit 0
+fi
+
+if valid_source_root "$candidate_root"; then
+  pony_launch_debug "resolved from local candidate root: $candidate_root"
+  cd "$candidate_root" && pwd
   exit 0
 fi
 
@@ -89,13 +102,6 @@ fi
 if ensure_cached_source "$repo_url" "$ref" "$cache_root"; then
   pony_launch_debug "resolved from cache root: $cache_root"
   cd "$cache_root" && pwd
-  exit 0
-fi
-
-candidate_root="$(cd "$script_dir/../.." && pwd)"
-if valid_source_root "$candidate_root"; then
-  pony_launch_debug "resolved from local candidate root: $candidate_root"
-  cd "$candidate_root" && pwd
   exit 0
 fi
 
