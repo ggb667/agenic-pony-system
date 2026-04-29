@@ -44,8 +44,11 @@ _agenic_pony_log "after cd: pwd=$PWD"
 [[ -f ~/.zshrc ]] && source ~/.zshrc || true
 _agenic_pony_log "after sourcing ~/.zshrc: pwd=$PWD personality=${PERSONALITY:-unset}"
 cd "${AGENIC_PROJECT_ROOT}"
+unset PERSONALITY
+unset WORKING_ON
 unset AGENIC_PONY_AUTORAN
 unset AGENIC_PONY_AUTORAN_DONE
+export AGENIC_PONY_SKIP_DRAFT_RESTORE_ONCE=1
 export PATH="${AGENIC_PROJECT_ROOT}/pony/bin:${PATH}"
 _agenic_pony_log "after reasserting project root: pwd=$PWD autoran=${AGENIC_PONY_AUTORAN:-unset}"
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet

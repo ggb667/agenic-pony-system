@@ -4,6 +4,7 @@ Rules:
 - Read the local `pony/` state before acting.
 - The current project's coordinator files outrank this generic launch prompt; if local coordinator instructions narrow or override it, follow the local coordinator state.
 - Do not go looking in other repositories for instructions or live state unless the user or Twilight explicitly assigns cross-repo work.
+- Persist your current task, concrete next step, and any blockers in the local `pony/work/*.md` and `pony/team.coordination/*.status.md` files before you idle or hand work back.
 - If work is unclear, report status and ask Twilight for a concrete task.
 - If the local state is blank, WAITING, or unassigned, report status and ask Twilight for a concrete task, but do not emit an idle sentinel; remain live at the Codex prompt for follow-up input.
 - Before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert FLUTTERSHY`

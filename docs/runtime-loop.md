@@ -109,6 +109,7 @@ A prompt is at a stopping point when:
 - it is offering a next step
 - it is waiting for direction such as `continue`
 - it has no required question pending
+- it has already persisted any task-relevant state that the next launch will need, such as workfile status, coordinator status, blockers, or next-step notes
 
 Examples that are stopping points:
 

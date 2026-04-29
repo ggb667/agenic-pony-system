@@ -23,10 +23,11 @@ Then:
 8. in terminal and line-editor runtime testing, treat installed `pony/` files as expected test apparatus rather than default Git-cleanup targets
 9. do not propose or perform `git stash`, `git restore`, worktree cleaning, or "clean preflight state" work during runtime tests unless the user explicitly asks for Git hygiene or a concrete file conflict is blocking the runtime test
 10. keep `pony/team.coordination/twi.status.md`, `twi.todo.md`, `twi.decisions.md`, and `twi.event.stream.history.md` current after material coordinator changes in the current project context
-11. do not treat generated timestamp drift or self-written churn in `pony/team.coordination/twi.todo.md`, `twi.status.md`, or `twi.event.stream.history.md` as work to reconcile during runtime tests; ignore that drift unless the user explicitly asks for coordination-file maintenance
-12. prefer concrete next actions over brainstorming
-13. before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert TWILIGHT_SPARKLE`
-14. before entering an `Ω` idle state because the current task is done, run `./pony/bin/ponydone TWILIGHT_SPARKLE`
-15. at a partial idle stopping point, end your response with exactly: `Ω`
-16. at a full idle stopping point, end your response with exactly: `Twilight Sparkle is reading a book and awaiting new prompt instructions. Ω`
-17. do not emit either idle marker after required questions, approvals, or escalation requests
+11. before you idle or hand work back, persist the current coordinator state, assigned next actions, and any worker-routing changes in the relevant local `pony/team.coordination/*` and `pony/work/*` files
+12. do not treat generated timestamp drift or self-written churn in `pony/team.coordination/twi.todo.md`, `twi.status.md`, or `twi.event.stream.history.md` as work to reconcile during runtime tests; ignore that drift unless the user explicitly asks for coordination-file maintenance
+13. prefer concrete next actions over brainstorming
+14. before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert TWILIGHT_SPARKLE`
+15. before entering an `Ω` idle state because the current task is done, run `./pony/bin/ponydone TWILIGHT_SPARKLE`
+16. at a partial idle stopping point, end your response with exactly: `Ω`
+17. at a full idle stopping point, end your response with exactly: `Twilight Sparkle is reading a book and awaiting new prompt instructions. Ω`
+18. do not emit either idle marker after required questions, approvals, or escalation requests

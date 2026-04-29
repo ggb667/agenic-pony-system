@@ -63,6 +63,26 @@ def dirty_fix_first_prompt(project_root: str, initial_prompt: str) -> str:
     return cleanup_prompt
 
 
+def waiting_for_task_notice(personality: str, workfile_path: str) -> str:
+    scope_text = ""
+    workfile = Path(workfile_path)
+    if workfile.exists():
+        for line in workfile.read_text().splitlines():
+            if line.startswith("Scope:"):
+                scope_text = line.split(":", 1)[1].strip()
+                break
+    if scope_text and scope_text != "unassigned":
+        return (
+            f"Preflight: no concrete task is assigned yet for {personality}. "
+            f"Scope is {scope_text}. Remain live at the Codex prompt and wait for Twilight "
+            "or the user to hand you the next specific task."
+        )
+    return (
+        f"Preflight: no concrete task is assigned yet for {personality}. "
+        "Remain live at the Codex prompt and wait for Twilight or the user to hand you the next specific task."
+    )
+
+
 def coordinator_profile_for(personality: str) -> str | None:
     if personality == "TWILIGHT_SPARKLE":
         return "twi_coordinator"
@@ -110,6 +130,8 @@ class PonySessionHost:
         result = preflight.stdout.strip() or "ESCALATE_TWI"
         if result == "READY_NO_LLM":
             return None, self.initial_prompt, "launch"
+        if result == "READY_KEEP_LIVE":
+            return "worker_mini", waiting_for_task_notice(self.personality, self.args.workfile), "launch"
         if result == "BLOCKED_DIRTY_FIX_FIRST":
             profile = coordinator_profile_for(self.personality)
             if profile is not None:
@@ -126,10 +148,6 @@ class PonySessionHost:
 
     def session_exists(self) -> bool:
         return self.tmux("has-session", "-t", self.session_name, check=False).returncode == 0
-
-    def kill_existing_session(self) -> None:
-        if self.session_exists():
-            self.tmux("kill-session", "-t", self.session_name, check=False)
 
     def current_pane_id(self) -> str:
         result = self.tmux("display-message", "-p", "-t", self.session_name, "#{pane_id}", capture=True)
@@ -181,8 +199,8 @@ class PonySessionHost:
         style = Style.from_dict({"prompt": "bold", "toolbar": "reverse"})
         session = PromptSession(history=FileHistory(str(self.history_path)))
         if self.startup_action == "launch":
-            self.kill_existing_session()
-            self.create_session(self.bootstrap_prompt, self.bootstrap_profile)
+            if not self.session_exists():
+                self.create_session(self.bootstrap_prompt, self.bootstrap_profile)
             self.attach()
 
         while True:
@@ -207,7 +225,7 @@ class PonySessionHost:
                 continue
 
             if not self.session_exists():
-                self.create_session("", self.bootstrap_profile)
+                self.create_session(self.bootstrap_prompt, self.bootstrap_profile)
             self.send_prompt(text)
             self.attach()
 

@@ -75,6 +75,10 @@ if [[ -o interactive ]]; then
 
   pony_runtime_draft_restore() {
     [[ -o zle ]] || return 0
+    if [[ "${AGENIC_PONY_SKIP_DRAFT_RESTORE_ONCE:-0}" == "1" ]]; then
+      unset AGENIC_PONY_SKIP_DRAFT_RESTORE_ONCE
+      return 0
+    fi
     if [[ -z "$BUFFER" && -s "$AGENIC_PROJECT_PONY_RUNTIME_DRAFT_PATH" ]]; then
       BUFFER="$(<"$AGENIC_PROJECT_PONY_RUNTIME_DRAFT_PATH")"
       CURSOR=${#BUFFER}
