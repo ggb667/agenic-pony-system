@@ -41,11 +41,26 @@ pony_launch_prompts_dir="$pony_root/launch.prompts"
 
 detect_project_root() {
   local start_dir="${1:-$PWD}"
+  local candidate_root=""
+  local config_path=""
+  local configured_project_root=""
+
   if git -C "$start_dir" rev-parse --show-toplevel >/dev/null 2>&1; then
-    git -C "$start_dir" rev-parse --show-toplevel
+    candidate_root="$(git -C "$start_dir" rev-parse --show-toplevel)"
   else
-    cd "$start_dir" && pwd
+    candidate_root="$(cd "$start_dir" && pwd)"
   fi
+
+  config_path="$candidate_root/pony/pony.system.config.yaml"
+  if [[ -f "$config_path" ]]; then
+    configured_project_root="$(awk -F': ' '$1 == "project_root" {print substr($0, index($0, ": ") + 2); exit}' "$config_path")"
+    if [[ -n "$configured_project_root" && -d "$configured_project_root" ]]; then
+      cd "$configured_project_root" && pwd
+      return 0
+    fi
+  fi
+
+  printf '%s\n' "$candidate_root"
 }
 
 detect_project_branch() {

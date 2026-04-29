@@ -45,7 +45,14 @@ def render_tab(agenic_root: Path, project_root: Path, slug: str, title: str, col
 
 
 def display_project_name(project_root: Path) -> str:
-    return project_root.name.replace("-", " ").replace("_", " ").title()
+    parts = project_root.name.replace("-", " ").replace("_", " ").split()
+    rendered_parts = []
+    for part in parts:
+        if part.isupper():
+            rendered_parts.append(part)
+        else:
+            rendered_parts.append(part.capitalize())
+    return " ".join(rendered_parts)
 
 
 def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:

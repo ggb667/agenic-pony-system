@@ -25,6 +25,26 @@ install_aj=false
 install_twi=false
 install_celestia=false
 
+cleanup_stale_worker_worktree_configs() {
+  [[ -d "$target_dir" ]] || return 0
+
+  python3 - "$target_dir" <<'PY'
+from pathlib import Path
+import sys
+
+target_dir = Path(sys.argv[1])
+for path in target_dir.glob("agenic-pony-*.yaml"):
+    try:
+        first_lines = path.read_text(encoding="utf-8").splitlines()[:6]
+    except OSError:
+        continue
+    for line in first_lines:
+        if line.startswith("# Project-local pony root: ") and "/pony/worktrees/" in line:
+            path.unlink(missing_ok=True)
+            break
+PY
+}
+
 if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
   install_team=false
   install_aj=false
@@ -33,6 +53,7 @@ if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
 fi
 
 mkdir -p "$target_dir" "$project_launch_config_dir"
+cleanup_stale_worker_worktree_configs
 if [[ "$install_twi" == true ]]; then
   python3 "$script_dir/render-warp-launch-config.py" \
     --agenic-root "$agenic_root" \
