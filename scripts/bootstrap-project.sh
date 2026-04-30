@@ -191,9 +191,14 @@ EOF
 set -euo pipefail
 project_root="$AGENIC_PROJECT_ROOT"
 resolver="\$project_root/pony/scripts/resolve-system-root.sh"
+source "\$project_root/pony/scripts/launch-debug.sh"
+pony_launch_debug_init
+pony_launch_debug "worktree start-session wrapper entry: pwd=\$PWD project_root=\$project_root personality=\${1:-missing}"
 unset AGENIC_PONY_SOURCE_ROOT
 source_root="\$("\$resolver" "\$project_root")"
+pony_launch_debug "worktree start-session wrapper resolved source root: \$source_root"
 export AGENIC_PONY_SOURCE_ROOT="\$source_root"
+pony_launch_debug "worktree start-session wrapper exec source start-session"
 exec "\$source_root/pony/scripts/start-session.sh" "\${1:?missing personality}" "\$project_root"
 EOF
 )"
@@ -560,8 +565,13 @@ EOF
 set -euo pipefail
 project_root="$AGENIC_PROJECT_ROOT"
 resolver="\$project_root/pony/scripts/resolve-system-root.sh"
+source "\$project_root/pony/scripts/launch-debug.sh"
+pony_launch_debug_init
+pony_launch_debug "project start-session wrapper entry: pwd=\$PWD project_root=\$project_root personality=\${1:-missing}"
 source_root="\$("\$resolver" "\$project_root")"
+pony_launch_debug "project start-session wrapper resolved source root: \$source_root"
 export AGENIC_PONY_SOURCE_ROOT="\$source_root"
+pony_launch_debug "project start-session wrapper exec source start-session"
 exec "\$source_root/pony/scripts/start-session.sh" "\${1:?missing personality}" "\$project_root"
 EOF
 )"
