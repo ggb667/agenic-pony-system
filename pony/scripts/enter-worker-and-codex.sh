@@ -105,7 +105,14 @@ case "$preflight_result" in
 esac
 
 if [[ -n "$profile" ]]; then
-  exec "$repo_codex_pony" -p "$profile" "$prompt"
+  if [[ -n "$prompt" ]]; then
+    exec "$repo_codex_pony" -p "$profile" "$prompt"
+  fi
+  exec "$repo_codex_pony" -p "$profile"
 fi
 
-exec "$repo_codex_pony" "$prompt"
+if [[ -n "$prompt" ]]; then
+  exec "$repo_codex_pony" "$prompt"
+fi
+
+exec "$repo_codex_pony"
