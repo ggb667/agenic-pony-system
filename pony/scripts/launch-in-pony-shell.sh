@@ -46,8 +46,6 @@ _agenic_pony_log "after sourcing ~/.zshrc: pwd=$PWD personality=${PERSONALITY:-u
 cd "${AGENIC_PROJECT_ROOT}"
 unset PERSONALITY
 unset WORKING_ON
-unset AGENIC_PONY_AUTORAN
-unset AGENIC_PONY_AUTORAN_DONE
 export AGENIC_PONY_SKIP_DRAFT_RESTORE_ONCE=1
 export PATH="${AGENIC_PROJECT_ROOT}/pony/bin:${PATH}"
 _agenic_pony_log "after reasserting project root: pwd=$PWD autoran=${AGENIC_PONY_AUTORAN:-unset}"
@@ -82,6 +80,8 @@ if [[ -z "${AGENIC_PONY_AUTORAN:-}" ]]; then
   else
     _agenic_pony_log "start-session returned normally"
   fi
+else
+  _agenic_pony_log "autorun skipped: personality=${AGENIC_LAUNCH_PERSONALITY} project=${AGENIC_PROJECT_ROOT} autoran=${AGENIC_PONY_AUTORAN}"
 fi
 EOF
 

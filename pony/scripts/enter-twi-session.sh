@@ -2,19 +2,23 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$script_dir/launch-debug.sh"
 source "$script_dir/pony-paths.sh"
 load_project_paths "$(cd "$script_dir/../.." && pwd)"
+pony_launch_debug_init
 
 watch_script="$(pony_script_path watch-twi.sh)"
 pony_ensure_layout_dirs
 log_file="$AGENIC_PROJECT_PONY_AGENTS_DIR/twi.watch.log"
 registry_file="$(pony_assignment_registry_path)"
 override_promptfile="${1:-}"
+pony_launch_debug "enter-twi-session entry: project_root=$AGENIC_PROJECT_ROOT watch_script=$watch_script override_promptfile=${override_promptfile:-none}"
 
 mkdir -p "$AGENIC_PROJECT_PONY_AGENTS_DIR"
 pkill -f "$watch_script" >/dev/null 2>&1 || true
 nohup "$watch_script" >"$log_file" 2>&1 &
 disown || true
+pony_launch_debug "enter-twi-session watch started: log_file=$log_file"
 
 assignment_row="$(
   python3 - "$registry_file" <<'PY'
@@ -42,6 +46,8 @@ fi
 if [[ -n "$override_promptfile" ]]; then
   twi_promptfile="$override_promptfile"
 fi
+
+pony_launch_debug "enter-twi-session resolved paths: workfile=$twi_workfile rootdir=$twi_rootdir promptfile=$twi_promptfile assignment_override=$( [[ -n "$assignment_row" ]] && printf yes || printf no )"
 
 exec "$(pony_script_path enter-worker-from-prompt-file.sh)" \
   TWILIGHT_SPARKLE \
