@@ -2,21 +2,22 @@
 set -euo pipefail
 
 pony_launch_debug_enabled() {
-  [[ "${AGENIC_PONY_LAUNCH_DEBUG:-0}" == "1" ]]
+  return 0
 }
 
 pony_launch_debug_init() {
   pony_launch_debug_enabled || return 0
 
-  if [[ -z "${AGENIC_PONY_LAUNCH_DEBUG_LOG:-}" ]]; then
-    local stamp
-    stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-    export AGENIC_PONY_LAUNCH_DEBUG_LOG="${TMPDIR:-/tmp}/agenic-pony-launch-${USER:-user}-${stamp}-$$.log"
+  if [[ "${AGENIC_PONY_LAUNCH_DEBUG_INITIALIZED:-0}" == "1" ]] && [[ -n "${AGENIC_PONY_LAUNCH_DEBUG_LOG:-}" ]]; then
+    return 0
   fi
 
-  if [[ ! -e "$AGENIC_PONY_LAUNCH_DEBUG_LOG" ]]; then
-    : >"$AGENIC_PONY_LAUNCH_DEBUG_LOG"
+  if [[ -z "${AGENIC_PONY_LAUNCH_DEBUG_LOG:-}" ]]; then
+    export AGENIC_PONY_LAUNCH_DEBUG_LOG="${TMPDIR:-/tmp}/agenic-pony-launch-current.log"
   fi
+
+  : >"$AGENIC_PONY_LAUNCH_DEBUG_LOG"
+  export AGENIC_PONY_LAUNCH_DEBUG_INITIALIZED=1
 }
 
 pony_launch_debug() {

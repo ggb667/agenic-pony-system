@@ -21,11 +21,12 @@ esac
 export AGENIC_LAUNCH_PERSONALITY="$personality"
 export AGENIC_PROJECT_ROOT="$launch_project_root"
 export PONY_FUNC="$pony_func"
+export AGENIC_PONY_LAUNCH_DEBUG_LOG="${TMPDIR:-/tmp}/agenic-pony-launch-current.log"
+unset AGENIC_PONY_LAUNCH_DEBUG_INITIALIZED
 unset AGENIC_PONY_AUTORAN
 unset AGENIC_PONY_AUTORAN_DONE
 pony_launch_debug_init
 pony_launch_debug "launch wrapper start: pwd=$PWD project_root=$launch_project_root personality=$personality pony_func=${pony_func:-none}"
-export AGENIC_PONY_LAUNCH_DEBUG_LOG
 
 launcher_home_root="${TMPDIR:-/tmp}/agenic-pony-zdotdir"
 launcher_home="$launcher_home_root/${USER:-user}-$(basename "$launch_project_root")-${personality}"
@@ -34,7 +35,6 @@ mkdir -p "$launcher_home"
 cat >"$launcher_home/.zshrc" <<'EOF'
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 _agenic_pony_log() {
-  [[ "${AGENIC_PONY_LAUNCH_DEBUG:-0}" == "1" ]] || return 0
   [[ -n "${AGENIC_PONY_LAUNCH_DEBUG_LOG:-}" ]] || return 0
   printf '%s [%s] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "launcher.zshrc" "$1" >>"${AGENIC_PONY_LAUNCH_DEBUG_LOG}"
 }
@@ -73,8 +73,15 @@ if [[ -z "${AGENIC_PONY_AUTORAN:-}" ]]; then
   export AGENIC_PONY_AUTORAN=1
   _agenic_pony_log "autorun start-session: personality=${AGENIC_LAUNCH_PERSONALITY} project=${AGENIC_PROJECT_ROOT}"
   source_root="$(./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"
+  _agenic_pony_log "resolved source root: ${source_root}"
   export AGENIC_PONY_SOURCE_ROOT="${source_root}"
   "${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}" </dev/tty >/dev/tty 2>&1
+  exit_code=$?
+  if [[ $exit_code -ne 0 ]]; then
+    _agenic_pony_log "start-session exited nonzero: exit_code=${exit_code}"
+  else
+    _agenic_pony_log "start-session returned normally"
+  fi
 fi
 EOF
 

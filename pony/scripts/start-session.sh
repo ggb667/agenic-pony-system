@@ -155,7 +155,7 @@ worker_rootdir="$AGENIC_PROJECT_ROOT"
 if [[ -n "$assignment_row" ]]; then
   IFS=$'\t' read -r workfile worker_rootdir <<<"$assignment_row"
 fi
-pony_launch_debug "exec enter-worker-from-prompt-file: workfile=$workfile worker_rootdir=$worker_rootdir runtime_promptfile=$runtime_promptfile"
+pony_launch_debug "exec enter-worker-from-prompt-file: workfile=$workfile worker_rootdir=$worker_rootdir runtime_promptfile=$runtime_promptfile assignment_row_present=$( [[ -n "$assignment_row" ]] && printf yes || printf no )"
 
 exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/enter-worker-from-prompt-file.sh" \
   "$personality" \

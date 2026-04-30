@@ -7,9 +7,11 @@ rootdir="${3:?missing rootdir}"
 initial_prompt="${4-}"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$script_dir/launch-debug.sh"
 source "$script_dir/pony-paths.sh"
 load_project_paths "$(cd "$script_dir/../.." && pwd)"
 repo_codex_pony="$(pony_bin_path codex-pony)"
+pony_launch_debug_init
 
 resolve_path() {
   local path="${1:-}"
@@ -60,6 +62,7 @@ preflight_result="$(
     "$WORKING_ON" \
     "$PWD"
 )"
+pony_launch_debug "worker handoff preflight: personality=$PERSONALITY rootdir=$rootdir workfile=$workfile result=$preflight_result"
 
 profile=""
 prompt="$initial_prompt"
@@ -104,15 +107,21 @@ case "$preflight_result" in
     ;;
 esac
 
+pony_launch_debug "worker handoff launch selection: personality=$PERSONALITY profile=${profile:-none} prompt_length=${#prompt} rootdir=$rootdir repo_codex_pony=$repo_codex_pony"
+
 if [[ -n "$profile" ]]; then
   if [[ -n "$prompt" ]]; then
+    pony_launch_debug "exec codex with profile and prompt: profile=$profile"
     exec "$repo_codex_pony" -p "$profile" "$prompt"
   fi
+  pony_launch_debug "exec codex with profile only: profile=$profile"
   exec "$repo_codex_pony" -p "$profile"
 fi
 
 if [[ -n "$prompt" ]]; then
+  pony_launch_debug "exec codex with prompt only"
   exec "$repo_codex_pony" "$prompt"
 fi
 
+pony_launch_debug "exec codex with no prompt and no profile override"
 exec "$repo_codex_pony"

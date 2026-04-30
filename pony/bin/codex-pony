@@ -3,12 +3,15 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 agenic_root="$(cd "$script_dir/../.." && pwd)"
+source "$agenic_root/pony/scripts/launch-debug.sh"
 source "$agenic_root/pony/scripts/pony-paths.sh"
 source "$agenic_root/pony/bin/codex-prompt-style.sh"
 current_script="$script_dir/$(basename "${BASH_SOURCE[0]}")"
+pony_launch_debug_init
 
 project_root="$(detect_project_root "${PWD}")"
 load_project_paths "$project_root"
+pony_launch_debug "codex-pony entry: pwd=$PWD project_root=$project_root current_script=$current_script arg_count=$#"
 
 if [[ ! -f "$AGENIC_PROJECT_PONY_CONFIG_PATH" ]]; then
   "$agenic_root/scripts/install-project.sh" "$project_root" >/dev/null
@@ -18,6 +21,7 @@ fi
 project_codex_pony="$project_root/pony/bin/codex-pony"
 if [[ "$project_root" != "$agenic_root" ]] && [[ "${AGENIC_PONY_REFRESH_REEXEC:-0}" != "1" ]] && [[ -x "$project_codex_pony" ]] && [[ "$current_script" != "$project_codex_pony" ]]; then
   export AGENIC_PONY_REFRESH_REEXEC=1
+  pony_launch_debug "codex-pony reexec project wrapper: project_codex_pony=$project_codex_pony"
   exec "$project_codex_pony" "$@"
 fi
 
@@ -40,6 +44,7 @@ if [[ -z "$codex_bin" ]]; then
 fi
 
 if [[ -z "$codex_bin" ]]; then
+  pony_launch_debug "codex-pony error: no codex binary available"
   echo "ERROR: codex is not available on PATH" >&2
   exit 1
 fi
@@ -63,4 +68,9 @@ if [[ -n "${CODEX_PONY_IDLE_MONITOR_SCRIPT:-}" ]] && [[ -n "${TMUX_PANE:-}" ]] &
   "$CODEX_PONY_IDLE_MONITOR_SCRIPT" "$TMUX_PANE" "$$" "$glyph" "${CODEX_PONY_TMUX_SOCKET_PATH:-}" "${CODEX_PONY_IDLE_SENTINEL:-}" "${CODEX_PONY_PARTIAL_IDLE_SENTINEL:-Ω}" >/dev/null 2>&1 &
 fi
 
+profile_arg="none"
+if [[ "${1:-}" == "-p" ]] && [[ -n "${2:-}" ]]; then
+  profile_arg="$2"
+fi
+pony_launch_debug "codex-pony exec: codex_bin=$codex_bin profile=$profile_arg project_root=$project_root"
 exec "$codex_bin" "${codex_args[@]}" "$@"
