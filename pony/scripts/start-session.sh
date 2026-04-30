@@ -121,6 +121,7 @@ runtime_prompt+="Project branch: $AGENIC_PROJECT_BRANCH"$'\n'
 runtime_prompt+="Project-local coordination root: $AGENIC_TEAM_COORDINATION_DIR"$'\n'
 runtime_prompt+="Project-local pony root: $AGENIC_PROJECT_PONY_DIR"$'\n'
 runtime_prompt+="Assigned workfile: $workfile"$'\n'
+runtime_prompt+="Launcher-command rule: if the user input is a raw shell or launcher command, especially a `launch-in-pony-shell.sh` invocation or another pony launcher path, do not treat it as project work and do not execute it as part of the current pony task. Explain briefly that the command was typed inside a live pony Codex session and ask the user to run it from another shell or exit/suspend the current pony first."$'\n'
 if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
   runtime_prompt+="Current-state rule: this project has active coordinator state under pony/team.coordination; resume from it instead of treating the repo as blank."$'\n'
   if [[ "$personality" == "TWILIGHT_SPARKLE" ]]; then
