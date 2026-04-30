@@ -6,13 +6,13 @@ This document defines the initial runtime model for the standalone Agenic Pony S
 
 The runtime is queue-driven:
 
-`idle -> running.prompt or running.agent.prompt -> idle`
+`ready -> running.prompt or running.agent.prompt -> ready`
 
-There is no separate wake/sleep model for ponies. The line-editor host watches the queue and starts the next item when the system is idle.
+There is no separate wake/sleep or suspend model for ponies. The line-editor host watches the queue and starts the next item when the system is ready, but it must not stop or suspend Codex on the user's behalf.
 
 ## States
 
-### `idle`
+### `ready`
 
 The system is not actively executing a prompt.
 
@@ -54,7 +54,7 @@ Each queue item has:
 
 ## Queue Arbitration
 
-When the system returns to `idle`:
+When the system returns to `ready`:
 
 - if there is a submitted user prompt ready to run, it wins over pending agent prompts
 - otherwise, the next queued item runs in FIFO order
@@ -63,7 +63,7 @@ This does not hide pending agent work. The user must be shown that pending work 
 
 ## Pending Agent Request Notice
 
-If an agent-originated queue item arrives while the system is running, or while the user is sitting in `idle`, the user should be informed of the pending request.
+If an agent-originated queue item arrives while the system is running, or while the user is sitting in `ready`, the user should be informed of the pending request.
 
 Preferred rendering:
 
@@ -77,7 +77,7 @@ While we were working I received a request from Twilight Sparkle:
 ✶ Applejack, please clean up the files and folders and make sure you are on the xyz branch and pull the latest from main into that branch.
 ```
 
-If the system is idle when the agent prompt is about to run, it should show the prompt directly rather than wrapping it in a "while we were working" notice.
+If the system is ready when the agent prompt is about to run, it should show the prompt directly rather than wrapping it in a "while we were working" notice.
 
 Examples:
 
@@ -146,7 +146,7 @@ Examples:
 
 Rules:
 
-- the line-editor host may suspend the TUI only when a valid idle marker appears at the end of the active response
+- idle markers are advisory handoff markers only; they must not be used to suspend or stop Codex automatically
 - `Ω` by itself means partial idle: safe stopping point, but more work could continue later
 - the long activity sentence ending in `Ω` means full idle: genuinely awaiting a new prompt
 - the agent must not emit either idle marker when it still needs required user input
@@ -154,7 +154,7 @@ Rules:
 
 ## Draft Preservation
 
-While in `idle`, the user may have a partially typed draft in the line editor.
+While in `ready`, the user may have a partially typed draft in the line editor.
 
 That draft must survive:
 
@@ -177,7 +177,7 @@ Requirements:
 - scrolling backward should move line by line without pane redraw jumps or mixed shell noise
 - Codex output history and parked-editor input must not share one messy inline transcript
 - the parked host should present a real editor surface, not a raw shell prompt
-- resuming from idle should preserve a stable reading history instead of appending shell job-control artifacts like `zsh: suspended`
+- resuming after a stopping point should preserve a stable reading history instead of appending shell job-control artifacts like `zsh: suspended`
 
 In practice, this means the final host should prefer a dedicated editor surface such as the `prompt_toolkit` host over a reclaimed shell prompt, and it should avoid forcing Codex into degraded inline rendering modes that damage scrollback quality.
 
@@ -215,8 +215,8 @@ Only one prompt executes at a time.
 Rules:
 
 - no nested prompt execution
-- prompts enqueued during a run are deferred until the next `idle`
-- user-submitted prompts take precedence at `idle`
+- prompts enqueued during a run are deferred until the next `ready`
+- user-submitted prompts take precedence at `ready`
 - otherwise queued items run FIFO
 
 ## Twilight Dispatch Semantics

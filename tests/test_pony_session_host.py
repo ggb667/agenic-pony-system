@@ -50,7 +50,6 @@ class PonySessionHostPreflightTests(unittest.TestCase):
 
             self.assertEqual(host.bootstrap_profile, "celestia_coordinator")
             self.assertIn("dirty worktree", host.bootstrap_prompt)
-            self.assertEqual(host.startup_action, "launch")
 
     def test_celestia_uses_celestia_profile_for_escalate_twi(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -67,5 +66,44 @@ class PonySessionHostPreflightTests(unittest.TestCase):
                 host = pony_session_host.PonySessionHost(args)
 
             self.assertEqual(host.bootstrap_profile, "celestia_coordinator")
-            self.assertEqual(host.bootstrap_prompt, "governance follow-up\n")
-            self.assertEqual(host.startup_action, "launch")
+            self.assertIn("Launch Codex anyway", host.bootstrap_prompt)
+            self.assertIn("governance follow-up", host.bootstrap_prompt)
+
+    def test_worker_escalate_twi_still_launches_codex(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rootdir = Path(tmpdir)
+            promptfile = rootdir / "prompt.txt"
+            promptfile.write_text("worker follow-up\n", encoding="utf-8")
+            args = self.make_args(rootdir, promptfile)
+            args.personality = "FLUTTERSHY"
+            args.workfile = str(rootdir / "pony/work/fs.md")
+
+            with patch.object(
+                pony_session_host.subprocess,
+                "run",
+                return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="ESCALATE_TWI\n", stderr=""),
+            ):
+                host = pony_session_host.PonySessionHost(args)
+
+            self.assertEqual(host.bootstrap_profile, "worker_mini")
+            self.assertIn("Launch Codex anyway", host.bootstrap_prompt)
+            self.assertIn("worker follow-up", host.bootstrap_prompt)
+
+    def test_worker_ready_no_llm_still_launches_codex(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rootdir = Path(tmpdir)
+            promptfile = rootdir / "prompt.txt"
+            promptfile.write_text("worker follow-up\n", encoding="utf-8")
+            args = self.make_args(rootdir, promptfile)
+            args.personality = "FLUTTERSHY"
+            args.workfile = str(rootdir / "pony/work/fs.md")
+
+            with patch.object(
+                pony_session_host.subprocess,
+                "run",
+                return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="READY_NO_LLM\n", stderr=""),
+            ):
+                host = pony_session_host.PonySessionHost(args)
+
+            self.assertEqual(host.bootstrap_profile, "worker_mini")
+            self.assertIn("Launch Codex anyway", host.bootstrap_prompt)

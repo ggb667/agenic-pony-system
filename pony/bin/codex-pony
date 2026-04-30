@@ -64,10 +64,6 @@ if [[ -n "${CODEX_PONY_PID_FILE:-}" ]]; then
   printf '%s\n' "$$" >"$CODEX_PONY_PID_FILE"
 fi
 
-if [[ -n "${CODEX_PONY_IDLE_MONITOR_SCRIPT:-}" ]] && [[ -n "${TMUX_PANE:-}" ]] && [[ -n "${glyph:-}" ]]; then
-  "$CODEX_PONY_IDLE_MONITOR_SCRIPT" "$TMUX_PANE" "$$" "$glyph" "${CODEX_PONY_TMUX_SOCKET_PATH:-}" "${CODEX_PONY_IDLE_SENTINEL:-}" "${CODEX_PONY_PARTIAL_IDLE_SENTINEL:-Ω}" >/dev/null 2>&1 &
-fi
-
 profile_arg="none"
 if [[ "${1:-}" == "-p" ]] && [[ -n "${2:-}" ]]; then
   profile_arg="$2"

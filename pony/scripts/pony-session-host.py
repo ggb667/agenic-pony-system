@@ -82,6 +82,27 @@ def waiting_for_task_notice(personality: str, workfile_path: str) -> str:
         "Remain live at the Codex prompt and wait for Twilight or the user to hand you the next specific task."
     )
 
+def escalate_twi_notice(personality: str, initial_prompt: str) -> str:
+    notice = (
+        f"Preflight detected a coordinator-routing issue for {personality}. "
+        "Launch Codex anyway, inspect the local pony state, summarize the mismatch or blocker plainly, "
+        "and hand the routing question to Twilight or the user instead of stopping at the launcher."
+    )
+    if initial_prompt:
+        return f"{notice}\n\n{initial_prompt}"
+    return notice
+
+
+def ready_no_llm_notice(personality: str, initial_prompt: str) -> str:
+    notice = (
+        f"Preflight says there is no immediate active coding slice for {personality}. "
+        "Launch Codex anyway, verify the local state, and remain available for direct follow-up input "
+        "rather than stopping at the launcher."
+    )
+    if initial_prompt:
+        return f"{notice}\n\n{initial_prompt}"
+    return notice
+
 
 def coordinator_profile_for(personality: str) -> str | None:
     if personality == "TWILIGHT_SPARKLE":
@@ -89,6 +110,13 @@ def coordinator_profile_for(personality: str) -> str | None:
     if personality == "PRINCESS_CELESTIA_SOL_INVICTUS":
         return "celestia_coordinator"
     return None
+
+
+def default_profile_for(personality: str) -> str:
+    coordinator_profile = coordinator_profile_for(personality)
+    if coordinator_profile is not None:
+        return coordinator_profile
+    return "worker_mini"
 
 
 class PonySessionHost:
@@ -104,11 +132,9 @@ class PonySessionHost:
         self.queue_script = args.queue_script
         self.codex_wrapper = args.codex_wrapper
         self.monitor_script = args.monitor_script
-        self.idle_sentinel = args.idle_sentinel
-        self.partial_idle_sentinel = args.partial_idle_sentinel
         self.initial_prompt = self.promptfile.read_text() if self.promptfile.exists() else ""
         self.personality = args.personality
-        self.bootstrap_profile, self.bootstrap_prompt, self.startup_action = self._resolve_preflight()
+        self.bootstrap_profile, self.bootstrap_prompt = self._resolve_preflight()
 
     def tmux(self, *subcmd: str, capture: bool = False, check: bool = True) -> subprocess.CompletedProcess[str]:
         cmd = ["tmux", "-S", str(self.socket_path), *subcmd]
@@ -119,7 +145,7 @@ class PonySessionHost:
             check=check,
         )
 
-    def _resolve_preflight(self) -> tuple[str | None, str, str]:
+    def _resolve_preflight(self) -> tuple[str, str]:
         preflight = subprocess.run(
             [self.args.queue_script.replace("queue-runtime.sh", "worker-preflight.sh"), self.personality, self.args.workfile, self.args.rootdir],
             text=True,
@@ -128,23 +154,18 @@ class PonySessionHost:
             cwd=self.rootdir,
         )
         result = preflight.stdout.strip() or "ESCALATE_TWI"
+        profile = default_profile_for(self.personality)
         if result == "READY_NO_LLM":
-            return None, self.initial_prompt, "launch"
+            return profile, ready_no_llm_notice(self.personality, self.initial_prompt)
         if result == "READY_KEEP_LIVE":
-            return "worker_mini", waiting_for_task_notice(self.personality, self.args.workfile), "launch"
+            return profile, waiting_for_task_notice(self.personality, self.args.workfile)
         if result == "BLOCKED_DIRTY_FIX_FIRST":
-            profile = coordinator_profile_for(self.personality)
-            if profile is not None:
-                return profile, dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt), "launch"
-            return None, "Only Twilight may continue from BLOCKED_DIRTY_FIX_FIRST.", "editor_only"
+            return profile, dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt)
         if result == "ESCALATE_MINI":
-            return "worker_mini", self.initial_prompt, "launch"
+            return profile, self.initial_prompt
         if result == "ESCALATE_TWI":
-            profile = coordinator_profile_for(self.personality)
-            if profile is not None:
-                return profile, self.initial_prompt, "launch"
-            return None, "Preflight: ESCALATE_TWI. Worker Codex not launched.", "editor_only"
-        return None, f"Preflight error: unexpected result '{result}'.", "editor_only"
+            return profile, escalate_twi_notice(self.personality, self.initial_prompt)
+        return profile, f"Preflight error: unexpected result '{result}'.\n\n{self.initial_prompt}".strip()
 
     def session_exists(self) -> bool:
         return self.tmux("has-session", "-t", self.session_name, check=False).returncode == 0
@@ -157,11 +178,6 @@ class PonySessionHost:
         env_pairs = {
             "PERSONALITY": self.personality,
             "WORKING_ON": self.args.workfile,
-            "CODEX_PONY_IDLE_MONITOR_SCRIPT": self.monitor_script,
-            "CODEX_PONY_TMUX_SOCKET_PATH": str(self.socket_path),
-            "CODEX_PONY_IDLE_SENTINEL": self.idle_sentinel,
-            "CODEX_PONY_PARTIAL_IDLE_SENTINEL": self.partial_idle_sentinel,
-            "CODEX_PONY_IDLE_ACTION": "detach-client",
         }
         wrapper_parts = [shlex.quote(self.codex_wrapper)]
         if profile:
@@ -198,10 +214,9 @@ class PonySessionHost:
 
         style = Style.from_dict({"prompt": "bold", "toolbar": "reverse"})
         session = PromptSession(history=FileHistory(str(self.history_path)))
-        if self.startup_action == "launch":
-            if not self.session_exists():
-                self.create_session(self.bootstrap_prompt, self.bootstrap_profile)
-            self.attach()
+        if not self.session_exists():
+            self.create_session(self.bootstrap_prompt, self.bootstrap_profile)
+        self.attach()
 
         while True:
             default_text = self.draft_path.read_text() if self.draft_path.exists() else ""

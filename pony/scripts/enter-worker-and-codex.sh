@@ -18,6 +18,14 @@ resolve_path() {
   printf '%s\n' "$path"
 }
 
+default_profile_for_personality() {
+  case "$1" in
+    TWILIGHT_SPARKLE) printf 'twi_coordinator\n' ;;
+    PRINCESS_CELESTIA_SOL_INVICTUS) printf 'celestia_coordinator\n' ;;
+    *) printf 'worker_mini\n' ;;
+  esac
+}
+
 dirty_fix_first_prompt() {
   local cleanup_prompt=""
   cleanup_prompt="Coordinator preflight detected a dirty worktree in ${rootdir}. First, inspect and reconcile or put away the pending local changes in that repo. Do not ignore them or defer that cleanup. After the worktree is in a deliberate state, continue with normal coordination behavior for the active pony."
@@ -44,6 +52,26 @@ waiting_for_task_notice() {
   fi
 }
 
+escalate_twi_notice() {
+  local notice=""
+  notice="Preflight detected a coordinator-routing issue for ${PERSONALITY}. Launch Codex anyway, inspect the local pony state, summarize the mismatch or blocker plainly, and hand the routing question to Twilight or the user instead of stopping at the launcher."
+  if [[ -n "$initial_prompt" ]]; then
+    printf '%s\n\n%s\n' "$notice" "$initial_prompt"
+  else
+    printf '%s\n' "$notice"
+  fi
+}
+
+ready_no_llm_notice() {
+  local notice=""
+  notice="Preflight says there is no immediate active coding slice for ${PERSONALITY}. Launch Codex anyway, verify the local state, and remain available for direct follow-up input rather than stopping at the launcher."
+  if [[ -n "$initial_prompt" ]]; then
+    printf '%s\n\n%s\n' "$notice" "$initial_prompt"
+  else
+    printf '%s\n' "$notice"
+  fi
+}
+
 workfile="$(resolve_path "$workfile")"
 rootdir="$(resolve_path "$rootdir")"
 
@@ -64,42 +92,23 @@ preflight_result="$(
 )"
 pony_launch_debug "worker handoff preflight: personality=$PERSONALITY rootdir=$rootdir workfile=$workfile result=$preflight_result"
 
-profile=""
+profile="$(default_profile_for_personality "$PERSONALITY")"
 prompt="$initial_prompt"
 
 case "$preflight_result" in
   READY_NO_LLM)
-    profile=""
+    prompt="$(ready_no_llm_notice)"
     ;;
   READY_KEEP_LIVE)
-    profile='worker_mini'
-    prompt=""
-    printf '%s\n' "$(waiting_for_task_notice)"
+    prompt="$(waiting_for_task_notice)"
     ;;
   BLOCKED_DIRTY_FIX_FIRST)
-    if [[ "$PERSONALITY" == 'TWILIGHT_SPARKLE' ]]; then
-      profile='twi_coordinator'
-      prompt="$(dirty_fix_first_prompt)"
-    elif [[ "$PERSONALITY" == 'PRINCESS_CELESTIA_SOL_INVICTUS' ]]; then
-      profile='celestia_coordinator'
-      prompt="$(dirty_fix_first_prompt)"
-    else
-      echo 'Only Twilight may continue from BLOCKED_DIRTY_FIX_FIRST.'
-      exit 0
-    fi
+    prompt="$(dirty_fix_first_prompt)"
     ;;
   ESCALATE_MINI)
-    profile='worker_mini'
     ;;
   ESCALATE_TWI)
-    if [[ "$PERSONALITY" == 'TWILIGHT_SPARKLE' ]]; then
-      profile='twi_coordinator'
-    elif [[ "$PERSONALITY" == 'PRINCESS_CELESTIA_SOL_INVICTUS' ]]; then
-      profile='celestia_coordinator'
-    else
-      echo 'Preflight: ESCALATE_TWI. Worker Codex not launched.'
-      exit 0
-    fi
+    prompt="$(escalate_twi_notice)"
     ;;
   *)
     echo "Preflight error: unexpected result '$preflight_result'."
