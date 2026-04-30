@@ -21,7 +21,7 @@ esac
 export AGENIC_LAUNCH_PERSONALITY="$personality"
 export AGENIC_PROJECT_ROOT="$launch_project_root"
 export PONY_FUNC="$pony_func"
-export AGENIC_PONY_LAUNCH_DEBUG_LOG="${TMPDIR:-/tmp}/agenic-pony-launch-current.log"
+unset AGENIC_PONY_LAUNCH_DEBUG_LOG
 unset AGENIC_PONY_LAUNCH_DEBUG_INITIALIZED
 unset AGENIC_PONY_AUTORAN
 unset AGENIC_PONY_AUTORAN_DONE
