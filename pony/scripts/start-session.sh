@@ -13,6 +13,15 @@ target_project_root="$(detect_project_root "$project_hint")"
 pony_launch_debug_init
 pony_launch_debug "start-session entry: pwd=$PWD personality=$personality project_hint=$project_hint current_script=$current_script target_project_root=$target_project_root"
 
+install_lock_dir="$target_project_root/pony/runtime/install-project.lock"
+mkdir -p "$(dirname "$install_lock_dir")"
+while ! mkdir "$install_lock_dir" 2>/dev/null; do
+  sleep 0.1
+done
+cleanup_install_lock() {
+  rmdir "$install_lock_dir" 2>/dev/null || true
+}
+trap cleanup_install_lock EXIT
 "$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null
 pony_launch_debug "after install-project: target_project_root=$target_project_root"
 
