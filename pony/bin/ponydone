@@ -4,7 +4,13 @@ set -eu
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 voices_dir="$(cd "$script_dir/../assets/voices/doneWithTask" && pwd)"
 
-personality="${1:-${PERSONALITY:-}}"
+default_personality="TWILIGHT_SPARKLE"
+repo_root="$(cd "$script_dir/../.." && pwd)"
+if [[ "$(basename "$repo_root")" == "agenic-pony-system" ]]; then
+  default_personality="PRINCESS_CELESTIA_SOL_INVICTUS"
+fi
+
+personality="${1:-${AGENIC_LAUNCH_PERSONALITY:-${PERSONALITY:-$default_personality}}}"
 personality="$(printf '%s' "$personality" | tr '[:lower:]' '[:upper:]')"
 
 case "$personality" in
