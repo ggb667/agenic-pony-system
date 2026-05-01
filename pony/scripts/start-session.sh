@@ -131,6 +131,10 @@ fi
   printf '%s\n' "Project-local coordination root: $AGENIC_TEAM_COORDINATION_DIR"
   printf '%s\n' "Project-local pony root: $AGENIC_PROJECT_PONY_DIR"
   printf '%s\n' "Assigned workfile: $workfile"
+  if [[ "$personality" != "TWILIGHT_SPARKLE" && "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then
+    printf '%s\n' "Approval-memory rule: when the user grants a permission, approval, exception, or recurring instruction, record it in the Assigned workfile and the matching status file during that same run, then treat the recorded approval as durable on future launches unless it is explicitly revoked."
+    printf '%s\n' "Blank-worker rule: if the local state is blank, WAITING, or unassigned, do not scan the repository for self-assigned work. Report the waiting state plainly, mention any recorded approvals if they matter, and remain live for a concrete task."
+  fi
   if [[ "$worker_rootdir" != "$AGENIC_PROJECT_ROOT" ]]; then
     printf '%s\n' "Worktree rule: you may be running inside the worker checkout at $worker_rootdir, but the authoritative coordination and runtime state still lives under $AGENIC_PROJECT_PONY_DIR at the project root."
     printf '%s\n' "Path rule: when reading or updating pony coordination files, prefer the absolute Project-local pony root, Project-local coordination root, and Assigned workfile paths shown above over relative ./pony paths from the current working directory."

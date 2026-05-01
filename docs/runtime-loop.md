@@ -119,6 +119,8 @@ Examples that are stopping points:
 Special worker-launch exception:
 
 - when a non-coordinator worker has just launched, reads local state, and finds `blank`, `WAITING`, or `unassigned`, it should report that status but remain live at the Codex prompt for immediate follow-up input rather than emitting an idle sentinel and parking itself
+- when a non-coordinator worker is in that blank or waiting state, it should not scan the repository looking for self-assigned work; it should wait for a concrete assignment
+- if the user grants a permission, approval, recurring exception, or standing instruction, the worker should persist that approval into the local workfile and status file during the same run so the next launch does not ask again unless the approval is revoked
 
 Examples that are not stopping points:
 

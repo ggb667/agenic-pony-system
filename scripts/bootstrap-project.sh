@@ -109,10 +109,40 @@ Branch: $AGENIC_PROJECT_BRANCH
 
 Status: blank
 Scope: unassigned
+Permissions granted: none recorded
 Notes:
 - no assigned work yet
 EOF
 )"
+}
+
+ensure_workfile_permissions_field() {
+  local slug="${1:?missing worker slug}"
+  local workfile="$AGENIC_PROJECT_PONY_WORK_DIR/$(workfile_name_for_slug "$slug")"
+  [[ -f "$workfile" ]] || return 0
+  python3 - "$workfile" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+lines = path.read_text(encoding="utf-8").splitlines()
+result = []
+inserted = False
+for line in lines:
+    if line.startswith("Permissions granted:"):
+        if inserted:
+            continue
+        result.append("Permissions granted: none recorded")
+        inserted = True
+        continue
+    result.append(line)
+    if line.startswith("Scope:") and not inserted:
+        result.append("Permissions granted: none recorded")
+        inserted = True
+if not inserted:
+    result.append("Permissions granted: none recorded")
+path.write_text("\n".join(result) + "\n", encoding="utf-8")
+PY
 }
 
 project_supports_worker_worktrees() {
@@ -328,6 +358,7 @@ WORKTREE: $worker_worktree
 BRANCH_VERIFIED: $branch_verified
 STATUS: WAITING
 PUSH_STATUS: clean_local_branch
+APPROVALS: none recorded
 FILES_PLANNED: none
 FILES_TOUCHED: none
 BLOCKERS: none
@@ -336,6 +367,35 @@ QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
 EOF
 )"
+}
+
+ensure_status_approvals_field() {
+  local slug="${1:?missing worker slug}"
+  local status_file="$AGENIC_TEAM_COORDINATION_DIR/${slug}.status.md"
+  [[ -f "$status_file" ]] || return 0
+  python3 - "$status_file" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+lines = path.read_text(encoding="utf-8").splitlines()
+result = []
+inserted = False
+for line in lines:
+    if line.startswith("APPROVALS:"):
+        if inserted:
+            continue
+        result.append("APPROVALS: none recorded")
+        inserted = True
+        continue
+    result.append(line)
+    if line.startswith("PUSH_STATUS:") and not inserted:
+        result.append("APPROVALS: none recorded")
+        inserted = True
+if not inserted:
+    result.append("APPROVALS: none recorded")
+path.write_text("\n".join(result) + "\n", encoding="utf-8")
+PY
 }
 
 heal_status_assignment_if_default() {
@@ -532,8 +592,10 @@ for managed_script in \
   enter-worker-shell.sh \
   launch-debug.sh \
   launch-worker.sh \
+  launch-team-member.sh \
   pony-line-editor.py \
   pony-session-host.py \
+  prepare-team-launch.sh \
   resolve-system-root.sh \
   start-session.sh \
   warm-codex-tui.sh \
@@ -608,7 +670,9 @@ sync_assignment_registry
 
 for slug in aj pinkie fs rarity rd spike twi; do
   write_workfile_if_missing "$slug"
+  ensure_workfile_permissions_field "$slug"
   write_status_if_missing "$slug"
+  ensure_status_approvals_field "$slug"
   heal_status_assignment_if_default "$slug"
   write_mailbox_if_missing "$slug"
 done

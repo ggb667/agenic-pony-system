@@ -51,8 +51,6 @@ if [ "$prefix" = "princess_celestia_" ] && ! find "$voices_dir" -maxdepth 1 -typ
   voice_label="celestia->twilight_sparkle"
 fi
 
-printf 'ponyalert voice: %s\n' "$voice_label" >&2
-
 pony_debug() {
   if [ "${PONYDEBUG:-0}" = "1" ]; then
     printf 'ponyalert: %s\n' "$*" >&2
@@ -71,7 +69,9 @@ fi
 
 choice_index=$(( RANDOM % ${#files[@]} ))
 chosen_wav="${files[$choice_index]}"
+chosen_name="$(basename "$chosen_wav" .wav)"
 pony_debug "selected $chosen_wav"
+printf '%s\n' "$chosen_name"
 
 run_with_timeout() {
   if command -v timeout >/dev/null 2>&1; then
@@ -130,6 +130,7 @@ EOF2
 
 play_fallback_beep() {
   pony_debug "using double bell fallback"
+  printf 'ponyalert: audio playback failed for %s; using bell fallback\n' "$chosen_name" >&2
   printf '\a'
   sleep 0.15
   printf '\a'
