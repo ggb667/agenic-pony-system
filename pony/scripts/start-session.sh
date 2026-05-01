@@ -23,6 +23,8 @@ cleanup_install_lock() {
 }
 trap cleanup_install_lock EXIT
 "$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null
+cleanup_install_lock
+trap - EXIT
 pony_launch_debug "after install-project: target_project_root=$target_project_root"
 
 project_start_session="$target_project_root/pony/scripts/start-session.sh"
