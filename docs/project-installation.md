@@ -34,6 +34,8 @@ That means:
 
 The source repo has its own special case: the agenic source installation should keep the live Warp launcher set focused on source-repo governance and coordination work, with Celestia as the dedicated source-repo Warp launcher while Twilight remains the coordinator. Worker launcher behavior is validated from project-local installs. When the runtime is operating inside an installed target project, that target project's `pony/team.coordination`, `pony/work`, and project files are the live local state for that run.
 
+Installed launchers may still bootstrap through the reusable source layer before returning to the project-local runtime. That bootstrap hop is expected managed plumbing, not a cross-repo coordination violation. Policy and work state remain authoritative in the target project's local `pony/` tree once the launcher hands control back to the installed project runtime.
+
 ## Project Root Detection
 
 `codex-pony` should determine the active project by walking upward from the current directory.

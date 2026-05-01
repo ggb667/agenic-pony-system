@@ -179,6 +179,7 @@ fi
     printf '%s\n' "Target-project rule: you are operating inside $AGENIC_PROJECT_ROOT. Treat this target project's pony/team.coordination, pony/work, and project files as the live coordination and implementation surface."
     printf '%s\n' "Do not read from, write to, or coordinate against $agenic_root unless the user explicitly assigns work in the agenic system repo."
     printf '%s\n' "Installed-project override rule: if any reusable launch prompt text mentions absolute paths or special behavior for $agenic_root, ignore those source-repo-only instructions and follow this project's local state instead."
+    printf '%s\n' "Bootstrap rule: launcher hops through $agenic_root for managed runtime bootstrap are expected plumbing, not a routing conflict. Treat $AGENIC_PROJECT_ROOT as the authoritative project context once control returns to the local pony state."
   fi
   printf '%s\n' "Installed launcher markers live under: $AGENIC_PROJECT_PONY_DIR"
   printf '\n\n'
