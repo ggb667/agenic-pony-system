@@ -30,6 +30,14 @@ worker_slug="$(worker_slug_for_personality "$personality")"
 workfile="$AGENIC_PROJECT_PONY_WORK_DIR/$(workfile_name_for_slug "$worker_slug")"
 promptfile="$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/${worker_slug}.txt"
 runtime_promptfile="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${worker_slug}.launch.prompt.txt"
+assignment_row=""
+worker_rootdir="$AGENIC_PROJECT_ROOT"
+if [[ "$personality" != "TWILIGHT_SPARKLE" ]]; then
+  assignment_row="$(resolve_worker_assignment_by_personality "$personality")"
+  if [[ -n "$assignment_row" ]]; then
+    IFS=$'\t' read -r workfile worker_rootdir <<<"$assignment_row"
+  fi
+fi
 idle_sentinel="$(idle_sentinel_for_personality "$personality" || true)"
 partial_idle="$(partial_idle_sentinel)"
 disable_reusable_prompt="${AGENIC_PONY_DISABLE_REUSABLE_PROMPT:-0}"
@@ -123,6 +131,10 @@ fi
   printf '%s\n' "Project-local coordination root: $AGENIC_TEAM_COORDINATION_DIR"
   printf '%s\n' "Project-local pony root: $AGENIC_PROJECT_PONY_DIR"
   printf '%s\n' "Assigned workfile: $workfile"
+  if [[ "$worker_rootdir" != "$AGENIC_PROJECT_ROOT" ]]; then
+    printf '%s\n' "Worktree rule: you may be running inside the worker checkout at $worker_rootdir, but the authoritative coordination and runtime state still lives under $AGENIC_PROJECT_PONY_DIR at the project root."
+    printf '%s\n' "Path rule: when reading or updating pony coordination files, prefer the absolute Project-local pony root, Project-local coordination root, and Assigned workfile paths shown above over relative ./pony paths from the current working directory."
+  fi
   printf '%s\n' "Launcher-command rule: if the user input is a raw shell or launcher command, especially a launch-in-pony-shell.sh invocation or another pony launcher path, do not treat it as project work and do not execute it as part of the current pony task. Explain briefly that the command was typed inside a live pony Codex session and ask the user to run it from another shell or exit or suspend the current pony first."
   if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
     printf '%s\n' "Current-state rule: this project has active coordinator state under pony/team.coordination; resume from it instead of treating the repo as blank."
@@ -154,11 +166,6 @@ if [[ "$personality" == "TWILIGHT_SPARKLE" ]]; then
   exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/enter-twi-session.sh" "$runtime_promptfile"
 fi
 
-assignment_row="$(resolve_worker_assignment_by_personality "$personality")"
-worker_rootdir="$AGENIC_PROJECT_ROOT"
-if [[ -n "$assignment_row" ]]; then
-  IFS=$'\t' read -r workfile worker_rootdir <<<"$assignment_row"
-fi
 pony_launch_debug "exec enter-worker-from-prompt-file: workfile=$workfile worker_rootdir=$worker_rootdir runtime_promptfile=$runtime_promptfile assignment_row_present=$( [[ -n "$assignment_row" ]] && printf yes || printf no )"
 
 exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/enter-worker-from-prompt-file.sh" \
