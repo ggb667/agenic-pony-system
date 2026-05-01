@@ -8,6 +8,7 @@ source_pony_root="$pony_root"
 source_pony_bin_dir="$pony_bin_dir"
 source_pony_scripts_dir="$pony_scripts_dir"
 source_pony_launch_prompts_dir="$pony_launch_prompts_dir"
+source_runtime_fingerprint="$("$source_pony_scripts_dir/runtime-fingerprint.sh")"
 
 target_root="${1:-$PWD}"
 load_project_paths "$target_root"
@@ -586,6 +587,7 @@ done
 for managed_script in \
   codex-tmux-monitor.sh \
   pony-paths.sh \
+  runtime-fingerprint.sh \
   enter-twi-session.sh \
   enter-worker-and-codex.sh \
   enter-worker-from-prompt-file.sh \
@@ -611,6 +613,7 @@ done
 write_managed_file "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/pony.zsh.support.zsh" "$(cat "$source_pony_scripts_dir/pony.zsh.support.zsh")"
 write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/launch-in-pony-shell.sh" "$(cat "$source_pony_scripts_dir/launch-in-pony-shell.sh")"
 write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/queue-runtime.sh" "$(cat "$source_pony_scripts_dir/queue-runtime.sh")"
+write_managed_file "$AGENIC_PROJECT_PONY_RUNTIME_DIR/source-runtime.fingerprint" "$source_runtime_fingerprint"$'\n'
 
 if ! is_agenic_source_project; then
   write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/codex-pony" "$(cat <<EOF

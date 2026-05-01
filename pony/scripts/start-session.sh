@@ -13,19 +13,37 @@ target_project_root="$(detect_project_root "$project_hint")"
 pony_launch_debug_init
 pony_launch_debug "start-session entry: pwd=$PWD personality=$personality project_hint=$project_hint current_script=$current_script target_project_root=$target_project_root"
 
-install_lock_dir="$target_project_root/pony/runtime/install-project.lock"
-mkdir -p "$(dirname "$install_lock_dir")"
-while ! mkdir "$install_lock_dir" 2>/dev/null; do
-  sleep 0.1
-done
-cleanup_install_lock() {
-  rmdir "$install_lock_dir" 2>/dev/null || true
-}
-trap cleanup_install_lock EXIT
-"$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null
-cleanup_install_lock
-trap - EXIT
-pony_launch_debug "after install-project: target_project_root=$target_project_root"
+install_required=0
+if [[ "$target_project_root" != "$agenic_root" ]]; then
+  source_fingerprint="$("$agenic_root/pony/scripts/runtime-fingerprint.sh")"
+  installed_fingerprint_file="$target_project_root/pony/runtime/source-runtime.fingerprint"
+  installed_fingerprint=""
+  if [[ -f "$installed_fingerprint_file" ]]; then
+    read -r installed_fingerprint <"$installed_fingerprint_file" || installed_fingerprint=""
+  fi
+  if [[ "${AGENIC_FORCE_INSTALL_REFRESH:-0}" == "1" || "$installed_fingerprint" != "$source_fingerprint" ]]; then
+    install_required=1
+  fi
+  pony_launch_debug "runtime fingerprint check: install_required=$install_required installed=${installed_fingerprint:-missing} source=$source_fingerprint"
+fi
+
+if (( install_required )); then
+  install_lock_dir="$target_project_root/pony/runtime/install-project.lock"
+  mkdir -p "$(dirname "$install_lock_dir")"
+  while ! mkdir "$install_lock_dir" 2>/dev/null; do
+    sleep 0.1
+  done
+  cleanup_install_lock() {
+    rmdir "$install_lock_dir" 2>/dev/null || true
+  }
+  trap cleanup_install_lock EXIT
+  "$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null
+  cleanup_install_lock
+  trap - EXIT
+  pony_launch_debug "after install-project: target_project_root=$target_project_root"
+else
+  pony_launch_debug "install-project skipped: target_project_root=$target_project_root"
+fi
 
 project_start_session="$target_project_root/pony/scripts/start-session.sh"
 if [[ "$target_project_root" != "$agenic_root" ]] && [[ "${AGENIC_PONY_REFRESH_REEXEC:-0}" != "1" ]] && [[ -x "$project_start_session" ]] && [[ "$current_script" != "$project_start_session" ]]; then
