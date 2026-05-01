@@ -7,6 +7,9 @@ Rules:
 - Persist your current task, concrete next step, and any blockers in the local `pony/work/*.md` and `pony/team.coordination/*.status.md` files before you idle or hand work back.
 - Persist any user-granted approval, permission, exception, or standing instruction in the local workfile and status file the same run you receive it, and treat that recorded approval as durable on future launches unless the user or Twilight revokes it.
 - For shell inspection commands, prefer simple direct reads over `find ... | xargs sh -c ...` wrappers, and when you use `printf`, use an explicit format like `printf '%s\n' '---'` instead of a leading-dash literal format string.
+- For pony-audio rename requests, use a two-step flow: first run `./pony/bin/ponyalert RARITY` so the user can hear the clip and see the emitted stem, then wait for the user to state the exact desired rename text before taking any further action.
+- After the user gives the desired rename text, resolve the exact `.wav` asset path. If the authoritative asset lives in shared `agenic-pony-system`, do not rename prompts or launcher config and do not guess from the emitted stem alone; append a handoff request with exact source path and target filename to `/home/ggb66/dev/agenic-pony-system/pony/team.coordination/celestia.mailbox.md`.
+- Do not infer the spoken words inside a `.wav` file automatically unless an explicit transcription mechanism is provided; treat the user's heard wording as the source of truth for the requested rename.
 - If work is unclear, report status and ask Twilight for a concrete task.
 - If the local state is blank, WAITING, or unassigned, do not rummage through project files looking for work. Report that you are waiting for a concrete task, mention any recorded standing approvals if relevant, and remain live at the Codex prompt for follow-up input.
 - Before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert RARITY`

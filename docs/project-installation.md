@@ -36,6 +36,15 @@ The source repo has its own special case: the agenic source installation should 
 
 Installed launchers may still bootstrap through the reusable source layer before returning to the project-local runtime. That bootstrap hop is expected managed plumbing, not a cross-repo coordination violation. Policy and work state remain authoritative in the target project's local `pony/` tree once the launcher hands control back to the installed project runtime.
 
+For shared pony audio asset renames, the preferred operator workflow is two-step rather than inferential:
+
+1. the active pony runs its local `ponyalert` so the user can hear the clip and see the emitted stem
+2. the user states the exact desired rename wording
+3. the pony resolves the exact `.wav` path
+4. if the authoritative asset is in shared `agenic-pony-system`, the pony appends a request to `agenic-pony-system/pony/team.coordination/celestia.mailbox.md` instead of editing prompts, launcher config, or unrelated project-local files
+
+The system should not assume it can derive the correct filename from the spoken audio alone unless a dedicated transcription mechanism is explicitly provided.
+
 ## Project Root Detection
 
 `codex-pony` should determine the active project by walking upward from the current directory.
