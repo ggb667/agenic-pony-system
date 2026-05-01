@@ -33,6 +33,15 @@ mapfile -d '' files < <(
   find "$voices_dir" -maxdepth 1 -type f -iname "${prefix}*.wav" -print0 | sort -z
 )
 
+if [ "$prefix" = "princess_celestia_" ]; then
+  mapfile -d '' preferred_files < <(
+    find "$voices_dir" -maxdepth 1 -type f -iname "${prefix}*.wav" ! -iname "${prefix}song_*.wav" -print0 | sort -z
+  )
+  if [ "${#preferred_files[@]}" -gt 0 ]; then
+    files=("${preferred_files[@]}")
+  fi
+fi
+
 if [ "${#files[@]}" -eq 0 ]; then
   pony_debug "no matching wav files for prefix ${prefix}; using double bell fallback"
   printf '\a\a'
