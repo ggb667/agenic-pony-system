@@ -33,15 +33,6 @@ mapfile -d '' files < <(
   find "$voices_dir" -maxdepth 1 -type f -iname "${prefix}*.wav" -print0 | sort -z
 )
 
-if [ "$prefix" = "princess_celestia_" ]; then
-  mapfile -d '' preferred_files < <(
-    find "$voices_dir" -maxdepth 1 -type f -iname "${prefix}*.wav" ! -iname "${prefix}song_*.wav" -print0 | sort -z
-  )
-  if [ "${#preferred_files[@]}" -gt 0 ]; then
-    files=("${preferred_files[@]}")
-  fi
-fi
-
 if [ "${#files[@]}" -eq 0 ]; then
   pony_debug "no matching wav files for prefix ${prefix}; using double bell fallback"
   printf '\a\a'
@@ -53,8 +44,10 @@ chosen_wav="${files[$choice_index]}"
 pony_debug "selected $chosen_wav"
 
 run_with_timeout() {
+  local duration="${1:-5s}"
+  shift || true
   if command -v timeout >/dev/null 2>&1; then
-    timeout 5s "$@"
+    timeout "$duration" "$@"
   else
     "$@"
   fi
@@ -63,15 +56,15 @@ run_with_timeout() {
 play_local() {
   if command -v ffplay >/dev/null 2>&1; then
     pony_debug "trying ffplay"
-    run_with_timeout ffplay -nodisp -autoexit -loglevel error "$chosen_wav" >/dev/null 2>&1 && return 0
+    run_with_timeout 5s ffplay -nodisp -autoexit -loglevel error "$chosen_wav" >/dev/null 2>&1 && return 0
   fi
   if command -v aplay >/dev/null 2>&1; then
     pony_debug "trying aplay"
-    run_with_timeout aplay -q "$chosen_wav" >/dev/null 2>&1 && return 0
+    run_with_timeout 5s aplay -q "$chosen_wav" >/dev/null 2>&1 && return 0
   fi
   if command -v paplay >/dev/null 2>&1; then
     pony_debug "trying paplay"
-    run_with_timeout paplay "$chosen_wav" >/dev/null 2>&1 && return 0
+    run_with_timeout 5s paplay "$chosen_wav" >/dev/null 2>&1 && return 0
   fi
   return 1
 }
@@ -85,12 +78,22 @@ play_wmplayer() {
 
   base="ponydone-${prefix}$$-$RANDOM.wav"
   win_copy="$win_tmp_dir/$base"
-  pony_debug "trying minimized wmplayer via $win_copy"
+  pony_debug "trying Windows audio via $win_copy"
   cp "$chosen_wav" "$win_copy" >/dev/null 2>&1 || return 1
 
   win_path="C:\\Users\\${USER}\\AppData\\Local\\Temp\\$base"
   ps=$(cat <<EOF2
 \$path = '$win_path'
+\$player = \$null
+try {
+  \$player = New-Object System.Media.SoundPlayer \$path
+  \$player.Load()
+  \$player.PlaySync()
+  Remove-Item \$path -ErrorAction SilentlyContinue
+  Write-Output 'soundplayer_ok'
+  exit 0
+} catch {
+}
 \$p = Start-Process -FilePath 'C:\Program Files (x86)\Windows Media Player\wmplayer.exe' -ArgumentList \$path -WindowStyle Minimized -PassThru
 Start-Sleep -Seconds 4
 if (-not \$p.HasExited) {
@@ -102,7 +105,7 @@ EOF2
 )
   enc=$(printf '%s' "$ps" | iconv -f UTF-8 -t UTF-16LE | base64 -w0)
 
-  run_with_timeout powershell.exe -NoProfile -EncodedCommand "$enc" >/dev/null 2>&1 && return 0
+  run_with_timeout 12s powershell.exe -NoProfile -EncodedCommand "$enc" >/dev/null 2>&1 && return 0
   rm -f "$win_copy" >/dev/null 2>&1 || true
   return 1
 }
