@@ -24,6 +24,17 @@ MODE_FILTERS = {
     "celestia": {"celestia"},
 }
 
+WORKFILE_NAMES = {
+    "celestia": "governor-celestia.md",
+    "twi": "coordinator-twi.md",
+    "aj": "aj.md",
+    "pinkie": "pinkie.md",
+    "fs": "fs.md",
+    "rarity": "rarity.md",
+    "rd": "rd.md",
+    "spike": "spike.md",
+}
+
 
 def render_tab(
     agenic_root: Path,
@@ -69,6 +80,26 @@ def display_project_name(project_root: Path) -> str:
     return " ".join(rendered_parts)
 
 
+def solo_tab_context(project_root: Path, slug: str, fallback: str) -> str:
+    workfile_name = WORKFILE_NAMES.get(slug)
+    if workfile_name is None:
+        return fallback
+    workfile = project_root / "pony" / "work" / workfile_name
+    if not workfile.exists():
+        return fallback
+    try:
+        for raw_line in workfile.read_text(encoding="utf-8").splitlines():
+            if not raw_line.startswith("Scope:"):
+                continue
+            scope = raw_line.split(":", 1)[1].strip()
+            if not scope:
+                return fallback
+            return scope
+    except OSError:
+        return fallback
+    return fallback
+
+
 def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
     project_name = display_project_name(project_root)
     if project_name.endswith("Pony System"):
@@ -102,7 +133,8 @@ def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
             continue
         tab_title = title
         if mode in {"aj", "twi", "celestia"}:
-            tab_title = f"{title} {project_name}"
+            context = solo_tab_context(project_root, slug, project_name)
+            tab_title = f"{title} {context}"
         lines.extend(
             render_tab(
                 agenic_root,
