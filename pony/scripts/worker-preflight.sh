@@ -270,7 +270,13 @@ if (( is_coordinator )); then
   fi
 
   set_push_status "$status_file" "clean_and_pushed"
-  printf 'ESCALATE_TWI\n'
+  decision_needed="$(field_block "DECISION_NEEDED" "$status_file")"
+  questions_for_twi="$(field_block "QUESTIONS_FOR_TWI" "$status_file")"
+  if ! field_is_empty "$decision_needed" || ! field_is_empty "$questions_for_twi"; then
+    printf 'ESCALATE_TWI\n'
+  else
+    printf 'READY_KEEP_LIVE\n'
+  fi
   exit 0
 fi
 
