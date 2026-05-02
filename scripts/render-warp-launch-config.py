@@ -133,9 +133,9 @@ def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
             continue
         if project_root == agenic_root and slug == "aj":
             continue
+        context = solo_tab_context(project_root, slug, project_name)
         tab_title = title
-        if mode in {"aj", "twi", "celestia"}:
-            context = solo_tab_context(project_root, slug, project_name)
+        if mode in {"team", "aj", "twi", "celestia"}:
             tab_title = f"{title} {context}"
         lines.extend(
             render_tab(
