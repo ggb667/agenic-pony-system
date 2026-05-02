@@ -54,7 +54,7 @@ Expected shape:
 
 That structure mirrors the real operating layout refined in live project use.
 
-For git-backed target projects, ordinary worker ponies are provisioned into linked worktrees under `pony/worktrees/<slug>/` so they do not all operate from the coordinator's root checkout. Twilight remains anchored to the main project worktree unless a later feature intentionally changes that policy.
+For git-backed target projects, ordinary worker ponies are provisioned into linked worktrees under `pony/worktrees/<slug>/` so they do not all operate from the coordinator's root checkout. Twilight remains anchored to the main project worktree on dedicated coordinator branch `pony/twi/main`. The agenic source repo is the special case: it keeps Twilight on source-repo `main` under Celestia governance rather than creating a Twi branch there.
 
 ## What The Reusable System Provides
 

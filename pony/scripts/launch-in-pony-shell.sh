@@ -64,7 +64,28 @@ _agenic_pony_apply_identity() {
   fi
 }
 
+_agenic_pony_set_terminal_title() {
+  [[ -t 1 ]] || return 0
+
+  local pony_label=""
+  case "${AGENIC_LAUNCH_PERSONALITY:-}" in
+    PRINCESS_CELESTIA_SOL_INVICTUS) pony_label="Celestia" ;;
+    TWILIGHT_SPARKLE) pony_label="Twilight" ;;
+    APPLEJACK) pony_label="Applejack" ;;
+    PINKIE_PIE) pony_label="Pinkie" ;;
+    FLUTTERSHY) pony_label="Fluttershy" ;;
+    RARITY) pony_label="Rarity" ;;
+    RAINBOW_DASH) pony_label="Rainbow Dash" ;;
+    SPIKE) pony_label="Spike" ;;
+    *) pony_label="Pony" ;;
+  esac
+
+  local project_label="${AGENIC_PROJECT_ROOT:t}"
+  printf '\033]0;%s · %s\007' "${pony_label}" "${project_label}"
+}
+
 _agenic_pony_apply_identity
+_agenic_pony_set_terminal_title
 _agenic_pony_log "after identity apply: pwd=$PWD personality=${PERSONALITY:-unset}"
 
 if [[ -z "${AGENIC_PONY_AUTORAN:-}" ]]; then

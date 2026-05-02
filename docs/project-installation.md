@@ -96,8 +96,9 @@ The precise contents may expand over time, but the key rule is that runtime stat
 
 For git-backed installs, the default worker policy is:
 
-- Twilight stays in the main project worktree as coordinator
+- Twilight stays in the main project worktree as coordinator on branch `pony/twi/main`
 - ordinary workers get linked git worktrees under `pony/worktrees/<slug>/`
+- ordinary worker branch names default to `pony/<slug>/main`
 - those worker worktrees are the paths recorded in `pony/team.coordination/assignment.registry.tsv`
 
 This keeps coordinator control and worker execution separated without requiring separate top-level clones outside the project-local pony tree.

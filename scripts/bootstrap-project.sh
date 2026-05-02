@@ -146,6 +146,33 @@ path.write_text("\n".join(result) + "\n", encoding="utf-8")
 PY
 }
 
+ensure_workfile_branch_matches_assignment() {
+  local slug="${1:?missing worker slug}"
+  local workfile="$AGENIC_PROJECT_PONY_WORK_DIR/$(workfile_name_for_slug "$slug")"
+  local target_branch
+  [[ -f "$workfile" ]] || return 0
+  target_branch="$(worker_branch_for_slug "$slug")"
+  python3 - "$workfile" "$target_branch" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+branch = sys.argv[2]
+lines = path.read_text(encoding="utf-8").splitlines()
+result = []
+replaced = False
+for line in lines:
+    if line.startswith("Branch: "):
+        result.append(f"Branch: {branch}")
+        replaced = True
+    else:
+        result.append(line)
+if not replaced:
+    result.insert(3, f"Branch: {branch}")
+path.write_text("\n".join(result) + "\n", encoding="utf-8")
+PY
+}
+
 project_supports_worker_worktrees() {
   if is_agenic_source_project; then
     return 1
@@ -342,6 +369,27 @@ remove_if_exists() {
   rm -f "$path"
 }
 
+project_coordinator_branch() {
+  if is_agenic_source_project; then
+    printf '%s\n' "$AGENIC_PROJECT_BRANCH"
+  else
+    printf '%s\n' "pony/twi/main"
+  fi
+}
+
+worker_branch_for_slug() {
+  local slug="${1:?missing worker slug}"
+  if [[ "$slug" == "twi" ]]; then
+    project_coordinator_branch
+    return 0
+  fi
+  if is_agenic_source_project; then
+    printf '%s\n' "$AGENIC_PROJECT_BRANCH"
+  else
+    printf 'pony/%s/main\n' "$slug"
+  fi
+}
+
 write_status_if_missing() {
   local slug="${1:?missing worker slug}"
   local worker_branch
@@ -399,6 +447,34 @@ path.write_text("\n".join(result) + "\n", encoding="utf-8")
 PY
 }
 
+ensure_status_branch_matches_assignment() {
+  local slug="${1:?missing worker slug}"
+  local status_file="$AGENIC_TEAM_COORDINATION_DIR/${slug}.status.md"
+  local target_branch
+  local target_worktree
+  [[ -f "$status_file" ]] || return 0
+  target_branch="$(worker_branch_for_slug "$slug")"
+  target_worktree="$(worker_worktree_for_slug "$slug")"
+  python3 - "$status_file" "$target_branch" "$target_worktree" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+branch = sys.argv[2]
+worktree = sys.argv[3]
+lines = path.read_text(encoding="utf-8").splitlines()
+result = []
+for line in lines:
+    if line.startswith("BRANCH: "):
+        result.append(f"BRANCH: {branch}")
+    elif line.startswith("WORKTREE: "):
+        result.append(f"WORKTREE: {worktree}")
+    else:
+        result.append(line)
+path.write_text("\n".join(result) + "\n", encoding="utf-8")
+PY
+}
+
 heal_status_assignment_if_default() {
   local slug="${1:?missing worker slug}"
   local status_file="$AGENIC_TEAM_COORDINATION_DIR/${slug}.status.md"
@@ -441,7 +517,9 @@ PY
 
 sync_assignment_registry() {
   local registry_path="$AGENIC_TEAM_COORDINATION_DIR/assignment.registry.tsv"
-  python3 - "$registry_path" "$AGENIC_PROJECT_NAME" "$AGENIC_PROJECT_BRANCH" "$AGENIC_PROJECT_ROOT" "$AGENIC_PROJECT_PONY_WORK_DIR" "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR" "$AGENIC_PROJECT_PONY_WORKTREES_DIR" <<'PY'
+  local coordinator_branch
+  coordinator_branch="$(project_coordinator_branch)"
+  python3 - "$registry_path" "$AGENIC_PROJECT_NAME" "$AGENIC_PROJECT_BRANCH" "$coordinator_branch" "$AGENIC_PROJECT_ROOT" "$AGENIC_PROJECT_PONY_WORK_DIR" "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR" "$AGENIC_PROJECT_PONY_WORKTREES_DIR" <<'PY'
 import csv
 import io
 import sys
@@ -451,6 +529,7 @@ from pathlib import Path
     registry_path,
     project_name,
     project_branch,
+    coordinator_branch,
     project_root,
     work_dir,
     prompts_dir,
@@ -470,13 +549,13 @@ fieldnames = [
     "scope",
 ]
 managed = {
-    "aj": ("AJ", "APPLEJACK", f"pony/aj/{project_branch}", f"{worktrees_dir}/aj", f"{work_dir}/aj.md", f"{prompts_dir}/aj.txt", "unassigned"),
-    "pinkie": ("Pinkie", "PINKIE_PIE", f"pony/pinkie/{project_branch}", f"{worktrees_dir}/pinkie", f"{work_dir}/pinkie.md", f"{prompts_dir}/pinkie.txt", "unassigned"),
-    "fs": ("FS", "FLUTTERSHY", f"pony/fs/{project_branch}", f"{worktrees_dir}/fs", f"{work_dir}/fs.md", f"{prompts_dir}/fs.txt", "unassigned"),
-    "rarity": ("Rarity", "RARITY", f"pony/rarity/{project_branch}", f"{worktrees_dir}/rarity", f"{work_dir}/rarity.md", f"{prompts_dir}/rarity.txt", "unassigned"),
-    "rd": ("RD", "RAINBOW_DASH", f"pony/rd/{project_branch}", f"{worktrees_dir}/rd", f"{work_dir}/rd.md", f"{prompts_dir}/rd.txt", "unassigned"),
-    "spike": ("Spike", "SPIKE", f"pony/spike/{project_branch}", f"{worktrees_dir}/spike", f"{work_dir}/spike.md", f"{prompts_dir}/spike.txt", "unassigned"),
-    "twi": ("Twilight", "TWILIGHT_SPARKLE", project_branch, project_root, f"{work_dir}/coordinator-twi.md", f"{prompts_dir}/twi.txt", "coordinate the team"),
+    "aj": ("AJ", "APPLEJACK", f"pony/aj/main", f"{worktrees_dir}/aj", f"{work_dir}/aj.md", f"{prompts_dir}/aj.txt", "unassigned"),
+    "pinkie": ("Pinkie", "PINKIE_PIE", f"pony/pinkie/main", f"{worktrees_dir}/pinkie", f"{work_dir}/pinkie.md", f"{prompts_dir}/pinkie.txt", "unassigned"),
+    "fs": ("FS", "FLUTTERSHY", f"pony/fs/main", f"{worktrees_dir}/fs", f"{work_dir}/fs.md", f"{prompts_dir}/fs.txt", "unassigned"),
+    "rarity": ("Rarity", "RARITY", f"pony/rarity/main", f"{worktrees_dir}/rarity", f"{work_dir}/rarity.md", f"{prompts_dir}/rarity.txt", "unassigned"),
+    "rd": ("RD", "RAINBOW_DASH", f"pony/rd/main", f"{worktrees_dir}/rd", f"{work_dir}/rd.md", f"{prompts_dir}/rd.txt", "unassigned"),
+    "spike": ("Spike", "SPIKE", f"pony/spike/main", f"{worktrees_dir}/spike", f"{work_dir}/spike.md", f"{prompts_dir}/spike.txt", "unassigned"),
+    "twi": ("Twilight", "TWILIGHT_SPARKLE", coordinator_branch, project_root, f"{work_dir}/coordinator-twi.md", f"{prompts_dir}/twi.txt", "coordinate the team"),
 }
 
 if project_branch == "no-git-branch":
@@ -674,8 +753,14 @@ sync_assignment_registry
 for slug in aj pinkie fs rarity rd spike twi; do
   write_workfile_if_missing "$slug"
   ensure_workfile_permissions_field "$slug"
+  if [[ "$slug" == "twi" ]]; then
+    ensure_workfile_branch_matches_assignment "$slug"
+  fi
   write_status_if_missing "$slug"
   ensure_status_approvals_field "$slug"
+  if [[ "$slug" == "twi" ]]; then
+    ensure_status_branch_matches_assignment "$slug"
+  fi
   heal_status_assignment_if_default "$slug"
   write_mailbox_if_missing "$slug"
 done
