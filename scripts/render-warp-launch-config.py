@@ -100,12 +100,15 @@ def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
             continue
         if project_root == agenic_root and slug == "aj":
             continue
+        tab_title = title
+        if mode in {"aj", "twi", "celestia"}:
+            tab_title = f"{title} {project_name}"
         lines.extend(
             render_tab(
                 agenic_root,
                 project_root,
                 slug,
-                title,
+                tab_title,
                 color,
                 personality,
                 focused=slug in {"twi", "celestia", "aj"},
