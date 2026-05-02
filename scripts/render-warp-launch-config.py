@@ -94,7 +94,7 @@ def solo_tab_context(project_root: Path, slug: str, fallback: str) -> str:
             scope = raw_line.split(":", 1)[1].strip()
             if not scope:
                 return fallback
-            if scope in {"unassigned", "no active coding slice"}:
+            if scope in {"unassigned", "no active coding slice", "none assigned"}:
                 return "Unassigned"
             return scope
     except OSError:
