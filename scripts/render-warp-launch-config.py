@@ -25,8 +25,21 @@ MODE_FILTERS = {
 }
 
 
-def render_tab(agenic_root: Path, project_root: Path, slug: str, title: str, color: str, personality: str, focused: bool) -> list[str]:
-    launcher = project_root / "pony/scripts/launch-team-member.sh" if slug in MODE_FILTERS["team"] else project_root / "pony/scripts/launch-in-pony-shell.sh"
+def render_tab(
+    agenic_root: Path,
+    project_root: Path,
+    slug: str,
+    title: str,
+    color: str,
+    personality: str,
+    focused: bool,
+    mode: str,
+) -> list[str]:
+    launcher = (
+        project_root / "pony/scripts/launch-team-member.sh"
+        if mode == "team"
+        else project_root / "pony/scripts/launch-in-pony-shell.sh"
+    )
     command = shlex.quote(str(launcher)) + " " + shlex.quote(personality)
     lines = [
         f"      - title: {title}",
@@ -87,7 +100,18 @@ def render_config(agenic_root: Path, project_root: Path, mode: str) -> str:
             continue
         if project_root == agenic_root and slug == "aj":
             continue
-        lines.extend(render_tab(agenic_root, project_root, slug, title, color, personality, focused=slug in {"twi", "celestia"}))
+        lines.extend(
+            render_tab(
+                agenic_root,
+                project_root,
+                slug,
+                title,
+                color,
+                personality,
+                focused=slug in {"twi", "celestia", "aj"},
+                mode=mode,
+            )
+        )
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 

@@ -21,7 +21,7 @@ twi_target="$target_dir/agenic-pony-team-${project_slug}-twi.yaml"
 aj_target="$target_dir/agenic-pony-aj-${project_slug}.yaml"
 celestia_target="$target_dir/agenic-pony-celestia-${project_slug}.yaml"
 install_team=true
-install_aj=false
+install_aj=true
 install_twi=false
 install_celestia=false
 
