@@ -1,4 +1,5 @@
 .venv-ponyhost/
+.codex
 **/__pycache__/
 pony/agents/
 pony/runtime/
