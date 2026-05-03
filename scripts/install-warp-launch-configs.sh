@@ -52,6 +52,10 @@ if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
   install_celestia=true
 fi
 
+if [[ "$project_slug" != "codex" ]]; then
+  install_aj=false
+fi
+
 mkdir -p "$target_dir" "$project_launch_config_dir"
 cleanup_stale_worker_worktree_configs
 if [[ "$install_twi" == true ]]; then
