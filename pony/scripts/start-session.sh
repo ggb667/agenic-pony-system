@@ -68,6 +68,7 @@ if [[ "$personality" != "TWILIGHT_SPARKLE" ]]; then
   fi
 fi
 idle_sentinel="$(idle_sentinel_for_personality "$personality" || true)"
+idle_sentinel_options="$(idle_sentinel_options_for_personality "$personality" || true)"
 partial_idle="$(partial_idle_sentinel)"
 disable_reusable_prompt="${AGENIC_PONY_DISABLE_REUSABLE_PROMPT:-0}"
 
@@ -189,8 +190,21 @@ fi
   printf '%s\n' "Idle-sentinel rule:"
   printf '%s\n' "- At a partial idle stopping point, where more work could continue later but no required user answer is pending, end your response with exactly this line and nothing after it:"
   printf '%s\n' "  $partial_idle"
-  printf '%s\n' "- At a full idle stopping point, where you are genuinely awaiting a new prompt, end your response with exactly this line and nothing after it:"
-  printf '%s\n' "  $idle_sentinel"
+  printf '%s\n' "- At a full idle stopping point, where you are genuinely awaiting a new prompt, end your response with exactly one approved full-idle line and nothing after it."
+  printf '%s\n' "- Every approved full-idle line must end with one of these exact suffixes:"
+  printf '%s\n' "  waiting for new tasks. Ω"
+  printf '%s\n' "  waiting for new work. Ω"
+  printf '%s\n' "  waiting for new instructions. Ω"
+  printf '%s\n' "  waiting for new directions. Ω"
+  printf '%s\n' "  awaiting new tasks. Ω"
+  printf '%s\n' "  awaiting new work. Ω"
+  printf '%s\n' "  awaiting new instructions. Ω"
+  printf '%s\n' "  awaiting new directions. Ω"
+  printf '%s\n' "- Approved full-idle lines for this pony are:"
+  while IFS= read -r idle_line; do
+    [[ -n "$idle_line" ]] || continue
+    printf '%s\n' "  $idle_line"
+  done <<<"$idle_sentinel_options"
   printf '%s\n' "- Do not emit either idle marker after required questions, approvals, escalations, or any response that still needs immediate user input."
 } >"$runtime_promptfile"
 pony_launch_debug "runtime prompt written: runtime_promptfile=$runtime_promptfile promptfile=$promptfile"

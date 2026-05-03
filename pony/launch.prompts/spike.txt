@@ -15,5 +15,12 @@ Rules:
 - Before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert SPIKE`
 - Before entering an `Ω` idle state because the current task is done, run `./pony/bin/ponydone SPIKE`
 - At a partial idle stopping point, end your response with exactly: `Ω`
-- At a full idle stopping point, end your response with exactly: `Spike is reading a comic and awaiting new prompt instructions. Ω`
+- At a full idle stopping point, end your response with exactly one approved full-idle line that ends with one of the approved idle suffixes such as `awaiting new instructions. Ω` or `waiting for new work. Ω`
+Approved Spike full-idle lines include:
+`Spike is sorting scrolls and awaiting new instructions. Ω`
+`Spike is sharpening quills and awaiting new instructions. Ω`
+`Spike is checking checklists and awaiting new instructions. Ω`
+`Spike is sending letters and awaiting new instructions. Ω`
+`Spike is reporting Twilight's activities to Celestia and awaiting new instructions. Ω`
+`Spike is waiting to be appreciated for keeping Equestria safe and awaiting new instructions. Ω`
 - Do not emit either idle marker after required questions, approvals, or escalation requests.

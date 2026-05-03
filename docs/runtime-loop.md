@@ -138,19 +138,25 @@ Examples:
 - Partial idle:
   `Ω`
 - Full idle:
-  `Twilight Sparkle is reading a book and awaiting new prompt instructions. Ω`
-  `Applejack is bucking apples and awaiting new prompt instructions. Ω`
-  `Pinkie Pie is baking a cake and awaiting new prompt instructions. Ω`
-  `Rarity is sewing a dress and awaiting new prompt instructions. Ω`
-  `Spike is reading a comic and awaiting new prompt instructions. Ω`
-  `Fluttershy is feeding her animals and awaiting new prompt instructions. Ω`
-  `Rainbow Dash is practicing tricks and awaiting new prompt instructions. Ω`
+  `Twilight Sparkle is reading a book and awaiting new instructions. Ω`
+  `Twilight Sparkle is practicing her magic and awaiting new instructions. Ω`
+  `Applejack is bucking apples and awaiting new instructions. Ω`
+  `Pinkie Pie is planning a party and awaiting new instructions. Ω`
+  `Rarity is refining a sketch and awaiting new instructions. Ω`
+  `Spike is sorting scrolls and awaiting new instructions. Ω`
+  `Fluttershy is feeding her animals and awaiting new instructions. Ω`
+  `Fluttershy is wrestling a bear and awaiting new instructions. Ω`
+  `Rainbow Dash is practicing new tricks and awaiting new instructions. Ω`
+  `Rainbow Dash is napping on a cloud and awaiting new instructions. Ω`
+  `Princess Celestia is tending the sun and awaiting new instructions. Ω`
+  `Princess Celestia is attending court and awaiting new instructions. Ω`
 
 Rules:
 
 - idle markers are advisory handoff markers only; they must not be used to suspend or stop Codex automatically
 - `Ω` by itself means partial idle: safe stopping point, but more work could continue later
 - the long activity sentence ending in `Ω` means full idle: genuinely awaiting a new prompt
+- the exact activity may vary by pony, but every approved full-idle line must still end with one of the approved idle suffixes, such as `awaiting new instructions. Ω` or `waiting for new work. Ω`
 - the agent must not emit either idle marker when it still needs required user input
 - approvals, escalations, and required clarification questions must not include either idle marker
 

@@ -40,6 +40,26 @@ field_is_empty() {
   [[ -z "$value" || "$value" == "none" || "$value" == "no decision needed." || "$value" == "no decision needed" || "$value" == "n/a" ]]
 }
 
+filter_preflight_git_status() {
+  local git_status_input="${1:-}"
+  local path=""
+
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    path="${line#?? }"
+
+    if [[ "$path" == ".codex" ]]; then
+      continue
+    fi
+
+    if [[ "$AGENIC_PROJECT_ROOT" != "$agenic_root" ]] && [[ "$path" == pony/* ]]; then
+      continue
+    fi
+
+    printf '%s\n' "$line"
+  done <<<"$git_status_input"
+}
+
 workfile_indicates_waiting_for_concrete_task() {
   local work_status="$1"
   local work_scope="$2"
@@ -225,13 +245,15 @@ if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
 fi
 
 git_branch="$(git branch --show-current 2>/dev/null || true)"
-git_status="$(git status --short 2>/dev/null || true)"
+raw_git_status="$(git status --short 2>/dev/null || true)"
+git_status="$(filter_preflight_git_status "$raw_git_status")"
 
 if [[ -n "$expected_branch" ]] && [[ -z "$git_branch" || "$git_branch" != "$expected_branch" ]]; then
   if (( ! is_coordinator )) && [[ -z "$git_status" ]] && git show-ref --verify --quiet "refs/heads/$expected_branch"; then
     git switch "$expected_branch" >/dev/null 2>&1 || true
     git_branch="$(git branch --show-current 2>/dev/null || true)"
-    git_status="$(git status --short 2>/dev/null || true)"
+    raw_git_status="$(git status --short 2>/dev/null || true)"
+    git_status="$(filter_preflight_git_status "$raw_git_status")"
   fi
 fi
 
@@ -269,7 +291,11 @@ if (( is_coordinator )); then
     exit 0
   fi
 
-  set_push_status "$status_file" "clean_and_pushed"
+  if [[ -n "$raw_git_status" ]]; then
+    set_push_status "$status_file" "project_local_runtime_state"
+  else
+    set_push_status "$status_file" "clean_and_pushed"
+  fi
   decision_needed="$(field_block "DECISION_NEEDED" "$status_file")"
   questions_for_twi="$(field_block "QUESTIONS_FOR_TWI" "$status_file")"
   if ! field_is_empty "$decision_needed" || ! field_is_empty "$questions_for_twi"; then

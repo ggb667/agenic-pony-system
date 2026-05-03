@@ -5,7 +5,7 @@ pane_id="${1:?missing tmux pane id}"
 codex_pid="${2:?missing codex pid}"
 prompt_glyph="${3:?missing prompt glyph}"
 tmux_socket_path="${4:-}"
-idle_sentinel="${5:-awaiting new prompt instructions. Ω}"
+idle_sentinel="${5:-awaiting new instructions. Ω}"
 partial_idle_sentinel="${6:-Ω}"
 
 consecutive_idle_polls=0
@@ -34,7 +34,7 @@ pane_looks_idle() {
   [[ "$recent_lines" == *"$prompt_glyph"* ]] || return 1
   [[ "$recent_lines" == *"gpt-"*"·"* ]] || return 1
   [[ "$recent_lines" != *"Working ("* ]] || return 1
-  if [[ "$recent_lines" == *"$idle_sentinel"* ]] || [[ "$recent_lines" == *$'\n'"$partial_idle_sentinel"$'\n'* ]] || [[ "$recent_lines" == "$partial_idle_sentinel" ]]; then
+  if [[ "$recent_lines" == *"$idle_sentinel"* ]] || [[ "$recent_lines" =~ (waiting\ for|awaiting)\ new\ (tasks|work|instructions|directions)\.\ Ω$ ]] || [[ "$recent_lines" == *$'\n'"$partial_idle_sentinel"$'\n'* ]] || [[ "$recent_lines" == "$partial_idle_sentinel" ]]; then
     return 0
   fi
   return 1

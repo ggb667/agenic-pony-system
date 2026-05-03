@@ -134,14 +134,23 @@ workfile_name_for_slug() {
 
 worker_branch_for_slug() {
   local slug="${1:?missing worker slug}"
-  case "$slug" in
-    twi|celestia)
+  if [[ "$slug" == "twi" ]]; then
+    if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
       printf '%s\n' "$AGENIC_PROJECT_BRANCH"
-      ;;
-    *)
-      printf 'pony/%s/%s\n' "$slug" "$AGENIC_PROJECT_BRANCH"
-      ;;
-  esac
+    else
+      printf '%s\n' "pony/twi/main"
+    fi
+    return 0
+  fi
+  if [[ "$slug" == "celestia" ]]; then
+    printf '%s\n' "$AGENIC_PROJECT_BRANCH"
+    return 0
+  fi
+  if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
+    printf '%s\n' "$AGENIC_PROJECT_BRANCH"
+  else
+    printf 'pony/%s/main\n' "$slug"
+  fi
 }
 
 worker_worktree_for_slug() {
@@ -172,15 +181,106 @@ worker_slug_for_label() {
 
 idle_sentinel_for_personality() {
   case "${1:-}" in
-    TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'Princess Celestia is tending the sun and awaiting new prompt instructions. Ω\n' ;;
-    AJ|APPLEJACK) printf 'Applejack is bucking apples and awaiting new prompt instructions. Ω\n' ;;
-    FS|FLUTTERSHY|SHY|FLUTTERS) printf 'Fluttershy is feeding her animals and awaiting new prompt instructions. Ω\n' ;;
-    PINKIE|PINKIE_PIE) printf 'Pinkie Pie is baking a cake and awaiting new prompt instructions. Ω\n' ;;
-    RARITY|RARES) printf 'Rarity is sewing a dress and awaiting new prompt instructions. Ω\n' ;;
-    RD|RAINBOW|RAINBOW_DASH|DASH) printf 'Rainbow Dash is practicing tricks and awaiting new prompt instructions. Ω\n' ;;
-    SPIKE) printf 'Spike is reading a comic and awaiting new prompt instructions. Ω\n' ;;
-    TWI|TWILIGHT|TWILIGHT_SPARKLE) printf 'Twilight Sparkle is reading a book and awaiting new prompt instructions. Ω\n' ;;
+    TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'Princess Celestia is tending the sun and awaiting new instructions. Ω\n' ;;
+    AJ|APPLEJACK) printf 'Applejack is bucking apples and awaiting new instructions. Ω\n' ;;
+    FS|FLUTTERSHY|SHY|FLUTTERS) printf 'Fluttershy is feeding her animals and awaiting new instructions. Ω\n' ;;
+    PINKIE|PINKIE_PIE) printf 'Pinkie Pie is planning a party and awaiting new instructions. Ω\n' ;;
+    RARITY|RARES) printf 'Rarity is refining a sketch and awaiting new instructions. Ω\n' ;;
+    RD|RAINBOW|RAINBOW_DASH|DASH) printf 'Rainbow Dash is practicing new tricks and awaiting new instructions. Ω\n' ;;
+    SPIKE) printf 'Spike is sorting scrolls and awaiting new instructions. Ω\n' ;;
+    TWI|TWILIGHT|TWILIGHT_SPARKLE) printf 'Twilight Sparkle is reading a book and awaiting new instructions. Ω\n' ;;
     *) return 1 ;;
+  esac
+}
+
+idle_sentinel_options_for_personality() {
+  case "${1:-}" in
+    TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS)
+      cat <<'EOF'
+Princess Celestia is tending the sun and awaiting new instructions. Ω
+Princess Celestia is reviewing the budget, finances and the royal ledgers and awaiting new instructions. Ω
+Princess Celestia is reorganizing the royal library and awaiting new instructions. Ω
+Princess Celestia is passing judgement and awaiting new instructions. Ω
+Princess Celestia is composing memoirs and awaiting new instructions. Ω
+Princess Celestia is attending court and awaiting new instructions. Ω
+EOF
+      ;;
+    AJ|APPLEJACK)
+      cat <<'EOF'
+Applejack is bucking apples and awaiting new instructions. Ω
+Applejack is fixing a fence and awaiting new instructions. Ω
+Applejack is counting supply crates and awaiting new instructions. Ω
+Applejack is sweeping the barn and awaiting new instructions. Ω
+Applejack is pretending she is not supervising everypony else and awaiting new instructions. Ω
+EOF
+      ;;
+    FS|FLUTTERSHY|SHY|FLUTTERS)
+      cat <<'EOF'
+Fluttershy is feeding her animals and awaiting new instructions. Ω
+Fluttershy is conducting bird songs and awaiting new instructions. Ω
+Fluttershy is tending her garden and awaiting new instructions. Ω
+Fluttershy is humming softly and awaiting new instructions. Ω
+Fluttershy is wrestling a bear and awaiting new instructions. Ω
+EOF
+      ;;
+    PINKIE|PINKIE_PIE)
+      cat <<'EOF'
+Pinkie Pie is planning a party and awaiting new instructions. Ω
+Pinkie Pie is testing emergency confetti reserves and awaiting new instructions. Ω
+Pinkie Pie is reorganizing snack caches and awaiting new instructions. Ω
+Pinkie Pie is practicing dramatic gasps and awaiting new instructions. Ω
+Pinkie Pie is bouncing in place for operational readiness and awaiting new instructions. Ω
+EOF
+      ;;
+    RARITY|RARES)
+      cat <<'EOF'
+Rarity is refining a sketch and awaiting new instructions. Ω
+Rarity is alphabetizing fabric swatches and awaiting new instructions. Ω
+Rarity is polishing gemstones and awaiting new instructions. Ω
+Rarity is correcting a tragic color choice and awaiting new instructions. Ω
+Rarity is fainting artistically but with purpose and awaiting new instructions. Ω
+EOF
+      ;;
+    RD|RAINBOW|RAINBOW_DASH|DASH)
+      cat <<'EOF'
+Rainbow Dash is practicing new tricks and awaiting new instructions. Ω
+Rainbow Dash is napping on a cloud and awaiting new instructions. Ω
+Rainbow Dash is racing wonderbolts and awaiting new instructions. Ω
+Rainbow Dash is napping in a tree and awaiting new instructions. Ω
+Rainbow Dash is doing laps and awaiting new instructions. Ω
+Rainbow Dash is napping in bed and awaiting new instructions. Ω
+Rainbow Dash is busting clouds and awaiting new instructions. Ω
+Rainbow Dash is carb loading before working out and awaiting new instructions. Ω
+Rainbow Dash is helping friends and awaiting new instructions. Ω
+Rainbow Dash is sleep flying and awaiting new instructions. Ω
+Rainbow Dash is reorganizing the weather schedule and awaiting new instructions. Ω
+Rainbow Dash is definitely not showing off and awaiting new instructions. Ω
+EOF
+      ;;
+    SPIKE)
+      cat <<'EOF'
+Spike is sorting scrolls and awaiting new instructions. Ω
+Spike is sharpening quills and awaiting new instructions. Ω
+Spike is checking checklists and awaiting new instructions. Ω
+Spike is sending letters and awaiting new instructions. Ω
+Spike is reporting Twilight's activities to Celestia and awaiting new instructions. Ω
+Spike is waiting to be appreciated for keeping Equestria safe and awaiting new instructions. Ω
+EOF
+      ;;
+    TWI|TWILIGHT|TWILIGHT_SPARKLE)
+      cat <<'EOF'
+Twilight Sparkle is reading a book and awaiting new instructions. Ω
+Twilight Sparkle is cross-referencing three other books and awaiting new instructions. Ω
+Twilight Sparkle is updating a checklist and awaiting new instructions. Ω
+Twilight Sparkle is color-coding a checklist and awaiting new instructions. Ω
+Twilight Sparkle is building a better checklist and awaiting new instructions. Ω
+Twilight Sparkle is practicing her magic and awaiting new instructions. Ω
+Twilight Sparkle is eating a daisy sandwich and awaiting new instructions. Ω
+EOF
+      ;;
+    *)
+      return 1
+      ;;
   esac
 }
 

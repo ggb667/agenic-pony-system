@@ -46,6 +46,15 @@ write_managed_file() {
   printf '%s' "$content" >"$path"
 }
 
+sync_managed_tree() {
+  local source_dir="${1:?missing source dir}"
+  local target_dir="${2:?missing target dir}"
+
+  mkdir -p "$target_dir"
+  find "$target_dir" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+  cp -R "$source_dir/." "$target_dir/"
+}
+
 ensure_git_exclude_rule() {
   local pattern="${1:?missing pattern}"
   git -C "$AGENIC_PROJECT_ROOT" rev-parse --show-toplevel >/dev/null 2>&1 || return 0
@@ -645,7 +654,7 @@ for prompt_template in "$source_pony_launch_prompts_dir"/*.txt; do
 done
 
 if [[ -d "$source_pony_root/assets" ]] && [[ "$source_pony_root/assets" != "$AGENIC_PROJECT_PONY_ASSETS_DIR" ]]; then
-  cp -R "$source_pony_root/assets/." "$AGENIC_PROJECT_PONY_ASSETS_DIR/"
+  sync_managed_tree "$source_pony_root/assets" "$AGENIC_PROJECT_PONY_ASSETS_DIR"
 fi
 
 if ! is_agenic_source_project && [[ -d "$agenic_root/vendor/prompt_toolkit" ]]; then

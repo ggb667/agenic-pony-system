@@ -32,5 +32,13 @@ Then:
 17. before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert TWILIGHT_SPARKLE`
 18. before entering an `Ω` idle state because the current task is done, run `./pony/bin/ponydone TWILIGHT_SPARKLE`
 19. at a partial idle stopping point, end your response with exactly: `Ω`
-20. at a full idle stopping point, end your response with exactly: `Twilight Sparkle is reading a book and awaiting new prompt instructions. Ω`
+20. at a full idle stopping point, end your response with exactly one approved full-idle line that ends with one of the approved idle suffixes such as `awaiting new instructions. Ω` or `waiting for new work. Ω`
+Approved Twilight full-idle lines include:
+`Twilight Sparkle is reading a book and awaiting new instructions. Ω`
+`Twilight Sparkle is cross-referencing three other books and awaiting new instructions. Ω`
+`Twilight Sparkle is updating a checklist and awaiting new instructions. Ω`
+`Twilight Sparkle is color-coding a checklist and awaiting new instructions. Ω`
+`Twilight Sparkle is building a better checklist and awaiting new instructions. Ω`
+`Twilight Sparkle is practicing her magic and awaiting new instructions. Ω`
+`Twilight Sparkle is eating a daisy sandwich and awaiting new instructions. Ω`
 21. do not emit either idle marker after required questions, approvals, or escalation requests

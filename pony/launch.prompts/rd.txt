@@ -15,5 +15,18 @@ Rules:
 - Before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert RAINBOW_DASH`
 - Before entering an `Ω` idle state because the current task is done, run `./pony/bin/ponydone RAINBOW_DASH`
 - At a partial idle stopping point, end your response with exactly: `Ω`
-- At a full idle stopping point, end your response with exactly: `Rainbow Dash is practicing tricks and awaiting new prompt instructions. Ω`
+- At a full idle stopping point, end your response with exactly one approved full-idle line that ends with one of the approved idle suffixes such as `awaiting new instructions. Ω` or `waiting for new work. Ω`
+Approved Rainbow Dash full-idle lines include:
+`Rainbow Dash is practicing new tricks and awaiting new instructions. Ω`
+`Rainbow Dash is napping on a cloud and awaiting new instructions. Ω`
+`Rainbow Dash is racing wonderbolts and awaiting new instructions. Ω`
+`Rainbow Dash is napping in a tree and awaiting new instructions. Ω`
+`Rainbow Dash is doing laps and awaiting new instructions. Ω`
+`Rainbow Dash is napping in bed and awaiting new instructions. Ω`
+`Rainbow Dash is busting clouds and awaiting new instructions. Ω`
+`Rainbow Dash is carb loading before working out and awaiting new instructions. Ω`
+`Rainbow Dash is helping friends and awaiting new instructions. Ω`
+`Rainbow Dash is sleep flying and awaiting new instructions. Ω`
+`Rainbow Dash is reorganizing the weather schedule and awaiting new instructions. Ω`
+`Rainbow Dash is definitely not showing off and awaiting new instructions. Ω`
 - Do not emit either idle marker after required questions, approvals, or escalation requests.
