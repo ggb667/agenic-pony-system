@@ -32,7 +32,7 @@ That means:
 - runtime tests should be exercised from the target project's `pony/` tree
 - `codex-rs` changes are only for Codex-specific UI behavior such as pony prompt symbol or color work
 
-The source repo has its own special case: the agenic source installation should keep the live Warp launcher set focused on source-repo governance and coordination work, with Celestia as the dedicated source-repo Warp launcher while Twilight remains the coordinator. Worker launcher behavior is validated from project-local installs. When the runtime is operating inside an installed target project, that target project's `pony/team.coordination`, `pony/work`, and project files are the live local state for that run.
+The source repo has its own special case: the agenic source installation should keep the live Warp launcher set focused on source-repo governance and coordination work, with Celestia as the dedicated source-repo Warp launcher while Twilight remains the coordinator. Worker launcher behavior is validated from project-local installs. When the runtime is operating inside an installed target project, that target project's `pony/team.coordination`, `pony/work`, and project files are the live local state for that run. Within that local state, `pony/work/*.md` is the canonical home for worker-local task state, while mailboxes and coordinator status files should summarize deltas and route requests rather than duplicate the full working record.
 
 Installed launchers may still bootstrap through the reusable source layer before returning to the project-local runtime. That bootstrap hop is expected managed plumbing, not a cross-repo coordination violation. Policy and work state remain authoritative in the target project's local `pony/` tree once the launcher hands control back to the installed project runtime.
 
@@ -41,7 +41,7 @@ For shared pony audio asset renames, the preferred operator workflow is two-step
 1. the active pony runs its local `ponyalert` so the user can hear the clip and see the emitted stem
 2. the user states the exact desired rename wording
 3. the pony resolves the exact `.wav` path
-4. if the authoritative asset is in shared `agenic-pony-system`, the pony appends a request to `agenic-pony-system/pony/team.coordination/celestia.mailbox.md` instead of editing prompts, launcher config, or unrelated project-local files
+4. if the authoritative asset is in shared `agenic-pony-system`, the pony appends a concise request to `agenic-pony-system/pony/team.coordination/celestia.mailbox.md` instead of editing prompts, launcher config, or unrelated project-local files
 
 The system should not assume it can derive the correct filename from the spoken audio alone unless a dedicated transcription mechanism is explicitly provided.
 
