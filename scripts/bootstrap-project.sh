@@ -675,6 +675,8 @@ done
 for managed_script in \
   codex-tmux-monitor.sh \
   pony-paths.sh \
+  pony-audio.sh \
+  pony-audio-host.sh \
   runtime-fingerprint.sh \
   enter-twi-session.sh \
   enter-worker-and-codex.sh \
