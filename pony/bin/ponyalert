@@ -73,6 +73,5 @@ chosen_wav="${files[$choice_index]}"
 chosen_name="$(basename "$chosen_wav" .wav)"
 pony_audio_debug "ponyalert" "selected $chosen_wav"
 printf '%s\n' "$chosen_name"
-pony_audio_play_wmplayer "ponyalert" "$prefix" "$chosen_wav" "ponyalert" || \
-  pony_audio_play_local "ponyalert" "$chosen_wav" || \
-  pony_audio_play_fallback_beep "ponyalert" "$chosen_name"
+pony_audio_request_host_play "ponyalert" "$prefix" "$chosen_wav" "$chosen_name" "ponyalert" || \
+  pony_audio_play_direct "ponyalert" "$prefix" "$chosen_wav" "$chosen_name" "ponyalert"

@@ -88,10 +88,42 @@ _agenic_pony_apply_identity
 _agenic_pony_set_terminal_title
 _agenic_pony_log "after identity apply: pwd=$PWD personality=${PERSONALITY:-unset}"
 
+_agenic_pony_start_audio_host() {
+  local source_root runtime_dir host_script pid_file fifo_path log_path host_pid
+
+  source_root="$(./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"
+  export AGENIC_PONY_SOURCE_ROOT="${source_root}"
+  runtime_dir="${AGENIC_PROJECT_ROOT}/pony/runtime"
+  mkdir -p "$runtime_dir"
+
+  fifo_path="${runtime_dir}/audio.host.fifo"
+  pid_file="${runtime_dir}/audio.host.pid"
+  log_path="${runtime_dir}/audio.host.log"
+  host_script="${source_root}/pony/scripts/pony-audio-host.sh"
+
+  export AGENIC_PONY_AUDIO_HOST_FIFO="$fifo_path"
+  export AGENIC_PONY_AUDIO_HOST_PID_FILE="$pid_file"
+
+  if [[ -f "$pid_file" ]]; then
+    read -r host_pid <"$pid_file" || host_pid=""
+    if [[ -n "$host_pid" ]] && kill -0 "$host_pid" 2>/dev/null; then
+      _agenic_pony_log "audio host already running: pid=${host_pid}"
+      return 0
+    fi
+  fi
+
+  rm -f "$pid_file" "$fifo_path"
+  _agenic_pony_log "starting audio host: script=${host_script} fifo=${fifo_path}"
+  "${host_script}" "${AGENIC_PROJECT_ROOT}" "${fifo_path}" "${pid_file}" >>"${log_path}" 2>&1 &
+  disown
+}
+
+_agenic_pony_start_audio_host
+
 if [[ -z "${AGENIC_PONY_AUTORAN:-}" ]]; then
   export AGENIC_PONY_AUTORAN=1
   _agenic_pony_log "autorun start-session: personality=${AGENIC_LAUNCH_PERSONALITY} project=${AGENIC_PROJECT_ROOT}"
-  source_root="$(./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"
+  source_root="${AGENIC_PONY_SOURCE_ROOT}"
   _agenic_pony_log "resolved source root: ${source_root}"
   export AGENIC_PONY_SOURCE_ROOT="${source_root}"
   "${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}" </dev/tty >/dev/tty 2>&1

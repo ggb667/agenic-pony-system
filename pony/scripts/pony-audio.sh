@@ -23,44 +23,54 @@ pony_audio_run_with_timeout() {
 
 pony_audio_can_use_windows_audio() {
   if [ "$pony_audio_windows_ready" = "yes" ]; then
+    pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "windows audio probe cached yes"
     return 0
   fi
   if [ "$pony_audio_windows_ready" = "no" ]; then
+    pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "windows audio probe cached no"
     return 1
   fi
 
   command -v powershell.exe >/dev/null 2>&1 || {
+    pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "windows audio unavailable: powershell.exe not found"
     pony_audio_windows_ready=no
     return 1
   }
 
   if powershell.exe -NoProfile -Command "exit 0" >/dev/null 2>&1; then
+    pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "windows audio probe succeeded"
     pony_audio_windows_ready=yes
     return 0
   fi
 
+  pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "windows audio probe failed"
   pony_audio_windows_ready=no
   return 1
 }
 
 pony_audio_can_use_local_audio() {
   if [ "$pony_audio_local_ready" = "yes" ]; then
+    pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "local audio probe cached yes"
     return 0
   fi
   if [ "$pony_audio_local_ready" = "no" ]; then
+    pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "local audio probe cached no"
     return 1
   fi
 
   command -v ffplay >/dev/null 2>&1 || {
+    pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "local audio unavailable: ffplay not found"
     pony_audio_local_ready=no
     return 1
   }
 
   if pony_audio_run_with_timeout 2s ffplay -nodisp -autoexit -loglevel error -f lavfi -t 0.1 anullsrc=r=48000:cl=mono >/dev/null 2>&1; then
+    pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "local audio probe succeeded"
     pony_audio_local_ready=yes
     return 0
   fi
 
+  pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "local audio probe failed"
   pony_audio_local_ready=no
   return 1
 }
@@ -91,6 +101,7 @@ pony_audio_play_wmplayer() {
   local temp_stem="${4:?missing temp stem}"
   local win_tmp_dir base win_copy win_path ps enc
 
+  PONY_AUDIO_TOOL_NAME="$tool_name"
   pony_audio_can_use_windows_audio || return 1
   win_tmp_dir="/mnt/c/Users/${USER}/AppData/Local/Temp"
   [ -d "$win_tmp_dir" ] || return 1
@@ -140,4 +151,40 @@ pony_audio_play_fallback_beep() {
   printf '\a'
   sleep 0.15
   printf '\a'
+}
+
+pony_audio_play_direct() {
+  local tool_name="${1:?missing tool name}"
+  local prefix="${2:?missing prefix}"
+  local wav_path="${3:?missing wav path}"
+  local clip_name="${4:-}"
+  local temp_stem="${5:?missing temp stem}"
+
+  pony_audio_play_wmplayer "$tool_name" "$prefix" "$wav_path" "$temp_stem" || \
+    pony_audio_play_local "$tool_name" "$wav_path" || \
+    pony_audio_play_fallback_beep "$tool_name" "$clip_name"
+}
+
+pony_audio_request_host_play() {
+  local tool_name="${1:?missing tool name}"
+  local prefix="${2:?missing prefix}"
+  local wav_path="${3:?missing wav path}"
+  local clip_name="${4:-}"
+  local temp_stem="${5:?missing temp stem}"
+  local fifo_path="${AGENIC_PONY_AUDIO_HOST_FIFO:-}"
+  local pid_file="${AGENIC_PONY_AUDIO_HOST_PID_FILE:-}"
+  local host_pid=""
+
+  [[ -n "$fifo_path" && -p "$fifo_path" ]] || return 1
+  [[ -n "$pid_file" && -f "$pid_file" ]] || return 1
+  read -r host_pid <"$pid_file" || host_pid=""
+  [[ -n "$host_pid" ]] || return 1
+  kill -0 "$host_pid" 2>/dev/null || return 1
+
+  pony_audio_debug "$tool_name" "requesting audio host playback via $fifo_path"
+  pony_audio_run_with_timeout 1s bash -c '
+    fifo_path="$1"
+    shift
+    printf "%s\t%s\t%s\t%s\t%s\n" "$@" >"$fifo_path"
+  ' bash "$fifo_path" "$tool_name" "$prefix" "$wav_path" "$clip_name" "$temp_stem" >/dev/null 2>&1
 }
