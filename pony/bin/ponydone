@@ -3,6 +3,7 @@ set -eu
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 voices_dir="$(cd "$script_dir/../assets/voices/doneWithTask" && pwd)"
+source "$script_dir/../scripts/pony-audio.sh"
 
 default_personality="TWILIGHT_SPARKLE"
 repo_root="$(cd "$script_dir/../.." && pwd)"
@@ -29,98 +30,22 @@ if [ "$prefix" = "princess_celestia_" ] && ! find "$voices_dir" -maxdepth 1 -typ
   prefix="twilight_sparkle_"
 fi
 
-pony_debug() {
-  if [ "${PONYDEBUG:-0}" = "1" ]; then
-    printf 'ponydone: %s\n' "$*" >&2
-  fi
-}
-
 mapfile -d '' files < <(
   find "$voices_dir" -maxdepth 1 -type f -iname "${prefix}*.wav" -print0 | sort -z
 )
 
 if [ "${#files[@]}" -eq 0 ]; then
-  pony_debug "no matching wav files for prefix ${prefix}; using double bell fallback"
+  pony_audio_debug "ponydone" "no matching wav files for prefix ${prefix}; using double bell fallback"
   printf '\a\a'
   exit 0
 fi
 
 choice_index=$(( RANDOM % ${#files[@]} ))
 chosen_wav="${files[$choice_index]}"
-pony_debug "selected $chosen_wav"
+chosen_name="$(basename "$chosen_wav" .wav)"
+pony_audio_debug "ponydone" "selected $chosen_wav"
+printf '%s\n' "$chosen_name"
 
-run_with_timeout() {
-  local duration="${1:-5s}"
-  shift || true
-  if command -v timeout >/dev/null 2>&1; then
-    timeout "$duration" "$@"
-  else
-    "$@"
-  fi
-}
-
-play_local() {
-  if command -v ffplay >/dev/null 2>&1; then
-    pony_debug "trying ffplay"
-    run_with_timeout 5s ffplay -nodisp -autoexit -loglevel error "$chosen_wav" >/dev/null 2>&1 && return 0
-  fi
-  if command -v aplay >/dev/null 2>&1; then
-    pony_debug "trying aplay"
-    run_with_timeout 5s aplay -q "$chosen_wav" >/dev/null 2>&1 && return 0
-  fi
-  if command -v paplay >/dev/null 2>&1; then
-    pony_debug "trying paplay"
-    run_with_timeout 5s paplay "$chosen_wav" >/dev/null 2>&1 && return 0
-  fi
-  return 1
-}
-
-play_wmplayer() {
-  local win_tmp_dir base win_copy win_path ps enc
-
-  command -v powershell.exe >/dev/null 2>&1 || return 1
-  win_tmp_dir="/mnt/c/Users/${USER}/AppData/Local/Temp"
-  [ -d "$win_tmp_dir" ] || return 1
-
-  base="ponydone-${prefix}$$-$RANDOM.wav"
-  win_copy="$win_tmp_dir/$base"
-  pony_debug "trying Windows audio via $win_copy"
-  cp "$chosen_wav" "$win_copy" >/dev/null 2>&1 || return 1
-
-  win_path="C:\\Users\\${USER}\\AppData\\Local\\Temp\\$base"
-  ps=$(cat <<EOF2
-\$path = '$win_path'
-\$player = \$null
-try {
-  \$player = New-Object System.Media.SoundPlayer \$path
-  \$player.Load()
-  \$player.PlaySync()
-  Remove-Item \$path -ErrorAction SilentlyContinue
-  Write-Output 'soundplayer_ok'
-  exit 0
-} catch {
-}
-\$p = Start-Process -FilePath 'C:\Program Files (x86)\Windows Media Player\wmplayer.exe' -ArgumentList \$path -WindowStyle Minimized -PassThru
-Start-Sleep -Seconds 4
-if (-not \$p.HasExited) {
-  Stop-Process -Id \$p.Id -Force
-}
-Remove-Item \$path -ErrorAction SilentlyContinue
-Write-Output 'wmplayer_ok'
-EOF2
-)
-  enc=$(printf '%s' "$ps" | iconv -f UTF-8 -t UTF-16LE | base64 -w0)
-
-  run_with_timeout 12s powershell.exe -NoProfile -EncodedCommand "$enc" >/dev/null 2>&1 && return 0
-  rm -f "$win_copy" >/dev/null 2>&1 || true
-  return 1
-}
-
-play_fallback_beep() {
-  pony_debug "using double bell fallback"
-  printf '\a'
-  sleep 0.15
-  printf '\a'
-}
-
-play_wmplayer || play_local || play_fallback_beep
+pony_audio_play_wmplayer "ponydone" "$prefix" "$chosen_wav" "ponydone" || \
+  pony_audio_play_local "ponydone" "$chosen_wav" || \
+  pony_audio_play_fallback_beep "ponydone" "$chosen_name"
