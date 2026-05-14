@@ -26,9 +26,7 @@ if [[ "$project_root" != "$agenic_root" ]] && [[ "${AGENIC_PONY_REFRESH_REEXEC:-
 fi
 
 if [[ -n "${WARP_LAUNCH_CONFIG_DIR:-}" || -d /mnt/c/Users/"$USER"/AppData/Roaming/warp/Warp/data/launch_configurations ]]; then
-  if [[ ! -f "$AGENIC_PROJECT_PONY_WINDOWS_WARP_MARKER" ]]; then
-    "$agenic_root/scripts/install-warp-launch-configs.sh" "$project_root" >/dev/null || true
-  fi
+  "$agenic_root/scripts/install-warp-launch-configs.sh" "$project_root" >/dev/null || true
 fi
 
 preferred_repo_codex="/home/ggb66/dev/codex/codex-rs/target/debug/codex-tui"

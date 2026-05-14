@@ -37,15 +37,9 @@ pony_audio_can_use_windows_audio() {
     return 1
   }
 
-  if powershell.exe -NoProfile -Command "exit 0" >/dev/null 2>&1; then
-    pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "windows audio probe succeeded"
-    pony_audio_windows_ready=yes
-    return 0
-  fi
-
-  pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "windows audio probe failed"
-  pony_audio_windows_ready=no
-  return 1
+  pony_audio_debug "${PONY_AUDIO_TOOL_NAME:-pony-audio}" "windows audio command available"
+  pony_audio_windows_ready=yes
+  return 0
 }
 
 pony_audio_can_use_local_audio() {
@@ -79,6 +73,14 @@ pony_audio_play_local() {
   local tool_name="${1:?missing tool name}"
   local wav_path="${2:?missing wav path}"
 
+  if [[ -n "${PULSE_SERVER:-}" ]]; then
+    pony_audio_debug "$tool_name" "PulseAudio environment detected: $PULSE_SERVER"
+    if command -v ffplay >/dev/null 2>&1; then
+      pony_audio_debug "$tool_name" "trying ffplay via SDL pulse driver"
+      pony_audio_run_with_timeout 5s env SDL_AUDIODRIVER=pulse ffplay -nodisp -autoexit -loglevel error "$wav_path" >/dev/null 2>&1 && return 0
+    fi
+  fi
+
   if pony_audio_can_use_local_audio; then
     pony_audio_debug "$tool_name" "trying ffplay"
     pony_audio_run_with_timeout 5s ffplay -nodisp -autoexit -loglevel error "$wav_path" >/dev/null 2>&1 && return 0
@@ -99,10 +101,32 @@ pony_audio_play_wmplayer() {
   local prefix="${2:?missing prefix}"
   local wav_path="${3:?missing wav path}"
   local temp_stem="${4:?missing temp stem}"
-  local win_tmp_dir base win_copy win_path ps enc
+  local win_tmp_dir base win_copy win_path direct_win_path ps enc
 
   PONY_AUDIO_TOOL_NAME="$tool_name"
   pony_audio_can_use_windows_audio || return 1
+  if command -v wslpath >/dev/null 2>&1; then
+    direct_win_path="$(wslpath -w "$wav_path" 2>/dev/null || true)"
+    if [ -n "$direct_win_path" ]; then
+      pony_audio_debug "$tool_name" "trying Windows SoundPlayer via direct WSL path $direct_win_path"
+      ps=$(cat <<EOF2
+\$path = '$direct_win_path'
+try {
+  \$player = New-Object System.Media.SoundPlayer \$path
+  \$player.Load()
+  \$player.PlaySync()
+  Write-Output 'soundplayer_direct_ok'
+  exit 0
+} catch {
+  exit 1
+}
+EOF2
+)
+      enc=$(printf '%s' "$ps" | iconv -f UTF-8 -t UTF-16LE | base64 -w0)
+      pony_audio_run_with_timeout 12s powershell.exe -NoProfile -EncodedCommand "$enc" >/dev/null 2>&1 && return 0
+    fi
+  fi
+
   win_tmp_dir="/mnt/c/Users/${USER}/AppData/Local/Temp"
   [ -d "$win_tmp_dir" ] || return 1
 
