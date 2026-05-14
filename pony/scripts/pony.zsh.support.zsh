@@ -67,7 +67,11 @@ if [[ -o interactive ]]; then
   pony_runtime_sync_notice() {
     ./pony/scripts/queue-runtime.sh init >/dev/null 2>&1 || return 0
     ./pony/scripts/queue-runtime.sh pending-notice >/dev/null 2>&1 || true
-    if [[ -s "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH" ]] && ! cmp -s "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH" "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_SEEN_PATH"; then
+    if [[ ! -s "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH" ]]; then
+      : >| "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_SEEN_PATH"
+      return 0
+    fi
+    if ! cmp -s "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH" "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_SEEN_PATH"; then
       printf '\n%s\n' "$(<"$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH")"
       cat "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH" > "$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_SEEN_PATH"
     fi
