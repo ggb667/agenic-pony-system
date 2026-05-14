@@ -114,8 +114,7 @@ _agenic_pony_start_audio_host() {
 
   rm -f "$pid_file" "$fifo_path"
   _agenic_pony_log "starting audio host: script=${host_script} fifo=${fifo_path}"
-  "${host_script}" "${AGENIC_PROJECT_ROOT}" "${fifo_path}" "${pid_file}" >>"${log_path}" 2>&1 &
-  disown
+  nohup "${host_script}" "${AGENIC_PROJECT_ROOT}" "${fifo_path}" "${pid_file}" </dev/null >>"${log_path}" 2>&1 &
 }
 
 _agenic_pony_start_audio_host
