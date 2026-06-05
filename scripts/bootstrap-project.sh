@@ -289,6 +289,15 @@ set -euo pipefail
 exec "$AGENIC_PROJECT_ROOT/pony/bin/codex-pony" "\$@"
 EOF
 )"
+
+  for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart; do
+    write_managed_executable "$worktree_pony_bin_dir/$managed_bin" "$(cat <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec "$AGENIC_PROJECT_ROOT/pony/bin/$managed_bin" "\$@"
+EOF
+)"
+  done
 }
 
 write_project_config_if_missing() {

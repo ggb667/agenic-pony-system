@@ -2,13 +2,33 @@
 set -eu
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_dir/../.." && pwd)"
 voices_dir="$(cd "$script_dir/../assets/voices/askingForHelp" && pwd)"
+source "$script_dir/../scripts/pony-paths.sh"
 source "$script_dir/../scripts/pony-audio.sh"
 
 default_personality="TWILIGHT_SPARKLE"
-repo_root="$(cd "$script_dir/../.." && pwd)"
 if [[ "$(basename "$repo_root")" == "agenic-pony-system" ]]; then
   default_personality="PRINCESS_CELESTIA_SOL_INVICTUS"
+fi
+
+load_project_paths "$repo_root"
+export AGENIC_PONY_AUDIO_HOST_FIFO="$AGENIC_PROJECT_PONY_RUNTIME_DIR/audio.host.fifo"
+export AGENIC_PONY_AUDIO_HOST_PID_FILE="$AGENIC_PROJECT_PONY_RUNTIME_DIR/audio.host.pid"
+
+usage() {
+  printf 'Usage: %s [PERSONALITY]\n' "$(basename "$0")" >&2
+}
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "$#" -gt 1 ]]; then
+  usage
+  printf 'ERROR: expected at most one personality argument; got %s\n' "$#" >&2
+  exit 64
 fi
 
 personality="${1:-${AGENIC_LAUNCH_PERSONALITY:-${PERSONALITY:-$default_personality}}}"

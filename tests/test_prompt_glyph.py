@@ -136,6 +136,26 @@ class PromptGlyphTests(unittest.TestCase):
                 f'source "{project_root}/pony/scripts/pony.zsh.support.zsh"',
                 (project_root / "pony/worktrees/aj/pony/scripts/pony.zsh.support.zsh").read_text(encoding="utf-8"),
             )
+            self.assertEqual(
+                (
+                    project_root / "pony/worktrees/aj/pony/bin/ponydone"
+                ).read_text(encoding="utf-8"),
+                (
+                    "#!/usr/bin/env bash\n"
+                    "set -euo pipefail\n"
+                    f'exec "{project_root}/pony/bin/ponydone" "$@"'
+                ),
+            )
+            self.assertEqual(
+                (
+                    project_root / "pony/worktrees/aj/pony/bin/ponyalert"
+                ).read_text(encoding="utf-8"),
+                (
+                    "#!/usr/bin/env bash\n"
+                    "set -euo pipefail\n"
+                    f'exec "{project_root}/pony/bin/ponyalert" "$@"'
+                ),
+            )
 
             result = subprocess.run(
                 [
