@@ -136,6 +136,47 @@ For git-backed projects, these generated `pony/` install outputs are ignored by
 default through a managed local Git exclude entry. If a team wants to version
 that tree deliberately, they can remove or adjust the managed `/pony/` exclude.
 
+## Sharing With Another Engineer
+
+If another engineer wants your current local Codex fork plus the pony runtime,
+the clean split is:
+
+1. clone your Codex fork
+2. clone `agenic-pony-system`
+3. install the pony runtime into the target project
+
+Example:
+
+```sh
+git clone https://github.com/ggb667/codex.git
+cd codex
+git checkout main
+
+git clone https://github.com/ggb667/agenic-pony-system.git
+cd agenic-pony-system
+git checkout main
+```
+
+Then from inside the target project they want to pony-enable:
+
+```sh
+/path/to/agenic-pony-system/scripts/install-project.sh
+/path/to/agenic-pony-system/scripts/install-warp-launch-configs.sh
+```
+
+Or explicitly:
+
+```sh
+/path/to/agenic-pony-system/scripts/install-project.sh /path/to/project
+/path/to/agenic-pony-system/scripts/install-warp-launch-configs.sh /path/to/project
+```
+
+If they want the exact Codex revision you tested locally, have them pin to the
+fork commit you shared along with these instructions.
+
+If they want GitHub MCP inside pony-launched sessions, they must also create a
+per-project launch env file containing `GITHUB_PAT_TOKEN` as described below.
+
 ## Session Environment
 
 Pony launchers can load extra environment variables for the Codex process before
