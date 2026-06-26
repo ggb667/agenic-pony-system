@@ -29,6 +29,31 @@ if [[ -n "${WARP_LAUNCH_CONFIG_DIR:-}" || -d /mnt/c/Users/"$USER"/AppData/Roamin
   "$agenic_root/scripts/install-warp-launch-configs.sh" "$project_root" >/dev/null || true
 fi
 
+source_launch_env() {
+  local env_file=""
+
+  if [[ -n "${AGENIC_PONY_ENV_FILE:-}" ]]; then
+    env_file="${AGENIC_PONY_ENV_FILE}"
+  elif [[ -f "$AGENIC_PROJECT_PONY_RUNTIME_DIR/launch.env" ]]; then
+    env_file="$AGENIC_PROJECT_PONY_RUNTIME_DIR/launch.env"
+  else
+    env_file="$(default_launch_env_file "$AGENIC_PROJECT_ROOT")"
+  fi
+
+  [[ -n "$env_file" ]] || return 0
+  if [[ ! -f "$env_file" ]]; then
+    pony_launch_debug "codex-pony launch env missing: env_file=$env_file"
+    return 0
+  fi
+
+  set -a
+  source "$env_file"
+  set +a
+  pony_launch_debug "codex-pony launch env loaded: env_file=$env_file github_token=$( [[ -n "${GITHUB_PAT_TOKEN:-}" ]] && printf 'present' || printf 'missing' )"
+}
+
+source_launch_env
+
 preferred_repo_codex="/home/ggb66/dev/codex/codex-rs/target/debug/codex-tui"
 codex_bin="${CODEX_PONY_BIN:-}"
 if [[ -z "$codex_bin" ]]; then
