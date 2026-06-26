@@ -16,3 +16,4 @@
 - reusable launch-prompt coordination instructions should be optional at startup and disableable via `AGENIC_PONY_DISABLE_REUSABLE_PROMPT=1` without removing pony voice, alerting, or idle behavior
 - project installs should self-refresh managed pony launchers, scripts, and reusable prompt templates on rerun so repo-local startup behavior can heal stale installs
 - shell launchers should run the first `start-session.sh` handoff directly from shell init instead of injecting a quoted command into `BUFFER`
+- shell launchers should source an explicit launch env file before starting Codex so MCP credentials such as `GITHUB_PAT_TOKEN` do not depend on ambient shell startup state

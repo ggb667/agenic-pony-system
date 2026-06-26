@@ -5,6 +5,7 @@ personality="${1:?missing personality}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 launch_project_root="$(cd "$script_dir/../.." && pwd)"
 source "$script_dir/launch-debug.sh"
+source "$script_dir/pony-paths.sh"
 
 case "$personality" in
   PRINCESS_CELESTIA_SOL_INVICTUS) pony_func="celestia" ;;
@@ -27,6 +28,9 @@ unset AGENIC_PONY_AUTORAN
 unset AGENIC_PONY_AUTORAN_DONE
 pony_launch_debug_init
 pony_launch_debug "launch wrapper start: pwd=$PWD project_root=$launch_project_root personality=$personality pony_func=${pony_func:-none}"
+
+default_env_file="$(default_launch_env_file "$launch_project_root")"
+export AGENIC_PONY_DEFAULT_ENV_FILE="$default_env_file"
 
 launcher_home_root="${TMPDIR:-/tmp}/agenic-pony-zdotdir"
 launcher_home="$launcher_home_root/${USER:-user}-$(basename "$launch_project_root")-${personality}"
@@ -52,6 +56,32 @@ _agenic_pony_log "after reasserting project root: pwd=$PWD autoran=${AGENIC_PONY
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 [[ -f ./pony/scripts/pony.zsh.support.zsh ]] && source ./pony/scripts/pony.zsh.support.zsh || true
 _agenic_pony_log "after sourcing pony.zsh.support.zsh: pwd=$PWD personality=${PERSONALITY:-unset}"
+
+_agenic_pony_source_launch_env() {
+  local env_file=""
+
+  if [[ -n "${AGENIC_PONY_ENV_FILE:-}" ]]; then
+    env_file="${AGENIC_PONY_ENV_FILE}"
+  elif [[ -f "${AGENIC_PROJECT_ROOT}/pony/runtime/launch.env" ]]; then
+    env_file="${AGENIC_PROJECT_ROOT}/pony/runtime/launch.env"
+  elif [[ -f "${AGENIC_PONY_DEFAULT_ENV_FILE:-}" ]]; then
+    env_file="${AGENIC_PONY_DEFAULT_ENV_FILE}"
+  fi
+
+  [[ -n "$env_file" ]] || return 0
+  if [[ ! -f "$env_file" ]]; then
+    _agenic_pony_log "launch env file missing: ${env_file}"
+    return 0
+  fi
+
+  _agenic_pony_log "sourcing launch env file: ${env_file}"
+  set -a
+  source "$env_file"
+  set +a
+}
+
+_agenic_pony_source_launch_env
+_agenic_pony_log "after launch env load: github_token=$( [[ -n "${GITHUB_PAT_TOKEN:-}" ]] && printf 'present' || printf 'missing' )"
 
 _agenic_pony_apply_identity() {
   if [[ -n "${PONY_FUNC:-}" ]] && whence -w "${PONY_FUNC}" >/dev/null 2>&1; then

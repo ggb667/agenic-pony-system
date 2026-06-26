@@ -140,6 +140,29 @@ It should describe:
 - supported launch surfaces
 - any project-local defaults needed by the pony runtime
 
+## Launch Environment
+
+Codex launchers need a deliberate way to receive MCP credentials and similar
+session-only secrets without depending on incidental shell startup state.
+
+Supported load order:
+
+1. `AGENIC_PONY_ENV_FILE` when the operator explicitly points at a file
+2. `<project-root>/pony/runtime/launch.env`
+3. `${XDG_STATE_HOME:-$HOME/.local/state}/agenic-pony-system/projects/<project-slug>/launch.env`
+
+The launcher should source the first file that exists before starting Codex and
+export the assignments found there. This is the preferred path for values such
+as `GITHUB_PAT_TOKEN` used by the GitHub MCP server.
+
+This keeps reusable launcher behavior in the source repo while allowing
+machine-local secrets to stay out of versioned project files by default.
+
+For inspection, `pony/bin/pony-launch-env-status` should report the resolved
+project root, both supported env-file paths, file presence and mode, and
+whether `GITHUB_PAT_TOKEN` is currently available from the process environment
+or from one of those files.
+
 ## Provisioning Markers
 
 Platform-specific provisioning markers should indicate which launcher surfaces have been installed.

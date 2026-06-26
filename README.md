@@ -136,6 +136,33 @@ For git-backed projects, these generated `pony/` install outputs are ignored by
 default through a managed local Git exclude entry. If a team wants to version
 that tree deliberately, they can remove or adjust the managed `/pony/` exclude.
 
+## Session Environment
+
+Pony launchers can load extra environment variables for the Codex process before
+startup. This is the supported path for MCP credentials such as
+`GITHUB_PAT_TOKEN`.
+
+Load order:
+
+- `AGENIC_PONY_ENV_FILE` when explicitly set
+- `<project-root>/pony/runtime/launch.env`
+- `${XDG_STATE_HOME:-$HOME/.local/state}/agenic-pony-system/projects/<project-slug>/launch.env`
+
+Example:
+
+```sh
+mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/agenic-pony-system/projects/agenic-pony-system"
+printf '%s\n' 'export GITHUB_PAT_TOKEN=ghp_your_token_here' > "${XDG_STATE_HOME:-$HOME/.local/state}/agenic-pony-system/projects/agenic-pony-system/launch.env"
+chmod 600 "${XDG_STATE_HOME:-$HOME/.local/state}/agenic-pony-system/projects/agenic-pony-system/launch.env"
+```
+
+The launcher sources that file with export-on-assignment semantics, so plain
+`NAME=value` lines or `export NAME=value` lines both work.
+
+Use `./pony/bin/pony-launch-env-status [project-root]` to print the exact
+launch-env paths for a project and whether `GITHUB_PAT_TOKEN` is available from
+the current process environment or from the supported env files.
+
 ## Optional Zsh Support
 
 The shell hook is optional convenience, not infrastructure.

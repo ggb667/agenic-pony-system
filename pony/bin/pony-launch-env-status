@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_dir/../.." && pwd)"
+source "$repo_root/pony/scripts/pony-paths.sh"
+
+project_hint="${1:-$PWD}"
+project_root="$(detect_project_root "$project_hint")"
+load_project_paths "$project_root"
+
+runtime_env_file="$AGENIC_PROJECT_PONY_RUNTIME_DIR/launch.env"
+state_env_file="$(default_launch_env_file "$project_root")"
+current_env_status="missing"
+effective_env_file=""
+effective_source="missing"
+
+token_assignment_status() {
+  local path="${1:?missing path}"
+  [[ -f "$path" ]] || {
+    printf '%s\n' "missing"
+    return 0
+  }
+  if rg -n '^[[:space:]]*(export[[:space:]]+)?GITHUB_PAT_TOKEN=' "$path" >/dev/null 2>&1; then
+    printf '%s\n' "present"
+  else
+    printf '%s\n' "absent"
+  fi
+}
+
+file_mode() {
+  local path="${1:?missing path}"
+  [[ -f "$path" ]] || {
+    printf '%s\n' "-"
+    return 0
+  }
+  stat -c '%a' "$path"
+}
+
+if [[ -n "${GITHUB_PAT_TOKEN:-}" ]]; then
+  current_env_status="present"
+  effective_source="process_env"
+elif [[ -f "$runtime_env_file" ]]; then
+  effective_env_file="$runtime_env_file"
+  if [[ "$(token_assignment_status "$runtime_env_file")" == "present" ]]; then
+    effective_source="runtime_env_file"
+  else
+    effective_source="runtime_env_file_without_token"
+  fi
+elif [[ -f "$state_env_file" ]]; then
+  effective_env_file="$state_env_file"
+  if [[ "$(token_assignment_status "$state_env_file")" == "present" ]]; then
+    effective_source="state_env_file"
+  else
+    effective_source="state_env_file_without_token"
+  fi
+fi
+
+printf '%s\n' "project_root=$project_root"
+printf '%s\n' "project_slug=$(project_slug "$project_root")"
+printf '%s\n' "current_env.github_pat_token=$current_env_status"
+printf '%s\n' "runtime_env.path=$runtime_env_file"
+printf '%s\n' "runtime_env.file=$( [[ -f "$runtime_env_file" ]] && printf '%s' present || printf '%s' missing )"
+printf '%s\n' "runtime_env.github_pat_token=$(token_assignment_status "$runtime_env_file")"
+printf '%s\n' "runtime_env.mode=$(file_mode "$runtime_env_file")"
+printf '%s\n' "state_env.path=$state_env_file"
+printf '%s\n' "state_env.file=$( [[ -f "$state_env_file" ]] && printf '%s' present || printf '%s' missing )"
+printf '%s\n' "state_env.github_pat_token=$(token_assignment_status "$state_env_file")"
+printf '%s\n' "state_env.mode=$(file_mode "$state_env_file")"
+printf '%s\n' "effective.source=$effective_source"
+printf '%s\n' "effective.env_file=${effective_env_file:--}"

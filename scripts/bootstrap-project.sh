@@ -675,7 +675,7 @@ if ! is_agenic_source_project; then
   ensure_git_exclude_rule "/pony/"
 fi
 
-for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart; do
+for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart pony-launch-env-status; do
   if [[ -f "$source_pony_bin_dir/$managed_bin" ]]; then
     write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/$managed_bin" "$(cat "$source_pony_bin_dir/$managed_bin")"
   fi

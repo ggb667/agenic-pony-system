@@ -82,6 +82,14 @@ project_slug() {
   printf '%s' "$(basename "$project_root")" | tr -cs '[:alnum:]._+-' '-' | sed 's/^-*//; s/-*$//'
 }
 
+default_launch_env_file() {
+  local project_root="${1:?missing project root}"
+  local state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
+  local slug
+  slug="$(project_slug "$project_root")"
+  printf '%s\n' "$state_home/agenic-pony-system/projects/$slug/launch.env"
+}
+
 worker_slug_for_personality() {
   case "${1:-}" in
     TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'celestia\n' ;;
