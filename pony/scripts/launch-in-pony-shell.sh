@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-personality="${1:?missing personality}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 launch_project_root="$(cd "$script_dir/../.." && pwd)"
 source "$script_dir/launch-debug.sh"
 source "$script_dir/pony-paths.sh"
+raw_personality="${1:?missing personality}"
+personality="$(canonical_personality "$raw_personality" 2>/dev/null || printf '%s' "$raw_personality")"
 
 case "$personality" in
   PRINCESS_CELESTIA_SOL_INVICTUS) pony_func="celestia" ;;

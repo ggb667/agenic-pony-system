@@ -132,6 +132,13 @@ worker_personality_for_slug() {
   esac
 }
 
+canonical_personality() {
+  local input="${1:?missing personality}"
+  local slug
+  slug="$(worker_slug_for_personality "$input")" || return 1
+  worker_personality_for_slug "$slug"
+}
+
 workfile_name_for_slug() {
   case "${1:-}" in
     celestia) printf 'governor-celestia.md\n' ;;

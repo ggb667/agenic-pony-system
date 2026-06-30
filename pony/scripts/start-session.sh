@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-personality="${1:?missing personality}"
+raw_personality="${1:?missing personality}"
 project_hint="${2:-$PWD}"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 agenic_root="$(cd "$script_dir/../.." && pwd)"
 source "$script_dir/launch-debug.sh"
 source "$script_dir/pony-paths.sh"
+personality="$(canonical_personality "$raw_personality" 2>/dev/null || printf '%s' "$raw_personality")"
 current_script="$script_dir/$(basename "${BASH_SOURCE[0]}")"
 target_project_root="$(detect_project_root "$project_hint")"
 pony_launch_debug_init
-pony_launch_debug "start-session entry: pwd=$PWD personality=$personality project_hint=$project_hint current_script=$current_script target_project_root=$target_project_root"
+pony_launch_debug "start-session entry: pwd=$PWD raw_personality=$raw_personality personality=$personality project_hint=$project_hint current_script=$current_script target_project_root=$target_project_root"
 
 read_runtime_marker() {
   local path="${1:?missing marker path}"
