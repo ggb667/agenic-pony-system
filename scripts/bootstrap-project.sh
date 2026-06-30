@@ -712,7 +712,6 @@ done
 write_managed_file "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/pony.zsh.support.zsh" "$(cat "$source_pony_scripts_dir/pony.zsh.support.zsh")"
 write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/launch-in-pony-shell.sh" "$(cat "$source_pony_scripts_dir/launch-in-pony-shell.sh")"
 write_managed_executable "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/queue-runtime.sh" "$(cat "$source_pony_scripts_dir/queue-runtime.sh")"
-write_managed_file "$AGENIC_PROJECT_PONY_RUNTIME_DIR/source-runtime.fingerprint" "$source_runtime_fingerprint"$'\n'
 
 if ! is_agenic_source_project; then
   write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/codex-pony" "$(cat <<EOF
@@ -820,6 +819,10 @@ EOF
 write_file_if_missing "$AGENIC_TEAM_COORDINATION_DIR/twi.review-needed" ""
 
 write_file_if_missing "$AGENIC_PROJECT_PONY_LINUX_SHELL_MARKER" ""
+
+# Publish the new runtime fingerprint only after every managed launcher,
+# wrapper, and worktree runtime file has been fully rewritten.
+write_managed_file "$AGENIC_PROJECT_PONY_RUNTIME_DIR/source-runtime.fingerprint" "$source_runtime_fingerprint"$'\n'
 
 cat <<EOF
 Bootstrapped project-local pony state.
