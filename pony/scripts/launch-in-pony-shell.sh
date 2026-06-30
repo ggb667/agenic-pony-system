@@ -99,6 +99,8 @@ _agenic_pony_set_terminal_title() {
   [[ -t 1 ]] || return 0
 
   local pony_label=""
+  local pony_scope=""
+  local registry_file="${AGENIC_PROJECT_ROOT}/pony/team.coordination/assignment.registry.tsv"
   case "${AGENIC_LAUNCH_PERSONALITY:-}" in
     PRINCESS_CELESTIA_SOL_INVICTUS) pony_label="Celestia" ;;
     TWILIGHT_SPARKLE) pony_label="Twilight" ;;
@@ -111,8 +113,18 @@ _agenic_pony_set_terminal_title() {
     *) pony_label="Pony" ;;
   esac
 
+  if [[ -f "$registry_file" ]]; then
+    pony_scope="$(awk -F '\t' -v personality="${AGENIC_LAUNCH_PERSONALITY:-}" '
+      NR > 1 && $3 == personality { print $9; exit }
+    ' "$registry_file")"
+  fi
+
   local project_label="${AGENIC_PROJECT_ROOT:t}"
-  printf '\033]0;%s · %s\007' "${pony_label}" "${project_label}"
+  if [[ -n "$pony_scope" && "$pony_scope" != "Idle" && "$pony_scope" != "idle" && "$pony_scope" != "unassigned" ]]; then
+    printf '\033]0;%s · %s\007' "${pony_label}" "${pony_scope}"
+  else
+    printf '\033]0;%s · %s\007' "${pony_label}" "${project_label}"
+  fi
 }
 
 _agenic_pony_apply_identity
