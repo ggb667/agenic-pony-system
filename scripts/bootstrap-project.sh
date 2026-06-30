@@ -13,6 +13,28 @@ source_runtime_fingerprint="$("$source_pony_scripts_dir/runtime-fingerprint.sh")
 target_root="${1:-$PWD}"
 load_project_paths "$target_root"
 
+install_state_file="$AGENIC_PROJECT_PONY_RUNTIME_DIR/install-project.state"
+install_metadata_file="$AGENIC_PROJECT_PONY_RUNTIME_DIR/install-project.metadata"
+bootstrap_succeeded=0
+
+write_install_state() {
+  local state="${1:?missing install state}"
+  printf '%s\n' "$state" >"$install_state_file"
+}
+
+bootstrap_cleanup() {
+  if (( bootstrap_succeeded )); then
+    return 0
+  fi
+  if [[ -n "${install_state_file:-}" ]]; then
+    printf '%s\n' "failed" >"$install_state_file"
+  fi
+}
+
+trap bootstrap_cleanup EXIT
+
+write_install_state "install_started"
+
 while IFS= read -r dir; do
   mkdir -p "$dir"
 done < <(project_pony_dirs)
@@ -658,6 +680,7 @@ write_file_if_missing "$AGENIC_PROJECT_PONY_RUNTIME_DRAFT_PATH" ""
 
 write_project_config_if_missing
 
+write_install_state "launch_prompts_syncing"
 for prompt_template in "$source_pony_launch_prompts_dir"/*.txt; do
   write_managed_file "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/$(basename "$prompt_template")" "$(cat "$prompt_template")"
 done
@@ -675,6 +698,7 @@ if ! is_agenic_source_project; then
   ensure_git_exclude_rule "/pony/"
 fi
 
+write_install_state "managed_runtime_syncing"
 for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart pony-launch-env-status; do
   if [[ -f "$source_pony_bin_dir/$managed_bin" ]]; then
     write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/$managed_bin" "$(cat "$source_pony_bin_dir/$managed_bin")"
@@ -762,6 +786,7 @@ else
   remove_if_exists "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team"
 fi
 
+write_install_state "worktrees_syncing"
 for slug in aj pinkie fs rarity rd spike; do
   ensure_worker_worktree "$slug"
   sync_worker_worktree_runtime "$slug"
@@ -769,6 +794,7 @@ done
 
 sync_assignment_registry
 
+write_install_state "coordination_state_syncing"
 for slug in aj pinkie fs rarity rd spike twi; do
   write_workfile_if_missing "$slug"
   ensure_workfile_permissions_field "$slug"
@@ -823,6 +849,15 @@ write_file_if_missing "$AGENIC_PROJECT_PONY_LINUX_SHELL_MARKER" ""
 # Publish the new runtime fingerprint only after every managed launcher,
 # wrapper, and worktree runtime file has been fully rewritten.
 write_managed_file "$AGENIC_PROJECT_PONY_RUNTIME_DIR/source-runtime.fingerprint" "$source_runtime_fingerprint"$'\n'
+write_managed_file "$install_metadata_file" "$(cat <<EOF
+last_completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+source_runtime_fingerprint: $source_runtime_fingerprint
+project_root: $AGENIC_PROJECT_ROOT
+project_branch: $AGENIC_PROJECT_BRANCH
+EOF
+)"
+write_install_state "complete"
+bootstrap_succeeded=1
 
 cat <<EOF
 Bootstrapped project-local pony state.

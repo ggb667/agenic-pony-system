@@ -13,36 +13,66 @@ target_project_root="$(detect_project_root "$project_hint")"
 pony_launch_debug_init
 pony_launch_debug "start-session entry: pwd=$PWD personality=$personality project_hint=$project_hint current_script=$current_script target_project_root=$target_project_root"
 
+read_runtime_marker() {
+  local path="${1:?missing marker path}"
+  if [[ -f "$path" ]]; then
+    head -n 1 "$path"
+  fi
+}
+
 install_required=0
 if [[ "$target_project_root" != "$agenic_root" ]]; then
   source_fingerprint="$("$agenic_root/pony/scripts/runtime-fingerprint.sh")"
   installed_fingerprint_file="$target_project_root/pony/runtime/source-runtime.fingerprint"
+  install_state_file="$target_project_root/pony/runtime/install-project.state"
+  install_metadata_file="$target_project_root/pony/runtime/install-project.metadata"
   installed_fingerprint=""
+  install_state="$(read_runtime_marker "$install_state_file")"
   if [[ -f "$installed_fingerprint_file" ]]; then
     read -r installed_fingerprint <"$installed_fingerprint_file" || installed_fingerprint=""
   fi
   if [[ "${AGENIC_FORCE_INSTALL_REFRESH:-0}" == "1" || "$installed_fingerprint" != "$source_fingerprint" ]]; then
     install_required=1
+  elif [[ "${install_state:-}" != "complete" ]]; then
+    install_required=1
   fi
-  pony_launch_debug "runtime fingerprint check: install_required=$install_required installed=${installed_fingerprint:-missing} source=$source_fingerprint"
+  pony_launch_debug "runtime fingerprint check: install_required=$install_required installed=${installed_fingerprint:-missing} source=$source_fingerprint state=${install_state:-missing} metadata_file=$install_metadata_file"
 fi
 
 if (( install_required )); then
   install_lock_dir="$target_project_root/pony/runtime/install-project.lock"
+  install_lock_info_file="$install_lock_dir/owner"
   mkdir -p "$(dirname "$install_lock_dir")"
+  reported_wait=0
   while ! mkdir "$install_lock_dir" 2>/dev/null; do
+    if (( ! reported_wait )); then
+      pony_launch_debug "install-project lock busy: lock_dir=$install_lock_dir state=${install_state:-missing} owner=$(read_runtime_marker "$install_lock_info_file")"
+      reported_wait=1
+    fi
     sleep 0.1
   done
   cleanup_install_lock() {
+    rm -f "$install_lock_info_file" 2>/dev/null || true
     rmdir "$install_lock_dir" 2>/dev/null || true
   }
   trap cleanup_install_lock EXIT
+  cat >"$install_lock_info_file" <<EOF
+pid=$$
+personality=$personality
+started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+host=$(hostname 2>/dev/null || printf 'unknown-host')
+project_root=$target_project_root
+source_fingerprint=${source_fingerprint:-unknown}
+previous_state=${install_state:-missing}
+EOF
+  pony_launch_debug "install-project lock acquired: lock_dir=$install_lock_dir owner_file=$install_lock_info_file state=${install_state:-missing}"
   "$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null
   cleanup_install_lock
   trap - EXIT
-  pony_launch_debug "after install-project: target_project_root=$target_project_root"
+  install_state="$(read_runtime_marker "$install_state_file")"
+  pony_launch_debug "after install-project: target_project_root=$target_project_root state=${install_state:-missing}"
 else
-  pony_launch_debug "install-project skipped: target_project_root=$target_project_root"
+  pony_launch_debug "install-project skipped: target_project_root=$target_project_root state=${install_state:-missing}"
 fi
 
 project_start_session="$target_project_root/pony/scripts/start-session.sh"
