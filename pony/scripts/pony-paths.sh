@@ -91,7 +91,9 @@ default_launch_env_file() {
 }
 
 worker_slug_for_personality() {
-  case "${1:-}" in
+  local personality
+  personality="$(printf '%s' "${1:-}" | tr '[:lower:]' '[:upper:]')"
+  case "$personality" in
     TIA|CELESTIA|PRINCESS|CELLY|SUNBUTT|PRINCESS_CELESTIA_SOL_INVICTUS) printf 'celestia\n' ;;
     AJ|APPLEJACK) printf 'aj\n' ;;
     FS|FLUTTERSHY|SHY|FLUTTERS) printf 'fs\n' ;;
