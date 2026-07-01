@@ -19,6 +19,7 @@ bootstrap_succeeded=0
 
 write_install_state() {
   local state="${1:?missing install state}"
+  mkdir -p "$(dirname "$install_state_file")"
   printf '%s\n' "$state" >"$install_state_file"
 }
 
