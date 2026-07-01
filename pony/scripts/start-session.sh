@@ -21,6 +21,36 @@ read_runtime_marker() {
   fi
 }
 
+install_failure_message() {
+  local project_root="${1:?missing project root}"
+  local personality_name="${2:?missing personality}"
+  local state_file="${3:?missing state file}"
+  local metadata_file="${4:?missing metadata file}"
+  local current_state
+  local metadata_text=""
+
+  current_state="$(read_runtime_marker "$state_file")"
+  if [[ -f "$metadata_file" ]]; then
+    metadata_text="$(cat "$metadata_file")"
+  fi
+
+  printf '%s\n' "ERROR: pony runtime refresh did not complete for $project_root."
+  printf '%s\n' "Refusing to launch $personality_name with stale installed scripts or a stale parked worker session."
+  printf '%s\n' "Current install state: ${current_state:-missing}"
+  if [[ -n "$metadata_text" ]]; then
+    printf '%s\n' ''
+    printf '%s\n' 'Install metadata:'
+    printf '%s\n' "$metadata_text"
+  fi
+  printf '%s\n' ''
+  printf '%s\n' 'Why this launch is blocked:'
+  printf '%s\n' '- the installed pony runtime did not reach install-project.state=complete'
+  printf '%s\n' '- worker launch must not continue with stale wrappers because project-root coordination writes may be missing'
+  printf '%s\n' ''
+  printf '%s\n' 'Next step:'
+  printf '%s\n' "- rerun scripts/install-project.sh $project_root and fix that failure before relaunching this pony"
+}
+
 install_required=0
 if [[ "$target_project_root" != "$agenic_root" ]]; then
   source_fingerprint="$("$agenic_root/pony/scripts/runtime-fingerprint.sh")"
@@ -67,11 +97,22 @@ source_fingerprint=${source_fingerprint:-unknown}
 previous_state=${install_state:-missing}
 EOF
   pony_launch_debug "install-project lock acquired: lock_dir=$install_lock_dir owner_file=$install_lock_info_file state=${install_state:-missing}"
-  "$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null
+  if ! "$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null; then
+    cleanup_install_lock
+    trap - EXIT
+    pony_launch_debug "install-project failed: target_project_root=$target_project_root"
+    install_failure_message "$target_project_root" "$personality" "$install_state_file" "$install_metadata_file" >&2
+    exit 1
+  fi
   cleanup_install_lock
   trap - EXIT
   install_state="$(read_runtime_marker "$install_state_file")"
   pony_launch_debug "after install-project: target_project_root=$target_project_root state=${install_state:-missing}"
+  if [[ "${install_state:-}" != "complete" ]]; then
+    pony_launch_debug "install-project incomplete after success exit: target_project_root=$target_project_root state=${install_state:-missing}"
+    install_failure_message "$target_project_root" "$personality" "$install_state_file" "$install_metadata_file" >&2
+    exit 1
+  fi
 else
   pony_launch_debug "install-project skipped: target_project_root=$target_project_root state=${install_state:-missing}"
 fi
