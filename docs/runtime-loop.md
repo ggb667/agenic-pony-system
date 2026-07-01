@@ -41,6 +41,41 @@ This includes:
 
 At the queue and runtime layer, agent-originated prompts follow the same envelope and scheduling rules. Twilight is still a source-repo special case in `agenic-pony-system`: only the Twilight launcher should be treated as live in the agenic source repo, while worker-launch validation happens in installed project-local runtimes such as `Handshake/pony`.
 
+## Direct Pony IPC
+
+There is also a separate direct pony-to-pony lane in the Codex fork TUI through
+the built-in `/pony` slash command.
+
+Examples:
+
+- `/pony rd do a ls -la`
+- `/pony twi please verify the branch before I continue`
+- `/pony all status check`
+
+Current behavior:
+
+- sending is handled directly by the Codex TUI rather than by `queue-runtime.sh`
+- receiving is polled from the Codex-side local IPC log, mirrored into the
+  project-local `pony/runtime` queue, and then injected into the target pony
+  session as a synthetic prompt when the live composer can accept it
+- successful `/pony` dispatch clears the command from the TUI composer
+
+Current limitation:
+
+- this direct IPC path is still not a pure queue-native transport; it uses the
+  queue as a persistence bridge for the live TUI path
+- immediate live delivery removes the queued item again after successful
+  injection
+- sender-side `/pony` state and receiver-side queue state still depend on the
+  Codex fork and the installed `queue-runtime.sh` remaining aligned
+
+So the system currently has two message lanes:
+
+- queue-backed project-local runtime messages for the line-editor host
+- direct Codex-to-Codex `/pony` IPC for live pony sessions
+
+They are related, but they are not yet unified.
+
 ## Queue Model
 
 The queue is FIFO.

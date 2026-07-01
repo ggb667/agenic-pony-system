@@ -47,6 +47,14 @@ codex_config_args_for_personality() {
   esac
 }
 
+additional_codex_args_for_rootdir() {
+  local active_rootdir="${1:?missing rootdir}"
+  local project_root="${AGENIC_PROJECT_ROOT:-}"
+  if [[ -n "$project_root" ]] && [[ "$active_rootdir" != "$project_root" ]]; then
+    printf '%s\n' '--add-dir' "$project_root"
+  fi
+}
+
 dirty_fix_first_prompt() {
   local cleanup_prompt=""
   cleanup_prompt="Coordinator preflight detected a dirty worktree in ${rootdir}. First, inspect and reconcile or put away the pending local changes in that repo. Do not ignore them or defer that cleanup. After the worktree is in a deliberate state, continue with normal coordination behavior for the active pony."
@@ -117,6 +125,9 @@ codex_args=()
 while IFS= read -r arg; do
   codex_args+=("$arg")
 done < <(codex_config_args_for_personality "$PERSONALITY")
+while IFS= read -r arg; do
+  codex_args+=("$arg")
+done < <(additional_codex_args_for_rootdir "$rootdir")
 prompt="$initial_prompt"
 
 case "$preflight_result" in

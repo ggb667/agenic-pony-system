@@ -145,6 +145,13 @@ def codex_config_args_for(personality: str) -> list[str]:
     ]
 
 
+def additional_codex_args_for_rootdir(rootdir: str) -> list[str]:
+    project_root = os.environ.get("AGENIC_PROJECT_ROOT", "").strip()
+    if project_root and Path(project_root) != Path(rootdir):
+        return ["--add-dir", project_root]
+    return []
+
+
 class PonySessionHost:
     def __init__(self, args: argparse.Namespace) -> None:
         self.args = args
@@ -181,6 +188,7 @@ class PonySessionHost:
         )
         result = preflight.stdout.strip() or "ESCALATE_TWI"
         codex_args = codex_config_args_for(self.personality)
+        codex_args.extend(additional_codex_args_for_rootdir(self.args.rootdir))
         if result == "READY_NO_LLM":
             return codex_args, ready_no_llm_notice(self.personality, self.initial_prompt)
         if result == "READY_KEEP_LIVE":

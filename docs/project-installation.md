@@ -100,6 +100,7 @@ For git-backed installs, the default worker policy is:
 - ordinary workers get linked git worktrees under `pony/worktrees/<slug>/`
 - ordinary worker branch names default to `pony/<slug>/main`
 - those worker worktrees are the paths recorded in `pony/team.coordination/assignment.registry.tsv`
+- when a worker launches from a linked worktree, its Codex sandbox must also add the project root as an extra writable directory so `pony/team.coordination/*` and `pony/work/*` remain writable from that session
 
 This keeps coordinator control and worker execution separated without requiring separate top-level clones outside the project-local pony tree.
 

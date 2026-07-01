@@ -111,3 +111,25 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             self.assertIn('model="gpt-5.4-mini"', host.bootstrap_codex_args)
             self.assertIn("never", host.bootstrap_codex_args)
             self.assertIn("Launch Codex anyway", host.bootstrap_prompt)
+
+    def test_worker_worktree_gets_project_root_writable_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            worker_root = project_root / "pony/worktrees/aj"
+            worker_root.mkdir(parents=True)
+            promptfile = worker_root / "prompt.txt"
+            promptfile.write_text("worker follow-up\n", encoding="utf-8")
+            args = self.make_args(worker_root, promptfile)
+            args.personality = "APPLEJACK"
+            args.workfile = str(project_root / "pony/work/aj.md")
+
+            with patch.dict("os.environ", {"AGENIC_PROJECT_ROOT": str(project_root)}, clear=False):
+                with patch.object(
+                    pony_session_host.subprocess,
+                    "run",
+                    return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="READY_NO_LLM\n", stderr=""),
+                ):
+                    host = pony_session_host.PonySessionHost(args)
+
+            self.assertIn("--add-dir", host.bootstrap_codex_args)
+            self.assertIn(str(project_root), host.bootstrap_codex_args)
