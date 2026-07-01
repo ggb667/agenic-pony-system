@@ -34,7 +34,7 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             partial_idle_sentinel="Ω",
         )
 
-    def test_celestia_uses_celestia_profile_for_dirty_fix_first(self) -> None:
+    def test_celestia_uses_explicit_codex_args_for_dirty_fix_first(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             rootdir = Path(tmpdir)
             promptfile = rootdir / "prompt.txt"
@@ -48,10 +48,11 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             ):
                 host = pony_session_host.PonySessionHost(args)
 
-            self.assertEqual(host.bootstrap_profile, "celestia_coordinator")
+            self.assertIn('model="gpt-5.4"', host.bootstrap_codex_args)
+            self.assertIn("on-request", host.bootstrap_codex_args)
             self.assertIn("dirty worktree", host.bootstrap_prompt)
 
-    def test_celestia_uses_celestia_profile_for_escalate_twi(self) -> None:
+    def test_celestia_uses_explicit_codex_args_for_escalate_twi(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             rootdir = Path(tmpdir)
             promptfile = rootdir / "prompt.txt"
@@ -65,7 +66,8 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             ):
                 host = pony_session_host.PonySessionHost(args)
 
-            self.assertEqual(host.bootstrap_profile, "celestia_coordinator")
+            self.assertIn('model="gpt-5.4"', host.bootstrap_codex_args)
+            self.assertIn("on-request", host.bootstrap_codex_args)
             self.assertIn("Launch Codex anyway", host.bootstrap_prompt)
             self.assertIn("governance follow-up", host.bootstrap_prompt)
 
@@ -85,7 +87,8 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             ):
                 host = pony_session_host.PonySessionHost(args)
 
-            self.assertEqual(host.bootstrap_profile, "worker_mini")
+            self.assertIn('model="gpt-5.4-mini"', host.bootstrap_codex_args)
+            self.assertIn("never", host.bootstrap_codex_args)
             self.assertIn("Launch Codex anyway", host.bootstrap_prompt)
             self.assertIn("worker follow-up", host.bootstrap_prompt)
 
@@ -105,5 +108,6 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             ):
                 host = pony_session_host.PonySessionHost(args)
 
-            self.assertEqual(host.bootstrap_profile, "worker_mini")
+            self.assertIn('model="gpt-5.4-mini"', host.bootstrap_codex_args)
+            self.assertIn("never", host.bootstrap_codex_args)
             self.assertIn("Launch Codex anyway", host.bootstrap_prompt)

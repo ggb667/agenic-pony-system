@@ -104,19 +104,45 @@ def ready_no_llm_notice(personality: str, initial_prompt: str) -> str:
     return notice
 
 
-def coordinator_profile_for(personality: str) -> str | None:
+def codex_config_args_for(personality: str) -> list[str]:
     if personality == "TWILIGHT_SPARKLE":
-        return "twi_coordinator"
+        return [
+            "-c",
+            'model_provider="openai"',
+            "-c",
+            'model="gpt-5.5"',
+            "-c",
+            'model_reasoning_effort="high"',
+            "-a",
+            "never",
+            "-s",
+            "workspace-write",
+        ]
     if personality == "PRINCESS_CELESTIA_SOL_INVICTUS":
-        return "celestia_coordinator"
-    return None
-
-
-def default_profile_for(personality: str) -> str:
-    coordinator_profile = coordinator_profile_for(personality)
-    if coordinator_profile is not None:
-        return coordinator_profile
-    return "worker_mini"
+        return [
+            "-c",
+            'model_provider="openai"',
+            "-c",
+            'model="gpt-5.4"',
+            "-c",
+            'model_reasoning_effort="medium"',
+            "-a",
+            "on-request",
+            "-s",
+            "workspace-write",
+        ]
+    return [
+        "-c",
+        'model_provider="openai"',
+        "-c",
+        'model="gpt-5.4-mini"',
+        "-c",
+        'model_reasoning_effort="low"',
+        "-a",
+        "never",
+        "-s",
+        "workspace-write",
+    ]
 
 
 class PonySessionHost:
@@ -134,7 +160,7 @@ class PonySessionHost:
         self.monitor_script = args.monitor_script
         self.initial_prompt = self.promptfile.read_text() if self.promptfile.exists() else ""
         self.personality = args.personality
-        self.bootstrap_profile, self.bootstrap_prompt = self._resolve_preflight()
+        self.bootstrap_codex_args, self.bootstrap_prompt = self._resolve_preflight()
 
     def tmux(self, *subcmd: str, capture: bool = False, check: bool = True) -> subprocess.CompletedProcess[str]:
         cmd = ["tmux", "-S", str(self.socket_path), *subcmd]
@@ -145,7 +171,7 @@ class PonySessionHost:
             check=check,
         )
 
-    def _resolve_preflight(self) -> tuple[str, str]:
+    def _resolve_preflight(self) -> tuple[list[str], str]:
         preflight = subprocess.run(
             [self.args.queue_script.replace("queue-runtime.sh", "worker-preflight.sh"), self.personality, self.args.workfile, self.args.rootdir],
             text=True,
@@ -154,18 +180,18 @@ class PonySessionHost:
             cwd=self.rootdir,
         )
         result = preflight.stdout.strip() or "ESCALATE_TWI"
-        profile = default_profile_for(self.personality)
+        codex_args = codex_config_args_for(self.personality)
         if result == "READY_NO_LLM":
-            return profile, ready_no_llm_notice(self.personality, self.initial_prompt)
+            return codex_args, ready_no_llm_notice(self.personality, self.initial_prompt)
         if result == "READY_KEEP_LIVE":
-            return profile, waiting_for_task_notice(self.personality, self.args.workfile)
+            return codex_args, waiting_for_task_notice(self.personality, self.args.workfile)
         if result == "BLOCKED_DIRTY_FIX_FIRST":
-            return profile, dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt)
+            return codex_args, dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt)
         if result == "ESCALATE_MINI":
-            return profile, self.initial_prompt
+            return codex_args, self.initial_prompt
         if result == "ESCALATE_TWI":
-            return profile, escalate_twi_notice(self.personality, self.initial_prompt)
-        return profile, f"Preflight error: unexpected result '{result}'.\n\n{self.initial_prompt}".strip()
+            return codex_args, escalate_twi_notice(self.personality, self.initial_prompt)
+        return codex_args, f"Preflight error: unexpected result '{result}'.\n\n{self.initial_prompt}".strip()
 
     def session_exists(self) -> bool:
         return self.tmux("has-session", "-t", self.session_name, check=False).returncode == 0
@@ -174,14 +200,13 @@ class PonySessionHost:
         result = self.tmux("display-message", "-p", "-t", self.session_name, "#{pane_id}", capture=True)
         return result.stdout.strip()
 
-    def create_session(self, bootstrap_prompt: str, profile: str | None) -> None:
+    def create_session(self, bootstrap_prompt: str, codex_args: list[str]) -> None:
         env_pairs = {
             "PERSONALITY": self.personality,
             "WORKING_ON": self.args.workfile,
         }
         wrapper_parts = [shlex.quote(self.codex_wrapper)]
-        if profile:
-            wrapper_parts.extend(["-p", shlex.quote(profile)])
+        wrapper_parts.extend(shlex.quote(arg) for arg in codex_args)
         if bootstrap_prompt:
             wrapper_parts.append(shlex.quote(bootstrap_prompt))
         shell_cmd = (
@@ -215,7 +240,7 @@ class PonySessionHost:
         style = Style.from_dict({"prompt": "bold", "toolbar": "reverse"})
         session = PromptSession(history=FileHistory(str(self.history_path)))
         if not self.session_exists():
-            self.create_session(self.bootstrap_prompt, self.bootstrap_profile)
+            self.create_session(self.bootstrap_prompt, self.bootstrap_codex_args)
         self.attach()
 
         while True:
@@ -240,7 +265,7 @@ class PonySessionHost:
                 continue
 
             if not self.session_exists():
-                self.create_session(self.bootstrap_prompt, self.bootstrap_profile)
+                self.create_session(self.bootstrap_prompt, self.bootstrap_codex_args)
             self.send_prompt(text)
             self.attach()
 

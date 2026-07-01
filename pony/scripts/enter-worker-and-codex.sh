@@ -18,11 +18,32 @@ resolve_path() {
   printf '%s\n' "$path"
 }
 
-default_profile_for_personality() {
+codex_config_args_for_personality() {
   case "$1" in
-    TWILIGHT_SPARKLE) printf 'twi_coordinator\n' ;;
-    PRINCESS_CELESTIA_SOL_INVICTUS) printf 'celestia_coordinator\n' ;;
-    *) printf 'worker_mini\n' ;;
+    TWILIGHT_SPARKLE)
+      printf '%s\n' \
+        '-c' 'model_provider="openai"' \
+        '-c' 'model="gpt-5.5"' \
+        '-c' 'model_reasoning_effort="high"' \
+        '-a' 'never' \
+        '-s' 'workspace-write'
+      ;;
+    PRINCESS_CELESTIA_SOL_INVICTUS)
+      printf '%s\n' \
+        '-c' 'model_provider="openai"' \
+        '-c' 'model="gpt-5.4"' \
+        '-c' 'model_reasoning_effort="medium"' \
+        '-a' 'on-request' \
+        '-s' 'workspace-write'
+      ;;
+    *)
+      printf '%s\n' \
+        '-c' 'model_provider="openai"' \
+        '-c' 'model="gpt-5.4-mini"' \
+        '-c' 'model_reasoning_effort="low"' \
+        '-a' 'never' \
+        '-s' 'workspace-write'
+      ;;
   esac
 }
 
@@ -92,7 +113,10 @@ preflight_result="$(
 )"
 pony_launch_debug "worker handoff preflight: personality=$PERSONALITY rootdir=$rootdir workfile=$workfile result=$preflight_result"
 
-profile="$(default_profile_for_personality "$PERSONALITY")"
+codex_args=()
+while IFS= read -r arg; do
+  codex_args+=("$arg")
+done < <(codex_config_args_for_personality "$PERSONALITY")
 prompt="$initial_prompt"
 
 case "$preflight_result" in
@@ -116,15 +140,15 @@ case "$preflight_result" in
     ;;
 esac
 
-pony_launch_debug "worker handoff launch selection: personality=$PERSONALITY profile=${profile:-none} prompt_length=${#prompt} rootdir=$rootdir repo_codex_pony=$repo_codex_pony"
+pony_launch_debug "worker handoff launch selection: personality=$PERSONALITY codex_args_count=${#codex_args[@]} prompt_length=${#prompt} rootdir=$rootdir repo_codex_pony=$repo_codex_pony"
 
-if [[ -n "$profile" ]]; then
+if (( ${#codex_args[@]} > 0 )); then
   if [[ -n "$prompt" ]]; then
-    pony_launch_debug "exec codex with profile and prompt: profile=$profile"
-    exec "$repo_codex_pony" -p "$profile" "$prompt"
+    pony_launch_debug "exec codex with explicit config args and prompt"
+    exec "$repo_codex_pony" "${codex_args[@]}" "$prompt"
   fi
-  pony_launch_debug "exec codex with profile only: profile=$profile"
-  exec "$repo_codex_pony" -p "$profile"
+  pony_launch_debug "exec codex with explicit config args only"
+  exec "$repo_codex_pony" "${codex_args[@]}"
 fi
 
 if [[ -n "$prompt" ]]; then

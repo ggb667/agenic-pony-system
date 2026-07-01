@@ -7,6 +7,6 @@ PUSH_STATUS: unpushed_local_commit
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 BLOCKERS: none
-NEXT_STEP: keep source-repo governance aligned, preserve the pending launcher/title and alias fixes in a clean commit, then investigate the new `/pony` intra-agent communication path
+NEXT_STEP: keep source-repo governance aligned while validating the explicit Codex launch-argument path in installed target-project runtimes
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
