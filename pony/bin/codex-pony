@@ -55,6 +55,10 @@ source_launch_env() {
 source_launch_env
 
 preferred_repo_codex="/home/ggb66/dev/codex/codex-rs/target/debug/codex-tui"
+profile_config_path=""
+if [[ -n "${CODEX_PONY_PROFILE:-}" ]]; then
+  profile_config_path="${CODEX_HOME:-$HOME/.codex}/${CODEX_PONY_PROFILE}.config.toml"
+fi
 codex_bin="${CODEX_PONY_BIN:-}"
 if [[ -z "$codex_bin" ]]; then
   if [[ -x "$preferred_repo_codex" ]]; then
@@ -76,6 +80,31 @@ if [[ -x "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/queue-runtime.sh" ]]; then
   "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/queue-runtime.sh" init >/dev/null
 fi
 
+append_codex_profile_args() {
+  local profile="$1"
+  local line key value
+
+  if [[ "$(basename "$codex_bin")" != "codex-tui" || ! -f "$profile_config_path" ]]; then
+    codex_args+=(-p "$profile")
+    return 0
+  fi
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%%#*}"
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -n "$line" ]] || continue
+    [[ "$line" != \[* ]] || continue
+    [[ "$line" == *=* ]] || continue
+
+    key="${line%%=*}"
+    value="${line#*=}"
+    key="${key%"${key##*[![:space:]]}"}"
+    value="${value#"${value%%[![:space:]]*}"}"
+    codex_args+=(-c "$key=$value")
+  done <"$profile_config_path"
+}
+
 codex_args=()
 if glyph="$(codex_prompt_glyph_for_personality "${PERSONALITY:-}" 2>/dev/null)"; then
   codex_args+=(-c "tui.prompt_glyph=\"$glyph\"")
@@ -84,7 +113,7 @@ if background="$(codex_prompt_background_for_personality "${PERSONALITY:-}" 2>/d
   codex_args+=(-c "tui.prompt_background=\"$background\"")
 fi
 if [[ -n "${CODEX_PONY_PROFILE:-}" ]]; then
-  codex_args+=(-p "$CODEX_PONY_PROFILE")
+  append_codex_profile_args "$CODEX_PONY_PROFILE"
 fi
 if [[ -n "${CODEX_PONY_PID_FILE:-}" ]]; then
   printf '%s\n' "$$" >"$CODEX_PONY_PID_FILE"

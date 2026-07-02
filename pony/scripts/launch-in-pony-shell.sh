@@ -21,7 +21,7 @@ case "$personality" in
 esac
 
 case "$personality" in
-  PRINCESS_CELESTIA_SOL_INVICTUS) codex_profile="just_you" ;;
+  PRINCESS_CELESTIA_SOL_INVICTUS) codex_profile="celestia" ;;
   *) codex_profile="" ;;
 esac
 
