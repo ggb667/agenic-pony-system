@@ -36,6 +36,8 @@ The source repo has its own special case: the agenic source installation should 
 
 If a worker changes state in a way that Twilight or another pony must act on, the worker should also publish a concise mailbox notice in the same run that names the exact state delta and the file or field Twilight should update. If another pony must act, the sender should also issue a direct `/tell` in that same run, and the runtime should accept either the pony's short alias or full display name for delivery. Project-root `pony/work/*.md` and `pony/team.coordination/*.status.md` are authoritative targets; if they are out of reach, the mailbox notice is the write request to Twilight instead of a mirror-only source of truth.
 
+Mailbox files themselves are not durable reboot-state storage. When a worker is blocked by a missing connection string, secret, endpoint, approval, or similar external prerequisite, that blocker should be written into canonical worker state with the exact missing artifact, the expected owner, and the next unblock step so the next launch does not mistake a notification note for a resolved dependency.
+
 Installed launchers may still bootstrap through the reusable source layer before returning to the project-local runtime. That bootstrap hop is expected managed plumbing, not a cross-repo coordination violation. Policy and work state remain authoritative in the target project's local `pony/` tree once the launcher hands control back to the installed project runtime.
 
 For shared pony audio asset renames, the preferred operator workflow is two-step rather than inferential:
