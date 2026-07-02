@@ -48,9 +48,9 @@ the built-in `/pony` slash command.
 
 Examples:
 
-- `/pony rd do a ls -la`
-- `/pony twi please verify the branch before I continue`
-- `/pony all status check`
+- `/tell rd do a ls -la`
+- `/tell twi please verify the branch before I continue`
+- `/tell all status check`
 
 Current behavior:
 
@@ -66,13 +66,13 @@ Current limitation:
   queue as a persistence bridge for the live TUI path
 - immediate live delivery removes the queued item again after successful
   injection
-- sender-side `/pony` state and receiver-side queue state still depend on the
+- sender-side `/tell` state and receiver-side queue state still depend on the
   Codex fork and the installed `queue-runtime.sh` remaining aligned
 
 So the system currently has two message lanes:
 
 - queue-backed project-local runtime messages for the line-editor host
-- direct Codex-to-Codex `/pony` IPC for live pony sessions
+- direct Codex-to-Codex `/tell` IPC for live pony sessions
 
 They are related, but they are not yet unified.
 
@@ -272,6 +272,10 @@ Those messages are not executed immediately by "waking" workers. Instead:
 - any other agent may also enqueue agent prompt(s), including requests directed back to Twilight
 - the line-editor host continues watching the queue
 - the next queued item starts when the system is idle
+
+## State Publication
+
+When a worker changes `pony/work/*.md` or `pony/team.coordination/*.status.md` in a way that affects coordination, it should also publish a concise mailbox notice to Twilight in the same run that names the exact state delta and the file or field Twilight should update. Twilight then decides whether that change also needs Spike or another pony to update documentation, and Twilight tells that pony directly. The project-root files are authoritative targets; if they are out of reach, the mailbox notice is the write request to Twilight instead of a mirror-only source of truth.
 
 This keeps the runtime simple:
 

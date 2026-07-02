@@ -34,6 +34,8 @@ That means:
 
 The source repo has its own special case: the agenic source installation should keep the live Warp launcher set focused on source-repo governance and coordination work, with Celestia as the dedicated source-repo Warp launcher while Twilight remains the coordinator. Worker launcher behavior is validated from project-local installs. When the runtime is operating inside an installed target project, that target project's `pony/team.coordination`, `pony/work`, and project files are the live local state for that run. Within that local state, `pony/work/*.md` is the canonical home for worker-local task state, while mailboxes and coordinator status files should summarize deltas and route requests rather than duplicate the full working record.
 
+If a worker changes state in a way that Twilight or another pony must act on, the worker should also publish a concise mailbox notice in the same run that names the exact state delta and the file or field Twilight should update. Project-root `pony/work/*.md` and `pony/team.coordination/*.status.md` are authoritative targets; if they are out of reach, the mailbox notice is the write request to Twilight instead of a mirror-only source of truth.
+
 Installed launchers may still bootstrap through the reusable source layer before returning to the project-local runtime. That bootstrap hop is expected managed plumbing, not a cross-repo coordination violation. Policy and work state remain authoritative in the target project's local `pony/` tree once the launcher hands control back to the installed project runtime.
 
 For shared pony audio asset renames, the preferred operator workflow is two-step rather than inferential:
@@ -101,6 +103,8 @@ For git-backed installs, the default worker policy is:
 - ordinary worker branch names default to `pony/<slug>/main`
 - those worker worktrees are the paths recorded in `pony/team.coordination/assignment.registry.tsv`
 - when a worker launches from a linked worktree, its Codex sandbox must also add the project root as an extra writable directory so `pony/team.coordination/*` and `pony/work/*` remain writable from that session
+
+If that root is not writable, workers should still publish the exact state delta to Twilight in the same run so Twilight can write or reconcile the authoritative project-root files. Do not treat the worktree mirror as the source of truth.
 
 This keeps coordinator control and worker execution separated without requiring separate top-level clones outside the project-local pony tree.
 

@@ -20,9 +20,17 @@ case "$personality" in
   *) pony_func="" ;;
 esac
 
+case "$personality" in
+  PRINCESS_CELESTIA_SOL_INVICTUS) codex_profile="just_you" ;;
+  *) codex_profile="" ;;
+esac
+
 export AGENIC_LAUNCH_PERSONALITY="$personality"
 export AGENIC_PROJECT_ROOT="$launch_project_root"
 export PONY_FUNC="$pony_func"
+if [[ -n "$codex_profile" ]]; then
+  export CODEX_PONY_PROFILE="$codex_profile"
+fi
 unset AGENIC_PONY_LAUNCH_DEBUG_LOG
 unset AGENIC_PONY_LAUNCH_DEBUG_INITIALIZED
 unset AGENIC_PONY_AUTORAN

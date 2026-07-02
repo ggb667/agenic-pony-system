@@ -83,12 +83,17 @@ fi
 if background="$(codex_prompt_background_for_personality "${PERSONALITY:-}" 2>/dev/null)"; then
   codex_args+=(-c "tui.prompt_background=\"$background\"")
 fi
+if [[ -n "${CODEX_PONY_PROFILE:-}" ]]; then
+  codex_args+=(-p "$CODEX_PONY_PROFILE")
+fi
 if [[ -n "${CODEX_PONY_PID_FILE:-}" ]]; then
   printf '%s\n' "$$" >"$CODEX_PONY_PID_FILE"
 fi
 
 profile_arg="none"
-if [[ "${1:-}" == "-p" ]] && [[ -n "${2:-}" ]]; then
+if [[ -n "${CODEX_PONY_PROFILE:-}" ]]; then
+  profile_arg="$CODEX_PONY_PROFILE"
+elif [[ "${1:-}" == "-p" ]] && [[ -n "${2:-}" ]]; then
   profile_arg="$2"
 fi
 pony_launch_debug "codex-pony exec: codex_bin=$codex_bin profile=$profile_arg project_root=$project_root"
