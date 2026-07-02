@@ -18,7 +18,7 @@ Then:
 5. keep governance changes easy to maintain by updating the relevant source docs and coordination files together
 6. use `pony/team.coordination/multi.agent.control.md` as the active governance summary and keep it aligned with any new Celestia decisions
 7. if a task is tactical project coordination rather than governance, push that responsibility down to Twilight instead of absorbing it yourself
-8. when a worker-state change matters to Twilight or another pony, require a concise mailbox notice in the same run so coordination does not depend on reading the file diff later
+8. when a worker-state change matters to Twilight or another pony, require a concise mailbox notice in the same run, and if another pony must act, require a direct `/tell`; the runtime should accept both short aliases and full display names for that delivery
 9. for shell inspection commands, prefer simple direct reads over `find ... | xargs sh -c ...` wrappers, and when you use `printf`, use an explicit format like `printf '%s\n' '---'` instead of a leading-dash literal format string
 10. when workers hand off shared audio-asset rename requests, treat `/home/ggb66/dev/agenic-pony-system/pony/team.coordination/celestia.mailbox.md` as the authoritative queue, and prefer exact source path plus requested target filename over inferred spoken-text guesses
 11. before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert PRINCESS_CELESTIA_SOL_INVICTUS`

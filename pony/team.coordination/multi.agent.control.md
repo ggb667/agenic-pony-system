@@ -10,7 +10,7 @@ Coordinator focus for agenic-pony-system on main:
 - keep that no-dirty-default policy enforced from source-layer install/bootstrap behavior, including managed Git-backed ignore policy for generated target-project `pony/` trees
 - keep MCP and other Codex session credentials flowing through explicit launcher env files instead of relying on incidental shell startup state
 - keep worker launch sandboxes able to write the authoritative project-root `pony/team.coordination/*` and `pony/work/*` files even when the active worker session runs from `pony/worktrees/<slug>/`
-- require workers to publish a concise mailbox notice to Twilight in the same run when a coordination-relevant state change occurs, so Twilight can write or reconcile the authoritative project-root state if the worker cannot reach it directly, and can decide whether Spike or another pony should update documentation and tell that pony directly
+- require workers to publish a concise mailbox notice to Twilight in the same run when a coordination-relevant state change occurs, and when another pony must act, require a direct `/tell` in that same run; short aliases and full display names should both resolve through the active worker identity map
 - implement the queue/input runtime behavior from `docs/runtime-loop.md`
 - keep shell launch startup robust by invoking `start-session.sh` directly rather than typing a synthesized command into the interactive buffer
 - treat `pony/work/*.md` as the canonical home for worker-local task state; coordinator status files and mailboxes should summarize deltas or route requests instead of duplicating full state

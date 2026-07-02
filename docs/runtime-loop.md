@@ -49,6 +49,7 @@ the built-in `/pony` slash command.
 Examples:
 
 - `/tell rd do a ls -la`
+- `/tell Rainbow Dash do a ls -la`
 - `/tell twi please verify the branch before I continue`
 - `/tell all status check`
 
@@ -59,6 +60,11 @@ Current behavior:
   project-local `pony/runtime` queue, and then injected into the target pony
   session as a synthetic prompt when the live composer can accept it
 - successful `/pony` dispatch clears the command from the TUI composer
+
+Addressing rule:
+
+- the runtime should accept both the worker display name and short aliases such as `rd`, `aj`, `twi`, and `tia`
+- alias resolution should canonicalize through the same worker identity map used by launchers and coordination state
 
 Current limitation:
 
@@ -275,7 +281,7 @@ Those messages are not executed immediately by "waking" workers. Instead:
 
 ## State Publication
 
-When a worker changes `pony/work/*.md` or `pony/team.coordination/*.status.md` in a way that affects coordination, it should also publish a concise mailbox notice to Twilight in the same run that names the exact state delta and the file or field Twilight should update. Twilight then decides whether that change also needs Spike or another pony to update documentation, and Twilight tells that pony directly. The project-root files are authoritative targets; if they are out of reach, the mailbox notice is the write request to Twilight instead of a mirror-only source of truth.
+When a worker changes `pony/work/*.md` or `pony/team.coordination/*.status.md` in a way that affects coordination, it should also publish a concise mailbox notice to Twilight in the same run that names the exact state delta and the file or field Twilight should update. If another pony must act on that change, the sender should also issue a direct `/tell` in the same run, and the runtime should accept either the pony's short alias or full display name for delivery. Twilight then decides whether that change also needs Spike or another pony to update documentation, and Twilight tells that pony directly. The project-root files are authoritative targets; if they are out of reach, the mailbox notice is the write request to Twilight instead of a mirror-only source of truth.
 
 This keeps the runtime simple:
 
