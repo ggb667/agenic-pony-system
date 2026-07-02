@@ -1,6 +1,7 @@
 # CELESTIA MAILBOX
 
 ## Pending Items
+- Twilight notice: dirty-worktree preflight is resolved in source commit `3491bb6` (`Stop default Celestia profile-file dependency`); normal coordination may proceed from the clean source-repo baseline.
 - Twilight notice: when another pony must act on a worker state change, require both a mailbox notice and a direct `/tell` in the same run. Short aliases like `RD`, `AJ`, `Twi`, and `Tia` should resolve correctly, as should full display names.
 - Twilight notice: normal source-repo Celestia launches should not depend on `~/.codex` profile files; if an operator explicitly uses `CODEX_PONY_PROFILE`, only the canonical manual name `celestia` is supported.
 - Twilight follow-up: the source-layer runtime defects are now fixed in `agenic-pony-system`. Refresh the installed-project validation lane and confirm that installed copies no longer persist `idle` as the ready token and no longer suppress repeated pending notices after the queue clears.

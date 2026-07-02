@@ -2,11 +2,11 @@ AUDIENCE: EVERYONE
 BRANCH: main
 WORKTREE: /home/ggb66/dev/agenic-pony-system
 BRANCH_VERIFIED: yes
-STATUS: HOLD
-PUSH_STATUS: uncommitted_local_changes
+STATUS: ACTIVE
+PUSH_STATUS: unpushed_local_commit
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
-BLOCKERS: preflight: coordinator worktree is dirty; Twilight must reconcile or put away local changes before normal coordination work
-NEXT_STEP: launch Twilight in dirty-fix-first mode, put away or reconcile the pending changes, then continue with normal coordination work
+BLOCKERS: none
+NEXT_STEP: continue source-repo governance from clean state; commit 3491bb6 reconciled the preflight dirty-worktree hold by landing the Celestia launcher profile-policy update
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
