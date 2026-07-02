@@ -55,9 +55,10 @@ source_launch_env() {
 source_launch_env
 
 preferred_repo_codex="/home/ggb66/dev/codex/codex-rs/target/debug/codex-tui"
+effective_codex_profile="${CODEX_PONY_PROFILE:-}"
 profile_config_path=""
-if [[ -n "${CODEX_PONY_PROFILE:-}" ]]; then
-  profile_config_path="${CODEX_HOME:-$HOME/.codex}/${CODEX_PONY_PROFILE}.config.toml"
+if [[ -n "$effective_codex_profile" ]]; then
+  profile_config_path="${CODEX_HOME:-$HOME/.codex}/${effective_codex_profile}.config.toml"
 fi
 codex_bin="${CODEX_PONY_BIN:-}"
 if [[ -z "$codex_bin" ]]; then
@@ -112,16 +113,16 @@ fi
 if background="$(codex_prompt_background_for_personality "${PERSONALITY:-}" 2>/dev/null)"; then
   codex_args+=(-c "tui.prompt_background=\"$background\"")
 fi
-if [[ -n "${CODEX_PONY_PROFILE:-}" ]]; then
-  append_codex_profile_args "$CODEX_PONY_PROFILE"
+if [[ -n "$effective_codex_profile" ]]; then
+  append_codex_profile_args "$effective_codex_profile"
 fi
 if [[ -n "${CODEX_PONY_PID_FILE:-}" ]]; then
   printf '%s\n' "$$" >"$CODEX_PONY_PID_FILE"
 fi
 
 profile_arg="none"
-if [[ -n "${CODEX_PONY_PROFILE:-}" ]]; then
-  profile_arg="$CODEX_PONY_PROFILE"
+if [[ -n "$effective_codex_profile" ]]; then
+  profile_arg="$effective_codex_profile"
 elif [[ "${1:-}" == "-p" ]] && [[ -n "${2:-}" ]]; then
   profile_arg="$2"
 fi

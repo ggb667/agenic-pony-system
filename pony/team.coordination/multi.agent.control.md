@@ -2,7 +2,7 @@
 
 Coordinator focus for agenic-pony-system on main:
 - keep the source-repo Warp launcher set dedicated to Celestia, with Twilight remaining the coordinator
-- keep the source-repo Celestia launcher on a dedicated `celestia` Codex profile rather than ad hoc or joke profile names, so the launcher contract remains discoverable and maintainable
+- keep the source-repo Celestia launcher independent from `~/.codex/*.config.toml` files during normal startup, while treating `celestia` as the canonical manual profile name if an operator explicitly uses a Codex profile
 - keep source-repo governance changes focused on launcher policy, prompt policy, coordinator policy, docs, and source-of-truth structure
 - keep tactical project coordination pushed down to Twilight instead of absorbing it into Celestia governance work
 - keep external target-project installs working, especially Handshake

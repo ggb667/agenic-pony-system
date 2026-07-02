@@ -91,6 +91,12 @@ Installed target-project launchers should not require the original local source 
 - otherwise they prefer the configured local source root from `pony.system.config.yaml` when it still exists
 - if that local root is unavailable, they can use a managed GitHub-backed source cache under `~/.local/share/agenic-pony-system/`
 
+For the agenic source repo specifically, normal Celestia launches should not
+depend on a `~/.codex/*.config.toml` profile file at all. The session host now
+passes Celestia's model, approval, and sandbox settings explicitly. If an
+operator deliberately exports `CODEX_PONY_PROFILE=celestia` for manual
+`codex-pony` use, only the canonical `celestia` profile name is supported.
+
 ## Warp And Shell Launching
 
 The safest model is project-specific launchers.

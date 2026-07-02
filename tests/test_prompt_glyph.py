@@ -105,6 +105,60 @@ class PromptGlyphTests(unittest.TestCase):
                 '"${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}"',
                 launch_script,
             )
+            self.assertNotIn("CODEX_PONY_PROFILE", launch_script)
+
+    def test_manual_celestia_profile_requires_canonical_profile_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+            warp_dir = Path(tmpdir) / "warp-configs"
+            warp_dir.mkdir()
+            codex_home = Path(tmpdir) / "codex-home"
+            codex_home.mkdir()
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            captured_args_path = project_root / "captured-args.json"
+            stub_codex = project_root / "stub-codex.py"
+            stub_codex.write_text(
+                textwrap.dedent(
+                    f"""\
+                    #!/usr/bin/env python3
+                    import json
+                    import sys
+                    from pathlib import Path
+
+                    Path({str(captured_args_path)!r}).write_text(json.dumps(sys.argv[1:]))
+                    """
+                ),
+                encoding="utf-8",
+            )
+            stub_codex.chmod(0o755)
+
+            subprocess.run(
+                ["bash", str(project_root / "pony/bin/codex-pony"), "launch", "smoke"],
+                check=True,
+                cwd=project_root,
+                env={
+                    **os.environ,
+                    "PATH": "/usr/bin:/bin",
+                    "CODEX_HOME": str(codex_home),
+                    "CODEX_PONY_BIN": str(stub_codex),
+                    "CODEX_PONY_PROFILE": "celestia",
+                    "PERSONALITY": "PRINCESS_CELESTIA_SOL_INVICTUS",
+                    "USER": os.environ.get("USER", "test-user"),
+                    "WARP_LAUNCH_CONFIG_DIR": str(warp_dir),
+                },
+            )
+
+            captured_args = json.loads(captured_args_path.read_text(encoding="utf-8"))
+            self.assertIn("-p", captured_args)
+            self.assertIn("celestia", captured_args)
+            self.assertEqual(sorted(path.name for path in codex_home.glob("*.config.toml")), [])
 
     def test_git_project_bootstrap_provisions_worker_worktrees_and_worker_assignment_uses_them(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
