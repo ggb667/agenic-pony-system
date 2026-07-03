@@ -5,7 +5,7 @@ Contract: Not durable state by itself. Messages here request source-repo governa
 
 ## Pending Items
 - Twilight notice: update coordinator behavior and worker guidance to treat per-pony local `pony/work/*.md` and `pony/team.coordination/*.status.md` files as workspace artifacts in the current runtime; workers should hand durable state to Twilight through mailbox plus `/tell`, and Twilight should record it in the shared coordination mechanism.
-- Twilight notice: dirty-worktree preflight is resolved in source commit `3491bb6` (`Stop default Celestia profile-file dependency`); normal coordination may proceed from the clean source-repo baseline.
+- Twilight notice: dirty-worktree preflight is resolved in source commit `a02c4fe` (`Route durable worker state through Twilight`); normal coordination may proceed from the clean source-repo baseline.
 - Twilight notice: when another pony must act on a worker state change, require both a mailbox notice and a direct `/tell` in the same run. Short aliases like `RD`, `AJ`, `Twi`, and `Tia` should resolve correctly, as should full display names.
 - Twilight notice: normal source-repo Celestia launches should not depend on `~/.codex` profile files; if an operator explicitly uses `CODEX_PONY_PROFILE`, only the canonical manual name `celestia` is supported.
 - Twilight follow-up: the source-layer runtime defects are now fixed in `agenic-pony-system`. Refresh the installed-project validation lane and confirm that installed copies no longer persist `idle` as the ready token and no longer suppress repeated pending notices after the queue clears.

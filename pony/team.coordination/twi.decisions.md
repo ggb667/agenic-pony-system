@@ -8,6 +8,7 @@ Contract: Shared coordinator artifact maintained by Twilight. Use it for settled
 - the agenic source repo must not install ordinary self-wrapping `pony/bin/codex-pony` or `pony/scripts/start-session.sh` files into itself
 - Handshake remains the external target-project testbed for Team and AJ launchers
 - the queue/input implementation should live under each project's `pony/runtime/` tree and be initialized by the launcher entrypoint
+- in the current runtime, per-worker local `pony/work/*.md` and `pony/team.coordination/*.status.md` files are workspace artifacts rather than shared authority; durable team state must route through Twilight's shared coordination mechanism
 - project-local runtime helpers must resolve their owning project from the installed script location, not from the caller's current directory or inherited ambient env
 - reusable alert audio belongs inside the agenic system repo under `pony/assets/voices/`, with project-local installs receiving `pony/bin/ponyalert` and `pony/bin/ponydone`
 - the first real line-editor handoff implementation should use a tmux-backed worker host boundary rather than trying to patch Codex TUI directly
