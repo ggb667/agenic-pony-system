@@ -1,5 +1,8 @@
 # Twilight Workfile
 
+Purpose: Twilight's local coordinator scratchpad and restart memory for the source-repo governance lane.
+Contract: Not the shared authority by default. Durable team state must be maintained by Twilight in the shared coordination mechanism and communicated to workers from there.
+
 Project: agenic-pony-system
 Branch: main
 

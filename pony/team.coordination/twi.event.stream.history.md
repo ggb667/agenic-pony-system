@@ -1,5 +1,8 @@
 # TWILIGHT EVENT STREAM HISTORY
 
+Purpose: Coordinator-maintained log of notable coordination and runtime events.
+Contract: Shared historical context maintained by Twilight. Useful for audit and recovery, but not a replacement for current authoritative routing or decision state.
+
 ## Current State
 - pending_review_needed_content: none
 

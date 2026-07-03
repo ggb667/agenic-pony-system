@@ -1,3 +1,8 @@
+## PURPOSE
+Shared Twilight status snapshot for source-repo coordination.
+## CONTRACT
+Maintained by Twilight as a shared coordinator artifact. Workers should not treat their own local copies or mirrors as authoritative shared state.
+
 AUDIENCE: EVERYONE
 BRANCH: main
 WORKTREE: /home/ggb66/dev/agenic-pony-system

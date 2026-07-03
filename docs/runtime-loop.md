@@ -281,11 +281,17 @@ Those messages are not executed immediately by "waking" workers. Instead:
 
 ## State Publication
 
-When a worker changes `pony/work/*.md` or `pony/team.coordination/*.status.md` in a way that affects coordination, it should also publish a concise mailbox notice to Twilight in the same run that names the exact state delta and the file or field Twilight should update. If another pony must act on that change, the sender should also issue a direct `/tell` in the same run, and the runtime should accept either the pony's short alias or full display name for delivery. Twilight then decides whether that change also needs Spike or another pony to update documentation, and Twilight tells that pony directly. The project-root files are authoritative targets; if they are out of reach, the mailbox notice is the write request to Twilight instead of a mirror-only source of truth.
+When a worker changes state in a way that affects coordination, it should also publish a concise mailbox notice to Twilight in the same run that names the exact state delta Twilight should record in shared state. If another pony must act on that change, the sender should also issue a direct `/tell` in the same run, and the runtime should accept either the pony's short alias or full display name for delivery. Twilight then decides whether that change also needs Spike or another pony to update documentation, and Twilight tells that pony directly. In the current runtime, workers should not assume per-workspace local coordination files are the authoritative sink for durable state.
 
-Mailbox files are notification lanes, not restart-state storage. If a fact must survive reboot, it must be recorded in the authoritative worker state files or explicitly escalated to Twilight as an exact write request naming the target file and field to update.
+Decision table:
 
-When a worker is blocked on a missing connection string, secret, endpoint, approval, or similar external prerequisite, the canonical worker state should record:
+- if another pony must act: send that pony a direct `/tell`
+- if shared durable state must change: tell Twilight the exact update to record
+- if both are true: do both in the same run
+
+Mailbox files are notification lanes, not restart-state storage. If a fact must survive reboot, it must be recorded by Twilight in the shared authoritative coordination mechanism from an exact worker write request.
+
+When a worker is blocked on a missing connection string, secret, endpoint, approval, or similar external prerequisite, the shared authoritative state Twilight maintains should record:
 
 - the exact missing artifact
 - who owns or is expected to supply it

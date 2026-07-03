@@ -1,5 +1,8 @@
 # Princess Celestia Workfile
 
+Purpose: Celestia's local governance scratchpad for source-repo policy and coordination-boundary decisions.
+Contract: Not the shared day-to-day coordination authority. Durable operational state belongs with Twilight's shared coordination mechanism unless the user explicitly assigns source-repo governance maintenance here.
+
 Project: agenic-pony-system
 Branch: main
 

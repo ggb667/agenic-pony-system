@@ -1,5 +1,8 @@
 # TWILIGHT DECISIONS
 
+Purpose: Twilight's curated record of durable coordinator decisions for this source repo.
+Contract: Shared coordinator artifact maintained by Twilight. Use it for settled policy, not ephemeral worker scratch state.
+
 ## Active Decisions
 - `Agenic Pony System Celestia` is the dedicated agenic source-repo Warp launcher; the agenic Twi Warp launcher is retired
 - the agenic source repo must not install ordinary self-wrapping `pony/bin/codex-pony` or `pony/scripts/start-session.sh` files into itself
