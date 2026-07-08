@@ -102,11 +102,26 @@ if [[ ! -f "$promptfile" ]]; then
   exit 1
 fi
 
-prompt="$(<"$promptfile")"
-pony_launch_debug "exec enter-worker-and-codex: personality=$personality workfile=$workfile rootdir=$rootdir promptfile=$promptfile"
+pony_ensure_layout_dirs
+session_name="${worker_slug:-$(printf '%s' "$personality" | tr '[:upper:]' '[:lower:]')}"
+socket_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${session_name}.tmux.sock"
+draft_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${session_name}.draft.txt"
+history_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${session_name}.history.txt"
+notice_path="$AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH"
+monitor_script="$(pony_script_path codex-tmux-monitor.sh)"
+host_script="$(pony_script_path pony-session-host.py)"
+pony_launch_debug "exec pony-session-host: personality=$personality workfile=$workfile rootdir=$rootdir promptfile=$promptfile session_name=$session_name socket_path=$socket_path"
 
-exec "$(pony_script_path enter-worker-and-codex.sh)" \
-  "$personality" \
-  "$workfile" \
-  "$rootdir" \
-  "$prompt"
+exec "$host_script" \
+  --personality "$personality" \
+  --workfile "$workfile" \
+  --rootdir "$rootdir" \
+  --promptfile "$promptfile" \
+  --session-name "$session_name" \
+  --socket-path "$socket_path" \
+  --draft-path "$draft_path" \
+  --notice-path "$notice_path" \
+  --history-path "$history_path" \
+  --queue-script "$(pony_script_path queue-runtime.sh)" \
+  --codex-wrapper "$(pony_bin_path codex-pony)" \
+  --monitor-script "$monitor_script"

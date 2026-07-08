@@ -15,6 +15,8 @@ fingerprint_file="$runtime_dir/source-runtime.fingerprint"
 runtime_state_file="$runtime_dir/runtime.state"
 installed_prompt="$resolved_target_root/pony/launch.prompts/twi.txt"
 installed_shell_launcher="$resolved_target_root/pony/scripts/launch-in-pony-shell.sh"
+installed_entry_launcher="$resolved_target_root/pony/scripts/enter-worker-from-prompt-file.sh"
+installed_host="$resolved_target_root/pony/scripts/pony-session-host.py"
 installed_wrapper="$resolved_target_root/pony/bin/codex-pony"
 installed_pony_tell="$resolved_target_root/pony/bin/pony-tell"
 legacy_pony_mail="$resolved_target_root/pony/bin/pony-mail"
@@ -41,7 +43,7 @@ expect_contains() {
   local path="${1:?missing path}"
   local needle="${2:?missing needle}"
   local label="${3:?missing label}"
-  if ! grep -Fq "$needle" "$path"; then
+  if ! grep -Fq -- "$needle" "$path"; then
     record_failure "$label missing expected text: $needle"
   fi
 }
@@ -50,7 +52,7 @@ expect_absent() {
   local path="${1:?missing path}"
   local needle="${2:?missing needle}"
   local label="${3:?missing label}"
-  if grep -Fq "$needle" "$path"; then
+  if grep -Fq -- "$needle" "$path"; then
     record_failure "$label still contains stale text: $needle"
   fi
 }
@@ -61,6 +63,8 @@ require_file "$fingerprint_file" "installed fingerprint"
 require_file "$runtime_state_file" "runtime state"
 require_file "$installed_prompt" "installed Twilight prompt"
 require_file "$installed_shell_launcher" "installed shell launcher"
+require_file "$installed_entry_launcher" "installed worker entry launcher"
+require_file "$installed_host" "installed pony session host"
 require_file "$installed_wrapper" "installed codex-pony wrapper"
 require_file "$installed_pony_tell" "installed pony-tell"
 require_file "$source_codex_pony" "source codex-pony"
@@ -124,6 +128,17 @@ if [[ -f "$installed_shell_launcher" ]]; then
   expect_contains "$installed_shell_launcher" 'RAINBOW_DASH) pony_label="Rainbow Dash"' "installed shell launcher"
 fi
 
+if [[ -f "$installed_entry_launcher" ]]; then
+  expect_contains "$installed_entry_launcher" 'host_script="$(pony_script_path pony-session-host.py)"' "installed worker entry launcher"
+  expect_contains "$installed_entry_launcher" '--session-name "$session_name"' "installed worker entry launcher"
+  expect_contains "$installed_entry_launcher" '--socket-path "$socket_path"' "installed worker entry launcher"
+fi
+
+if [[ -f "$installed_host" ]]; then
+  expect_contains "$installed_host" 'def should_defer_initial_codex_start(self) -> bool:' "installed pony session host"
+  expect_contains "$installed_host" 'return self.preflight_result == "READY_KEEP_LIVE"' "installed pony session host"
+fi
+
 if [[ -f "$installed_wrapper" ]]; then
   expect_contains "$installed_wrapper" 'resolve-system-root.sh' "installed codex-pony wrapper"
 fi
@@ -146,4 +161,4 @@ printf '%s\n' "- runtime state token is ready"
 printf '%s\n' "- runtime fingerprint matches source: $source_fingerprint"
 printf '%s\n' "- source and installed pony-tell are executable and legacy pony-mail is absent"
 printf '%s\n' "- Twilight prompt contains live ping reply guidance and compact source summary reference"
-printf '%s\n' "- launcher surfaces retain the expected title and pony-name mappings"
+printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, and deferred parked-host entry path"

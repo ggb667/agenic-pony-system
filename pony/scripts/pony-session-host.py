@@ -167,7 +167,7 @@ class PonySessionHost:
         self.monitor_script = args.monitor_script
         self.initial_prompt = self.promptfile.read_text() if self.promptfile.exists() else ""
         self.personality = args.personality
-        self.bootstrap_codex_args, self.bootstrap_prompt = self._resolve_preflight()
+        self.preflight_result, self.bootstrap_codex_args, self.bootstrap_prompt = self._resolve_preflight()
 
     def tmux(self, *subcmd: str, capture: bool = False, check: bool = True) -> subprocess.CompletedProcess[str]:
         cmd = ["tmux", "-S", str(self.socket_path), *subcmd]
@@ -178,7 +178,7 @@ class PonySessionHost:
             check=check,
         )
 
-    def _resolve_preflight(self) -> tuple[list[str], str]:
+    def _resolve_preflight(self) -> tuple[str, list[str], str]:
         preflight = subprocess.run(
             [self.args.queue_script.replace("queue-runtime.sh", "worker-preflight.sh"), self.personality, self.args.workfile, self.args.rootdir],
             text=True,
@@ -190,16 +190,19 @@ class PonySessionHost:
         codex_args = codex_config_args_for(self.personality)
         codex_args.extend(additional_codex_args_for_rootdir(self.args.rootdir))
         if result == "READY_NO_LLM":
-            return codex_args, ready_no_llm_notice(self.personality, self.initial_prompt)
+            return result, codex_args, ready_no_llm_notice(self.personality, self.initial_prompt)
         if result == "READY_KEEP_LIVE":
-            return codex_args, waiting_for_task_notice(self.personality, self.args.workfile)
+            return result, codex_args, waiting_for_task_notice(self.personality, self.args.workfile)
         if result == "BLOCKED_DIRTY_FIX_FIRST":
-            return codex_args, dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt)
+            return result, codex_args, dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt)
         if result == "ESCALATE_MINI":
-            return codex_args, self.initial_prompt
+            return result, codex_args, self.initial_prompt
         if result == "ESCALATE_TWI":
-            return codex_args, escalate_twi_notice(self.personality, self.initial_prompt)
-        return codex_args, f"Preflight error: unexpected result '{result}'.\n\n{self.initial_prompt}".strip()
+            return result, codex_args, escalate_twi_notice(self.personality, self.initial_prompt)
+        return result, codex_args, f"Preflight error: unexpected result '{result}'.\n\n{self.initial_prompt}".strip()
+
+    def should_defer_initial_codex_start(self) -> bool:
+        return self.preflight_result == "READY_KEEP_LIVE"
 
     def session_exists(self) -> bool:
         return self.tmux("has-session", "-t", self.session_name, check=False).returncode == 0
@@ -247,9 +250,11 @@ class PonySessionHost:
 
         style = Style.from_dict({"prompt": "bold", "toolbar": "reverse"})
         session = PromptSession(history=FileHistory(str(self.history_path)))
-        if not self.session_exists():
+        if self.session_exists():
+            self.attach()
+        elif not self.should_defer_initial_codex_start():
             self.create_session(self.bootstrap_prompt, self.bootstrap_codex_args)
-        self.attach()
+            self.attach()
 
         while True:
             default_text = self.draft_path.read_text() if self.draft_path.exists() else ""
@@ -273,6 +278,11 @@ class PonySessionHost:
                 continue
 
             if not self.session_exists():
+                if self.should_defer_initial_codex_start():
+                    self.create_session(text, self.bootstrap_codex_args)
+                    self.draft_path.write_text("")
+                    self.attach()
+                    continue
                 self.create_session(self.bootstrap_prompt, self.bootstrap_codex_args)
             self.send_prompt(text)
             self.attach()

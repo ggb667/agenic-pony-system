@@ -54,6 +54,14 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
             REPO_ROOT / "pony" / "scripts" / "launch-in-pony-shell.sh",
             self.project_root / "pony" / "scripts" / "launch-in-pony-shell.sh",
         )
+        shutil.copy2(
+            REPO_ROOT / "pony" / "scripts" / "enter-worker-from-prompt-file.sh",
+            self.project_root / "pony" / "scripts" / "enter-worker-from-prompt-file.sh",
+        )
+        shutil.copy2(
+            REPO_ROOT / "pony" / "scripts" / "pony-session-host.py",
+            self.project_root / "pony" / "scripts" / "pony-session-host.py",
+        )
 
         (self.project_root / "pony" / "scripts" / "resolve-system-root.sh").write_text(
             "#!/usr/bin/env bash\nprintf '%s\\n' '/tmp/source-root'\n",
@@ -82,6 +90,7 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
         self.assertIn("Installed runtime validation passed", result.stdout)
         self.assertIn("source and installed pony-tell are executable", result.stdout)
         self.assertIn("runtime state token is ready", result.stdout)
+        self.assertIn("deferred parked-host entry path", result.stdout)
 
     def test_validator_reports_stale_prompt_and_fingerprint(self) -> None:
         (self.project_root / "pony" / "runtime" / "source-runtime.fingerprint").write_text(

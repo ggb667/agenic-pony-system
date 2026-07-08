@@ -97,7 +97,13 @@ class PromptGlyphTests(unittest.TestCase):
                 check=True,
                 cwd=project_root,
             )
+            subprocess.run(
+                ["python3", "-m", "py_compile", str(project_root / "pony/scripts/pony-session-host.py")],
+                check=True,
+                cwd=project_root,
+            )
             launch_script = (project_root / "pony/scripts/launch-in-pony-shell.sh").read_text(encoding="utf-8")
+            entry_script = (project_root / "pony/scripts/enter-worker-from-prompt-file.sh").read_text(encoding="utf-8")
             self.assertIn(
                 'source_root="$(./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"',
                 launch_script,
@@ -113,6 +119,10 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn('FLUTTERSHY) pony_func="fluttershy" ;;', launch_script)
             self.assertIn('RAINBOW_DASH) pony_func="rainbow" ;;', launch_script)
             self.assertNotIn("CODEX_PONY_PROFILE", launch_script)
+            self.assertIn('host_script="$(pony_script_path pony-session-host.py)"', entry_script)
+            self.assertIn('--session-name "$session_name"', entry_script)
+            self.assertIn('--socket-path "$socket_path"', entry_script)
+            self.assertIn('--promptfile "$promptfile"', entry_script)
             self.assertIn('PRINCESS_CELESTIA_SOL_INVICTUS) pony_label="Celestia" ;;', launch_script)
             self.assertIn('TWILIGHT_SPARKLE) pony_label="Twilight" ;;', launch_script)
             self.assertIn('APPLEJACK) pony_label="Applejack" ;;', launch_script)
