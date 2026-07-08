@@ -113,6 +113,9 @@ fi
 if background="$(codex_prompt_background_for_personality "${PERSONALITY:-}" 2>/dev/null)"; then
   codex_args+=(-c "tui.prompt_background=\"$background\"")
 fi
+if [[ -n "${PERSONALITY:-}" ]]; then
+  codex_args+=(-c "tui.terminal_title=[]")
+fi
 if [[ -n "$effective_codex_profile" ]]; then
   append_codex_profile_args "$effective_codex_profile"
 fi

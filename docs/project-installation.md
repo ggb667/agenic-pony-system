@@ -34,7 +34,9 @@ That means:
 
 The source repo has its own special case: the agenic source installation should keep the live Warp launcher set focused on source-repo governance and coordination work, with Celestia as the dedicated source-repo Warp launcher while Twilight remains the coordinator. Normal Celestia launches should not depend on a Codex profile file in `~/.codex`; the launcher stack should pass the required model, approval, and sandbox settings explicitly. If an operator deliberately invokes `codex-pony` with `CODEX_PONY_PROFILE=celestia`, only the canonical `celestia` profile name is supported. Worker launcher behavior is validated from project-local installs. In the current runtime model, per-worker local `pony/work` and `pony/team.coordination` files inside individual pony workspaces are not the shared authority; workers are expected to report durable state changes to Twilight, and Twilight updates the shared coordination mechanism.
 
-If a worker changes state in a way that Twilight or another pony must act on, the worker should also publish a concise mailbox notice in the same run that names the exact state delta Twilight should record in shared state. If another pony must act, the sender should also issue a direct `/tell` in that same run, and the runtime should accept either the pony's short alias or full display name for delivery. Workers should not assume per-workspace local coordination files are the authoritative sink for durable shared state.
+If a worker changes state in a way that Twilight or another pony must act on, the worker should issue the needed direct `/tell` messages in the same run. If shared durable state must change, the sender should tell Twilight the exact state delta Twilight should record in shared state. If another pony must act, the sender should also issue a direct `/tell` to that pony in that same run, and the runtime should accept either the pony's short alias or full display name for delivery. Workers should not assume per-workspace local coordination files are the authoritative sink for durable shared state.
+
+Simple direct `/tell` pings, acknowledgements, and short live coordination notes should stay in the live IPC lane by default. They should normally receive a direct `/tell` reply rather than being copied into mailbox or coordinator-history files unless the message also carries a durable state change, blocker, decision request, or exact write request.
 
 Mailbox files themselves are not durable reboot-state storage. When a worker is blocked by a missing connection string, secret, endpoint, approval, or similar external prerequisite, the worker should tell Twilight the exact missing artifact, the expected owner, and the next unblock step so shared restart state stays truthful.
 
@@ -100,7 +102,7 @@ The precise contents may expand over time, but the key rule is that runtime stat
 
 For git-backed installs, the default worker policy is:
 
-- Twilight stays in the main project worktree as coordinator on branch `pony/twi/main`
+- Twilight stays in the main project worktree as coordinator on branch `main`
 - ordinary workers get linked git worktrees under `pony/worktrees/<slug>/`
 - ordinary worker branch names default to `pony/<slug>/main`
 - those worker worktrees are the paths recorded in `pony/team.coordination/assignment.registry.tsv`

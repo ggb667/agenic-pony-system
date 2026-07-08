@@ -255,6 +255,12 @@ fi
     printf '%s\n' "Bootstrap rule: launcher hops through $agenic_root for managed runtime bootstrap are expected plumbing, not a routing conflict. Treat $AGENIC_PROJECT_ROOT as the authoritative project context once control returns to the local pony state."
   fi
   printf '%s\n' "Installed launcher markers live under: $AGENIC_PROJECT_PONY_DIR"
+  if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
+    printf '%s\n' "Direct-message rule: for live pony-to-pony messaging, warnings, breakage reports, and quick escalation notes, use $AGENIC_PROJECT_PONY_BIN_DIR/pony-tell <pony|all> <message>."
+  else
+    printf '%s\n' "Direct-message rule: for live pony-to-pony messaging, warnings, breakage reports, and quick escalation notes inside this project, use $AGENIC_PROJECT_PONY_BIN_DIR/pony-tell <pony|all> <message>."
+    printf '%s\n' "Celestia rule: in installed target projects, do not route ordinary live coordination through Celestia; only contact her when the user explicitly assigns source-repo governance work."
+  fi
   printf '\n\n'
   printf '%s\n' "Alert rule: before any real user-facing approval request or escalation request, run $AGENIC_PROJECT_PONY_BIN_DIR/ponyalert $personality."
   printf '%s\n' "Done rule: before entering an Ω idle state because the current task is done, run $AGENIC_PROJECT_PONY_BIN_DIR/ponydone $personality."

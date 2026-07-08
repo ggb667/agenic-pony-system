@@ -13,7 +13,8 @@ Coordinator focus for agenic-pony-system on main:
 - keep that no-dirty-default policy enforced from source-layer install/bootstrap behavior, including managed Git-backed ignore policy for generated target-project `pony/` trees
 - keep MCP and other Codex session credentials flowing through explicit launcher env files instead of relying on incidental shell startup state
 - keep the runtime aligned with the current shared-state rule: workers report changes to Twilight, and Twilight maintains the authoritative coordination state rather than relying on worker-local file writes
-- require workers to publish a concise mailbox notice to Twilight in the same run when a coordination-relevant state change occurs, and when another pony must act, require a direct `/tell` in that same run; short aliases and full display names should both resolve through the active worker identity map
+- require workers to send the needed direct `/tell` messages in the same run when a coordination-relevant state change occurs; short aliases and full display names should both resolve through the active worker identity map
+- treat simple pony-to-pony `/tell` pings, acknowledgements, and short live notes as conversational IPC by default: reply live with `/tell` unless the message also carries a durable state change, blocker, or explicit write request
 - treat mailbox files as notification lanes rather than reboot-state storage; if a fact must survive restart, require Twilight to record it in the shared authoritative coordination mechanism from an exact worker write request
 - require blockers caused by missing connection strings, secrets, endpoints, approvals, or other external prerequisites to name the exact missing artifact, the expected owner, and the next unblock step in canonical worker state before idle
 - implement the queue/input runtime behavior from `docs/runtime-loop.md`

@@ -155,7 +155,7 @@ worker_branch_for_slug() {
     if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
       printf '%s\n' "$AGENIC_PROJECT_BRANCH"
     else
-      printf '%s\n' "pony/twi/main"
+      printf '%s\n' "main"
     fi
     return 0
   fi

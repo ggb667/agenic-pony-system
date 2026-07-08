@@ -313,7 +313,7 @@ exec "$AGENIC_PROJECT_ROOT/pony/bin/codex-pony" "\$@"
 EOF
 )"
 
-  for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart; do
+  for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart pony-tell; do
     write_managed_executable "$worktree_pony_bin_dir/$managed_bin" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
@@ -414,7 +414,7 @@ project_coordinator_branch() {
   if is_agenic_source_project; then
     printf '%s\n' "$AGENIC_PROJECT_BRANCH"
   else
-    printf '%s\n' "pony/twi/main"
+    printf '%s\n' "main"
   fi
 }
 
@@ -700,11 +700,12 @@ if ! is_agenic_source_project; then
 fi
 
 write_install_state "managed_runtime_syncing"
-for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart pony-launch-env-status; do
+for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart pony-launch-env-status pony-tell; do
   if [[ -f "$source_pony_bin_dir/$managed_bin" ]]; then
     write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/$managed_bin" "$(cat "$source_pony_bin_dir/$managed_bin")"
   fi
 done
+remove_if_exists "$AGENIC_PROJECT_PONY_BIN_DIR/pony-mail"
 
 for managed_script in \
   codex-tmux-monitor.sh \

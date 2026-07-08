@@ -82,6 +82,13 @@ So the system currently has two message lanes:
 
 They are related, but they are not yet unified.
 
+Behavior rule for direct `/tell`:
+
+- a simple ping, acknowledgement, or short live coordination note between ponies should normally be answered with a direct `/tell` reply
+- that immediate reply rule still applies when the receiving pony is otherwise WAITING, blank, or unassigned
+- do not promote that kind of message into mailbox or coordinator-history churn by default
+- only persist the interaction when it carries a durable state change, blocker, decision request, or explicit write request that must survive restart
+
 ## Queue Model
 
 The queue is FIFO.
@@ -281,7 +288,7 @@ Those messages are not executed immediately by "waking" workers. Instead:
 
 ## State Publication
 
-When a worker changes state in a way that affects coordination, it should also publish a concise mailbox notice to Twilight in the same run that names the exact state delta Twilight should record in shared state. If another pony must act on that change, the sender should also issue a direct `/tell` in the same run, and the runtime should accept either the pony's short alias or full display name for delivery. Twilight then decides whether that change also needs Spike or another pony to update documentation, and Twilight tells that pony directly. In the current runtime, workers should not assume per-workspace local coordination files are the authoritative sink for durable state.
+When a worker changes state in a way that affects coordination, it should issue the needed direct `/tell` messages in the same run. If shared durable state must change, the sender should tell Twilight the exact state delta Twilight should record in shared state. If another pony must act on that change, the sender should also issue a direct `/tell` to that pony in the same run, and the runtime should accept either the pony's short alias or full display name for delivery. Twilight then decides whether that change also needs Spike or another pony to update documentation, and Twilight tells that pony directly. In the current runtime, workers should not assume per-workspace local coordination files are the authoritative sink for durable state.
 
 Decision table:
 

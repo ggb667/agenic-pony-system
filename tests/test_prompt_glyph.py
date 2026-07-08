@@ -74,6 +74,7 @@ class PromptGlyphTests(unittest.TestCase):
 
             captured_args = json.loads(captured_args_path.read_text(encoding="utf-8"))
             self.assertIn('tui.prompt_glyph="☀︎"', captured_args)
+            self.assertIn("tui.terminal_title=[]", captured_args)
 
     def test_installed_wrappers_are_shell_valid(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -105,6 +106,12 @@ class PromptGlyphTests(unittest.TestCase):
                 '"${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}"',
                 launch_script,
             )
+            self.assertNotIn(
+                '"${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}" </dev/tty >/dev/tty 2>&1',
+                launch_script,
+            )
+            self.assertIn('FLUTTERSHY) pony_func="fluttershy" ;;', launch_script)
+            self.assertIn('RAINBOW_DASH) pony_func="rainbow" ;;', launch_script)
             self.assertNotIn("CODEX_PONY_PROFILE", launch_script)
 
     def test_manual_celestia_profile_requires_canonical_profile_file(self) -> None:

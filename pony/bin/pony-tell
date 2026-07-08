@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$script_dir/../scripts/pony-paths.sh"
+load_project_paths "${AGENIC_PROJECT_ROOT:-$PWD}"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  pony-tell list
+  pony-tell <pony-name|all> <message...>
+EOF
+}
+
+chat_log_path="${AGENIC_PONY_CHAT_LOG_PATH:-${TMPDIR:-/tmp}/codex-pony-chat.jsonl}"
+registry_log_path="${AGENIC_PONY_REGISTRY_LOG_PATH:-${TMPDIR:-/tmp}/codex-pony-registry.jsonl}"
+
+command="${1:-}"
+case "$command" in
+  ""|-h|--help)
+    usage
+    exit 0
+    ;;
+  list)
+    python3 - "$registry_log_path" <<'PY'
+import json
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+path = Path(sys.argv[1])
+if not path.exists():
+    raise SystemExit(0)
+
+cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
+latest = {}
+for raw in path.read_text(encoding="utf-8").splitlines():
+    raw = raw.strip()
+    if not raw:
+      continue
+    try:
+        entry = json.loads(raw)
+    except json.JSONDecodeError:
+        continue
+    try:
+        seen = datetime.fromisoformat(entry["last_seen_at"].replace("Z", "+00:00"))
+    except Exception:
+        continue
+    if seen < cutoff:
+        continue
+    latest[entry["pony_name"]] = entry
+
+for pony_name in sorted(latest):
+    entry = latest[pony_name]
+    print(f'{pony_name}\t{entry.get("path", "")}\t{entry.get("git_branch", "")}')
+PY
+    ;;
+  *)
+    [[ $# -ge 2 ]] || { usage >&2; exit 64; }
+    target="$1"
+    shift
+    message="$*"
+    sender_personality="${AGENIC_LAUNCH_PERSONALITY:-${PERSONALITY:-}}"
+    [[ -n "$sender_personality" ]] || {
+      printf '%s\n' "pony-tell requires AGENIC_LAUNCH_PERSONALITY or PERSONALITY in the environment." >&2
+      exit 64
+    }
+    python3 - "$target" "$message" "$sender_personality" "$AGENIC_PROJECT_ROOT" "$registry_log_path" "$chat_log_path" <<'PY'
+import json
+import os
+import sys
+import uuid
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+target, text, sender_name, project_root, registry_path_raw, chat_path_raw = sys.argv[1:]
+registry_path = Path(registry_path_raw)
+chat_path = Path(chat_path_raw)
+
+ALIASES = {
+    "TIA": "PRINCESS_CELESTIA_SOL_INVICTUS",
+    "CELESTIA": "PRINCESS_CELESTIA_SOL_INVICTUS",
+    "PRINCESS": "PRINCESS_CELESTIA_SOL_INVICTUS",
+    "CELLY": "PRINCESS_CELESTIA_SOL_INVICTUS",
+    "SUNBUTT": "PRINCESS_CELESTIA_SOL_INVICTUS",
+    "PRINCESS_CELESTIA_SOL_INVICTUS": "PRINCESS_CELESTIA_SOL_INVICTUS",
+    "TWI": "TWILIGHT_SPARKLE",
+    "TWILIGHT": "TWILIGHT_SPARKLE",
+    "TWILIGHT_SPARKLE": "TWILIGHT_SPARKLE",
+    "AJ": "APPLEJACK",
+    "APPLEJACK": "APPLEJACK",
+    "FS": "FLUTTERSHY",
+    "FLUTTERSHY": "FLUTTERSHY",
+    "SHY": "FLUTTERSHY",
+    "FLUTTERS": "FLUTTERSHY",
+    "PINKIE": "PINKIE_PIE",
+    "PINKIE_PIE": "PINKIE_PIE",
+    "RARITY": "RARITY",
+    "RARES": "RARITY",
+    "RD": "RAINBOW_DASH",
+    "RAINBOW": "RAINBOW_DASH",
+    "RAINBOW_DASH": "RAINBOW_DASH",
+    "DASH": "RAINBOW_DASH",
+    "SPIKE": "SPIKE",
+}
+SYMBOLS = {
+    "PRINCESS_CELESTIA_SOL_INVICTUS": "☀︎",
+    "TWILIGHT_SPARKLE": "✶",
+    "APPLEJACK": "🍎",
+    "FLUTTERSHY": "🦋",
+    "PINKIE_PIE": "🎈",
+    "RARITY": "💎",
+    "RAINBOW_DASH": "⚡",
+    "SPIKE": "🐲",
+}
+
+def canonicalize(name: str) -> str:
+    normalized = name.strip().upper().replace(" ", "_").replace("-", "_")
+    if normalized == "ALL":
+        return "*"
+    return ALIASES.get(normalized, normalized)
+
+def split_subject_and_body(text: str) -> tuple[str, str]:
+    split_at = len(text)
+    chars_seen = 0
+    for idx, ch in enumerate(text):
+        if ch in ".!?\n":
+            split_at = idx
+            break
+        chars_seen += 1
+        if chars_seen == 25:
+            split_at = idx + 1
+            break
+    subject = text[:split_at].rstrip()
+    body = text[split_at:]
+    return subject or text[:25], body
+
+sender = canonicalize(sender_name)
+recipient = canonicalize(target)
+known = set(SYMBOLS) | {"*"}
+if sender not in SYMBOLS:
+    raise SystemExit(f"Unknown sender pony '{sender_name}'.")
+if recipient not in known:
+    raise SystemExit(f"Unknown target pony '{target}'.")
+
+sender_instance_id = str(uuid.uuid4())
+cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
+if registry_path.exists():
+    for raw in reversed(registry_path.read_text(encoding="utf-8").splitlines()):
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            entry = json.loads(raw)
+            seen = datetime.fromisoformat(entry["last_seen_at"].replace("Z", "+00:00"))
+        except Exception:
+            continue
+        if seen < cutoff:
+            continue
+        if entry.get("pony_name") == sender and entry.get("path") == project_root:
+            sender_instance_id = entry.get("uuid") or sender_instance_id
+            break
+
+subject, body = split_subject_and_body(text.strip())
+entry = {
+    "id": str(uuid.uuid4()),
+    "from_instance_id": sender_instance_id,
+    "from_pony_name": sender,
+    "from_symbol": SYMBOLS[sender],
+    "to": recipient,
+    "subject": subject,
+    "body": body,
+    "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+}
+
+chat_path.parent.mkdir(parents=True, exist_ok=True)
+with chat_path.open("a", encoding="utf-8") as fh:
+    fh.write(json.dumps(entry, separators=(",", ":")))
+    fh.write("\n")
+
+print(entry["id"])
+PY
+    ;;
+esac

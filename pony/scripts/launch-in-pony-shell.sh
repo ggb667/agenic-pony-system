@@ -13,9 +13,9 @@ case "$personality" in
   TWILIGHT_SPARKLE) pony_func="twi" ;;
   APPLEJACK) pony_func="aj" ;;
   PINKIE_PIE) pony_func="pinkie" ;;
-  FLUTTERSHY) pony_func="shy" ;;
+  FLUTTERSHY) pony_func="fluttershy" ;;
   RARITY) pony_func="rarity" ;;
-  RAINBOW_DASH) pony_func="rd" ;;
+  RAINBOW_DASH) pony_func="rainbow" ;;
   SPIKE) pony_func="spike" ;;
   *) pony_func="" ;;
 esac
@@ -168,7 +168,9 @@ if [[ -z "${AGENIC_PONY_AUTORAN:-}" ]]; then
   source_root="${AGENIC_PONY_SOURCE_ROOT}"
   _agenic_pony_log "resolved source root: ${source_root}"
   export AGENIC_PONY_SOURCE_ROOT="${source_root}"
-  "${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}" </dev/tty >/dev/tty 2>&1
+  # Reopening /dev/tty here can collide with Codex approval UI terminal ownership.
+  # Let the startup handoff inherit the interactive shell's stdio instead.
+  "${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}"
   exit_code=$?
   if [[ $exit_code -ne 0 ]]; then
     _agenic_pony_log "start-session exited nonzero: exit_code=${exit_code}"
