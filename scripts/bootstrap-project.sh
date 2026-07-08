@@ -670,7 +670,7 @@ EOF
 )"
 
 write_file_if_missing "$AGENIC_PROJECT_PONY_RUNTIME_STATE_PATH" "$(cat <<EOF
-idle
+ready
 EOF
 )"
 

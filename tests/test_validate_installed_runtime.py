@@ -45,6 +45,9 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
         (self.project_root / "pony" / "runtime" / "source-runtime.fingerprint").write_text(
             f"{self.source_fingerprint}\n", encoding="utf-8"
         )
+        (self.project_root / "pony" / "runtime" / "runtime.state").write_text(
+            "ready\n", encoding="utf-8"
+        )
 
         shutil.copy2(REPO_ROOT / "pony" / "launch.prompts" / "twi.txt", self.project_root / "pony" / "launch.prompts" / "twi.txt")
         shutil.copy2(
@@ -78,10 +81,14 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Installed runtime validation passed", result.stdout)
         self.assertIn("source and installed pony-tell are executable", result.stdout)
+        self.assertIn("runtime state token is ready", result.stdout)
 
     def test_validator_reports_stale_prompt_and_fingerprint(self) -> None:
         (self.project_root / "pony" / "runtime" / "source-runtime.fingerprint").write_text(
             "stale-fingerprint\n", encoding="utf-8"
+        )
+        (self.project_root / "pony" / "runtime" / "runtime.state").write_text(
+            "idle\n", encoding="utf-8"
         )
         (self.project_root / "pony" / "launch.prompts" / "twi.txt").write_text(
             "Read:\n8. `README.md`\n9. `docs/runtime-loop.md`\n10. `docs/project-installation.md`\n",
@@ -98,6 +105,7 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Installed runtime validation FAILED", result.stdout)
         self.assertIn("installed runtime fingerprint is stale", result.stdout)
+        self.assertIn("runtime state is not ready", result.stdout)
         self.assertIn("installed Twilight prompt still contains stale text", result.stdout)
 
 

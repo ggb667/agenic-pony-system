@@ -44,6 +44,8 @@ Mailbox files themselves are not durable reboot-state storage. When a worker is 
 
 Installed launchers may still bootstrap through the reusable source layer before returning to the project-local runtime. That bootstrap hop is expected managed plumbing, not a cross-repo coordination violation. Policy and work state remain authoritative in the target project's local `pony/` tree once the launcher hands control back to the installed project runtime.
 
+The queue/runtime state token under `pony/runtime/runtime.state` should use `ready` as the canonical non-running value. Fresh installs should seed `ready`, and reusable runtime helpers should normalize stale `idle` carryover rather than preserving it indefinitely.
+
 For shared pony audio asset renames, the preferred operator workflow is two-step rather than inferential:
 
 1. the active pony runs its local `ponyalert` so the user can hear the clip and see the emitted stem

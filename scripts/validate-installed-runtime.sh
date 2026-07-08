@@ -12,6 +12,7 @@ runtime_dir="$resolved_target_root/pony/runtime"
 state_file="$runtime_dir/install-project.state"
 metadata_file="$runtime_dir/install-project.metadata"
 fingerprint_file="$runtime_dir/source-runtime.fingerprint"
+runtime_state_file="$runtime_dir/runtime.state"
 installed_prompt="$resolved_target_root/pony/launch.prompts/twi.txt"
 installed_shell_launcher="$resolved_target_root/pony/scripts/launch-in-pony-shell.sh"
 installed_wrapper="$resolved_target_root/pony/bin/codex-pony"
@@ -57,6 +58,7 @@ expect_absent() {
 require_file "$state_file" "install state"
 require_file "$metadata_file" "install metadata"
 require_file "$fingerprint_file" "installed fingerprint"
+require_file "$runtime_state_file" "runtime state"
 require_file "$installed_prompt" "installed Twilight prompt"
 require_file "$installed_shell_launcher" "installed shell launcher"
 require_file "$installed_wrapper" "installed codex-pony wrapper"
@@ -82,6 +84,14 @@ if [[ -f "$state_file" ]]; then
   read -r install_state <"$state_file" || install_state=""
   if [[ "$install_state" != "complete" ]]; then
     record_failure "install state is not complete: ${install_state:-missing}"
+  fi
+fi
+
+runtime_state=""
+if [[ -f "$runtime_state_file" ]]; then
+  read -r runtime_state <"$runtime_state_file" || runtime_state=""
+  if [[ "$runtime_state" != "ready" ]]; then
+    record_failure "runtime state is not ready: ${runtime_state:-missing}"
   fi
 fi
 
@@ -132,6 +142,7 @@ fi
 
 printf '%s\n' "Installed runtime validation passed for $resolved_target_root"
 printf '%s\n' "- install state: complete"
+printf '%s\n' "- runtime state token is ready"
 printf '%s\n' "- runtime fingerprint matches source: $source_fingerprint"
 printf '%s\n' "- source and installed pony-tell are executable and legacy pony-mail is absent"
 printf '%s\n' "- Twilight prompt contains live ping reply guidance and compact source summary reference"

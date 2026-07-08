@@ -27,5 +27,6 @@ Contract: Distills the stable source-repo rules from `README.md`, `docs/runtime-
 
 - source changes land in `agenic-pony-system`
 - installed copies under `<project-root>/pony/` should be refreshed when managed prompts, scripts, or runtime files change
+- project-local `pony/runtime/runtime.state` should use `ready` as the canonical parked token; stale `idle` values should be normalized or treated as drift
 - runtime validation should happen from the installed target project's `pony/` tree
 - `codex-rs` edits are reserved for Codex UI behavior, not general pony policy
