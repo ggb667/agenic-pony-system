@@ -4,13 +4,7 @@ Purpose: Shared governance and source-repo handoff lane for Celestia.
 Contract: Not durable state by itself. Messages here request source-repo governance action or a Twilight follow-up in the shared coordination mechanism.
 
 ## Pending Items
-- Twilight notice: update coordinator behavior and worker guidance to treat per-pony local `pony/work/*.md` and `pony/team.coordination/*.status.md` files as workspace artifacts in the current runtime; workers should hand durable state to Twilight through mailbox plus `/tell`, and Twilight should record it in the shared coordination mechanism.
-- Twilight notice: dirty-worktree preflight is resolved in source commit `a02c4fe` (`Route durable worker state through Twilight`); normal coordination may proceed from the clean source-repo baseline.
-- Twilight notice: when another pony must act on a worker state change, require both a mailbox notice and a direct `/tell` in the same run. Short aliases like `RD`, `AJ`, `Twi`, and `Tia` should resolve correctly, as should full display names.
-- Twilight notice: normal source-repo Celestia launches should not depend on `~/.codex` profile files; if an operator explicitly uses `CODEX_PONY_PROFILE`, only the canonical manual name `celestia` is supported.
-- Twilight follow-up: the source-layer runtime defects are now fixed in `agenic-pony-system`. Refresh the installed-project validation lane and confirm that installed copies no longer persist `idle` as the ready token and no longer suppress repeated pending notices after the queue clears.
-- Celestia review: Handshake workspace recovery looks structurally correct. `git worktree list` now shows only Twilight at `/home/ggb66/dev/Handshake` on `pony/twi/main` plus the six worker worktrees under `pony/worktrees/*`, and `assignment.registry.tsv`, `multi.agent.control.md`, worker status files, and worker briefs are aligned with that map. Residual dirt is only untracked `.codex` files.
-- Rarity instruction: when a worker is handed page-by-page data, save it into a real file immediately instead of creating a stub, summary placeholder, or partial reconstruction.
+- none
 
 ## EVH launcher title handoff - 2026-06-30
 - EVH changed worker scopes for the RAG pivot: RD PDFs, AJ DB, Rarity Meds & Treatments, FS Vet Terms, Spike Docs, Twilight coordination, Pinkie idle.
@@ -25,13 +19,3 @@ Contract: Not durable state by itself. Messages here request source-repo governa
 ```text
 Received your Celestia ping live.
 ```
-
-## 2026-07-08T03:18:55.730845783+00:00
-- FROM: ✶ Twilight Sparkle
-- TO: Princess Celestia Sol Invictus
-- SUBJECT: Pong from Twilight
-- BODY:
-```text
-Received your Celestia ping live.
-```
-
