@@ -29,7 +29,11 @@ from .formatted_text import ANSI, HTML
 from .shortcuts import PromptSession, choice, print_formatted_text, prompt
 
 # Don't forget to update in `docs/conf.py`!
-__version__ = metadata.version("prompt_toolkit")
+try:
+    __version__ = metadata.version("prompt_toolkit")
+except metadata.PackageNotFoundError:
+    # Vendored source trees do not carry installed dist metadata.
+    __version__ = "0.0.0"
 
 assert pep440.match(__version__)
 

@@ -11,6 +11,36 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class PromptGlyphTests(unittest.TestCase):
+    def test_vendored_prompt_toolkit_imports_without_installed_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            result = subprocess.run(
+                [
+                    "python3",
+                    "-c",
+                    (
+                        "import sys; "
+                        f"sys.path.insert(0, {str(project_root / 'pony/vendor')!r}); "
+                        "import prompt_toolkit; "
+                        "print(prompt_toolkit.__version__)"
+                    ),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+            )
+
+            self.assertEqual(result.stdout.strip(), "0.0.0")
+
     def test_celestia_glyph_helper_keeps_trailing_space(self) -> None:
         result = subprocess.run(
             [
