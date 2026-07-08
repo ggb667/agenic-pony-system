@@ -33,6 +33,10 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
     def test_twilight_prompt_uses_shared_coordination_mechanism(self) -> None:
         text = (PROMPTS_DIR / "twi.txt").read_text(encoding="utf-8")
         self.assertIn("shared Twilight-managed coordination mechanism", text)
+        self.assertIn("source.runtime.summary.md", text)
+        self.assertNotIn("README.md", text)
+        self.assertNotIn("docs/runtime-loop.md", text)
+        self.assertNotIn("docs/project-installation.md", text)
         self.assertIn("are not the shared authority", text)
         self.assertIn("shared authoritative state", text)
         self.assertIn("treat `/tell` messages as live coordination signals", text)
@@ -43,6 +47,13 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
             text,
         )
         self.assertNotIn("pony/team.coordination/twi.mailbox.md", text)
+
+    def test_celestia_prompt_uses_compact_source_summary(self) -> None:
+        text = (PROMPTS_DIR / "celestia.txt").read_text(encoding="utf-8")
+        self.assertIn("source.runtime.summary.md", text)
+        self.assertNotIn("README.md", text)
+        self.assertNotIn("docs/runtime-loop.md", text)
+        self.assertNotIn("docs/project-installation.md", text)
 
 
 if __name__ == "__main__":

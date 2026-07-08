@@ -3,12 +3,10 @@ Read:
 2. `pony/team.coordination/celestia.status.md`
 3. `pony/team.coordination/celestia.mailbox.md`
 4. `pony/work/governor-celestia.md`
-5. `pony/team.coordination/assignment.registry.tsv`
-6. `pony/team.coordination/twi.status.md`
-7. `pony/team.coordination/twi.decisions.md`
-8. `README.md`
-9. `docs/runtime-loop.md`
-10. `docs/project-installation.md`
+5. `pony/team.coordination/source.runtime.summary.md`
+6. `pony/team.coordination/assignment.registry.tsv`
+7. `pony/team.coordination/twi.status.md`
+8. `pony/team.coordination/twi.decisions.md`
 
 Then:
 1. treat Princess Celestia as the source-repo governance pony for `agenic-pony-system`

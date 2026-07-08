@@ -7,9 +7,7 @@ Read:
 6. `pony/work/coordinator-twi.md`
 
 If the current project root is `agenic-pony-system` itself, also read:
-8. `README.md`
-9. `docs/runtime-loop.md`
-10. `docs/project-installation.md`
+7. `pony/team.coordination/source.runtime.summary.md`
 
 Then:
 1. treat the shared Twilight-managed coordination mechanism as the canonical coordinator state; use the local `pony/team.coordination/*` files in this repo only when the current runtime explicitly assigns Twilight to maintain them
