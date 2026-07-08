@@ -50,7 +50,9 @@ class PonySessionHostPreflightTests(unittest.TestCase):
 
             self.assertIn('model="gpt-5.4"', host.bootstrap_codex_args)
             self.assertIn("on-request", host.bootstrap_codex_args)
-            self.assertIn("dirty worktree", host.bootstrap_prompt)
+            self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
+            self.assertIn("Startup behavior:", host.bootstrap_prompt)
+            self.assertIn("Dirty-worktree preflight", host.bootstrap_prompt)
 
     def test_celestia_uses_explicit_codex_args_for_escalate_twi(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -68,8 +70,9 @@ class PonySessionHostPreflightTests(unittest.TestCase):
 
             self.assertIn('model="gpt-5.4"', host.bootstrap_codex_args)
             self.assertIn("on-request", host.bootstrap_codex_args)
-            self.assertIn("Launch Codex anyway", host.bootstrap_prompt)
-            self.assertIn("governance follow-up", host.bootstrap_prompt)
+            self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
+            self.assertIn("Startup behavior:", host.bootstrap_prompt)
+            self.assertIn("Coordinator-routing issue", host.bootstrap_prompt)
 
     def test_worker_escalate_twi_still_launches_codex(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -89,8 +92,9 @@ class PonySessionHostPreflightTests(unittest.TestCase):
 
             self.assertIn('model="gpt-5.4-mini"', host.bootstrap_codex_args)
             self.assertIn("never", host.bootstrap_codex_args)
-            self.assertIn("Launch Codex anyway", host.bootstrap_prompt)
-            self.assertIn("worker follow-up", host.bootstrap_prompt)
+            self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
+            self.assertIn("Startup behavior:", host.bootstrap_prompt)
+            self.assertIn("Coordinator-routing issue", host.bootstrap_prompt)
 
     def test_worker_ready_no_llm_still_launches_codex(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -110,7 +114,9 @@ class PonySessionHostPreflightTests(unittest.TestCase):
 
             self.assertIn('model="gpt-5.4-mini"', host.bootstrap_codex_args)
             self.assertIn("never", host.bootstrap_codex_args)
-            self.assertIn("Launch Codex anyway", host.bootstrap_prompt)
+            self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
+            self.assertIn("Startup behavior:", host.bootstrap_prompt)
+            self.assertIn("no immediate active coding slice", host.bootstrap_prompt)
 
     def test_worker_worktree_gets_project_root_writable_dir(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -151,4 +157,6 @@ class PonySessionHostPreflightTests(unittest.TestCase):
                 host = pony_session_host.PonySessionHost(args)
 
             self.assertEqual(host.preflight_result, "READY_KEEP_LIVE")
-            self.assertEqual(host.bootstrap_prompt, "")
+            self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
+            self.assertIn("Startup behavior:", host.bootstrap_prompt)
+            self.assertIn("No concrete task is assigned yet", host.bootstrap_prompt)

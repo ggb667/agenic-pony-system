@@ -51,16 +51,23 @@ def prompt_fragments_for(personality: str) -> list[tuple[str, str]]:
     return [("class:prompt", f"{prompt_label_for(personality)} > ")]
 
 
-def dirty_fix_first_prompt(project_root: str, initial_prompt: str) -> str:
-    cleanup_prompt = (
-        f"Coordinator preflight detected a dirty worktree in {project_root}. "
-        "First, inspect and reconcile or put away the pending local changes in that repo. "
-        "Do not ignore them or defer that cleanup. After the worktree is in a deliberate state, "
-        "continue with normal coordination behavior for the active pony."
+def startup_brief_prompt(state_hint: str = "") -> str:
+    prompt = (
+        "Startup behavior: greet the developer in character with a concise startup self-brief. "
+        "Cover your pony identity, role, active project and workspace, current state and scope, "
+        "prompt symbol, terminal title, accent color, and live interoperation mechanisms such as "
+        "/tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your "
+        "full instructions."
     )
-    if initial_prompt:
-        return f"{cleanup_prompt}\n\n{initial_prompt}"
-    return cleanup_prompt
+    if state_hint:
+        return f"{prompt} Current condition: {state_hint}"
+    return prompt
+
+
+def dirty_fix_first_prompt(project_root: str) -> str:
+    return startup_brief_prompt(
+        f"Dirty-worktree preflight in {project_root}: inspect and reconcile or put away the pending local changes before any other coordination work."
+    )
 
 
 def waiting_for_task_notice(personality: str, workfile_path: str) -> str:
@@ -72,36 +79,24 @@ def waiting_for_task_notice(personality: str, workfile_path: str) -> str:
                 scope_text = line.split(":", 1)[1].strip()
                 break
     if scope_text and scope_text != "unassigned":
-        return (
-            f"Preflight: no concrete task is assigned yet for {personality}. "
-            f"Scope is {scope_text}. Remain live at the Codex prompt and wait for Twilight "
-            "or the user to hand you the next specific task."
+        return startup_brief_prompt(
+            f"No concrete task is assigned yet for {personality}; current scope is {scope_text}; remain live for Twilight or the user to hand you the next specific task."
         )
-    return (
-        f"Preflight: no concrete task is assigned yet for {personality}. "
-        "Remain live at the Codex prompt and wait for Twilight or the user to hand you the next specific task."
+    return startup_brief_prompt(
+        f"No concrete task is assigned yet for {personality}; remain live for Twilight or the user to hand you the next specific task."
     )
 
-def escalate_twi_notice(personality: str, initial_prompt: str) -> str:
-    notice = (
-        f"Preflight detected a coordinator-routing issue for {personality}. "
-        "Launch Codex anyway, inspect the local pony state, summarize the mismatch or blocker plainly, "
-        "and hand the routing question to Twilight or the user instead of stopping at the launcher."
+
+def escalate_twi_notice(personality: str) -> str:
+    return startup_brief_prompt(
+        f"Coordinator-routing issue for {personality}: inspect the local pony state, summarize the mismatch or blocker plainly, and hand the routing question to Twilight or the user instead of stopping at the launcher."
     )
-    if initial_prompt:
-        return f"{notice}\n\n{initial_prompt}"
-    return notice
 
 
-def ready_no_llm_notice(personality: str, initial_prompt: str) -> str:
-    notice = (
-        f"Preflight says there is no immediate active coding slice for {personality}. "
-        "Launch Codex anyway, verify the local state, and remain available for direct follow-up input "
-        "rather than stopping at the launcher."
+def ready_no_llm_notice(personality: str) -> str:
+    return startup_brief_prompt(
+        f"There is no immediate active coding slice for {personality}; verify the local state and remain available for direct follow-up input."
     )
-    if initial_prompt:
-        return f"{notice}\n\n{initial_prompt}"
-    return notice
 
 
 def codex_config_args_for(personality: str) -> list[str]:
@@ -152,6 +147,11 @@ def additional_codex_args_for_rootdir(rootdir: str) -> list[str]:
     return []
 
 
+def hidden_instructions_arg(promptfile: Path) -> list[str]:
+    escaped = str(promptfile).replace("\\", "\\\\").replace(chr(34), "\\\"")
+    return ["-c", f'model_instructions_file="{escaped}"']
+
+
 class PonySessionHost:
     def __init__(self, args: argparse.Namespace) -> None:
         self.args = args
@@ -165,7 +165,6 @@ class PonySessionHost:
         self.queue_script = args.queue_script
         self.codex_wrapper = args.codex_wrapper
         self.monitor_script = args.monitor_script
-        self.initial_prompt = self.promptfile.read_text() if self.promptfile.exists() else ""
         self.personality = args.personality
         self.preflight_result, self.bootstrap_codex_args, self.bootstrap_prompt = self._resolve_preflight()
 
@@ -188,18 +187,19 @@ class PonySessionHost:
         )
         result = preflight.stdout.strip() or "ESCALATE_TWI"
         codex_args = codex_config_args_for(self.personality)
+        codex_args.extend(hidden_instructions_arg(self.promptfile))
         codex_args.extend(additional_codex_args_for_rootdir(self.args.rootdir))
         if result == "READY_NO_LLM":
-            return result, codex_args, ready_no_llm_notice(self.personality, self.initial_prompt)
+            return result, codex_args, ready_no_llm_notice(self.personality)
         if result == "READY_KEEP_LIVE":
-            return result, codex_args, ""
+            return result, codex_args, waiting_for_task_notice(self.personality, self.args.workfile)
         if result == "BLOCKED_DIRTY_FIX_FIRST":
-            return result, codex_args, dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt)
+            return result, codex_args, dirty_fix_first_prompt(self.args.rootdir)
         if result == "ESCALATE_MINI":
-            return result, codex_args, self.initial_prompt
+            return result, codex_args, startup_brief_prompt("Proceed with the active task immediately after the self-brief.")
         if result == "ESCALATE_TWI":
-            return result, codex_args, escalate_twi_notice(self.personality, self.initial_prompt)
-        return result, codex_args, f"Preflight error: unexpected result '{result}'.\n\n{self.initial_prompt}".strip()
+            return result, codex_args, escalate_twi_notice(self.personality)
+        return result, codex_args, startup_brief_prompt(f"Unexpected preflight result: {result}.")
 
     def session_exists(self) -> bool:
         return self.tmux("has-session", "-t", self.session_name, capture=True, check=False).returncode == 0

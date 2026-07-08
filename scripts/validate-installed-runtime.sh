@@ -136,7 +136,8 @@ fi
 
 if [[ -f "$installed_host" ]]; then
   expect_contains "$installed_host" 'if result == "READY_KEEP_LIVE":' "installed pony session host"
-  expect_contains "$installed_host" 'return result, codex_args, ""' "installed pony session host"
+  expect_contains "$installed_host" 'model_instructions_file=' "installed pony session host"
+  expect_contains "$installed_host" 'Startup behavior: greet the developer in character with a concise startup self-brief.' "installed pony session host"
   expect_contains "$installed_host" 'capture=True, check=False' "installed pony session host"
 fi
 
@@ -162,4 +163,4 @@ printf '%s\n' "- runtime state token is ready"
 printf '%s\n' "- runtime fingerprint matches source: $source_fingerprint"
 printf '%s\n' "- source and installed pony-tell are executable and legacy pony-mail is absent"
 printf '%s\n' "- Twilight prompt contains live ping reply guidance and compact source summary reference"
-printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, quiet READY_KEEP_LIVE startup, and parked-host entry path"
+printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, hidden model instructions, startup self-brief handoff, and parked-host entry path"
