@@ -8,6 +8,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 agenic_root="$(cd "$script_dir/../.." && pwd)"
 source "$script_dir/launch-debug.sh"
 source "$script_dir/pony-paths.sh"
+source "$agenic_root/pony/bin/codex-prompt-style.sh"
 personality="$(canonical_personality "$raw_personality" 2>/dev/null || printf '%s' "$raw_personality")"
 current_script="$script_dir/$(basename "${BASH_SOURCE[0]}")"
 target_project_root="$(detect_project_root "$project_hint")"
@@ -19,6 +20,101 @@ read_runtime_marker() {
   if [[ -f "$path" ]]; then
     head -n 1 "$path"
   fi
+}
+
+display_name_for_personality() {
+  case "${1:-}" in
+    PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' 'Princess Celestia Sol Invictus' ;;
+    TWILIGHT_SPARKLE) printf '%s\n' 'Twilight Sparkle' ;;
+    APPLEJACK) printf '%s\n' 'Applejack' ;;
+    FLUTTERSHY) printf '%s\n' 'Fluttershy' ;;
+    PINKIE_PIE) printf '%s\n' 'Pinkie Pie' ;;
+    RARITY) printf '%s\n' 'Rarity' ;;
+    RAINBOW_DASH) printf '%s\n' 'Rainbow Dash' ;;
+    SPIKE) printf '%s\n' 'Spike' ;;
+    *) printf '%s\n' "${1:-Unknown Pony}" ;;
+  esac
+}
+
+runtime_role_for_personality() {
+  case "${1:-}" in
+    PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' 'source-repo governance pony' ;;
+    TWILIGHT_SPARKLE) printf '%s\n' 'project coordinator pony' ;;
+    *) printf '%s\n' 'specialist worker pony' ;;
+  esac
+}
+
+prompt_label_for_personality() {
+  local display_name glyph
+  display_name="$(display_name_for_personality "${1:-}")"
+  glyph="$(codex_prompt_glyph_for_personality "${1:-}" 2>/dev/null || true)"
+  if [[ -n "$glyph" ]]; then
+    printf '%s\n' "${display_name} ${glyph} >"
+  else
+    printf '%s\n' "${display_name} >"
+  fi
+}
+
+title_label_for_personality() {
+  case "${1:-}" in
+    PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' 'Celestia' ;;
+    TWILIGHT_SPARKLE) printf '%s\n' 'Twilight' ;;
+    APPLEJACK) printf '%s\n' 'Applejack' ;;
+    FLUTTERSHY) printf '%s\n' 'Fluttershy' ;;
+    PINKIE_PIE) printf '%s\n' 'Pinkie' ;;
+    RARITY) printf '%s\n' 'Rarity' ;;
+    RAINBOW_DASH) printf '%s\n' 'Rainbow Dash' ;;
+    SPIKE) printf '%s\n' 'Spike' ;;
+    *) printf '%s\n' 'Pony' ;;
+  esac
+}
+
+scope_from_workfile() {
+  local workfile_path="${1:?missing workfile}"
+  [[ -f "$workfile_path" ]] || return 0
+  awk -F': ' '$1 == "Scope" { print substr($0, index($0, ": ") + 2); exit }' "$workfile_path"
+}
+
+status_from_worker_slug() {
+  local slug="${1:-}"
+  local status_file=""
+  [[ -n "$slug" ]] || return 0
+  status_file="$AGENIC_TEAM_COORDINATION_DIR/${slug}.status.md"
+  [[ -f "$status_file" ]] || return 0
+  awk -F': ' '$1 == "STATUS" { print substr($0, index($0, ": ") + 2); exit }' "$status_file"
+}
+
+terminal_title_for_personality() {
+  local personality_name="${1:?missing personality}"
+  local title_label scope_value project_label registry_file
+  title_label="$(title_label_for_personality "$personality_name")"
+  project_label="$(basename "$AGENIC_PROJECT_ROOT")"
+  scope_value=""
+  registry_file="$(pony_assignment_registry_path)"
+  if [[ -f "$registry_file" ]]; then
+    scope_value="$(awk -F '	' -v personality="$personality_name" '
+      NR > 1 && $3 == personality { print $9; exit }
+    ' "$registry_file")"
+  fi
+  if [[ -n "$scope_value" && "$scope_value" != "Idle" && "$scope_value" != "idle" && "$scope_value" != "unassigned" ]]; then
+    printf '%s\n' "${title_label} · ${scope_value}"
+  else
+    printf '%s\n' "${title_label} · ${project_label}"
+  fi
+}
+
+validate_runtime_prompt_contract() {
+  local prompt_path="${1:?missing prompt path}"
+  shift
+  local missing=0
+  local pattern=""
+  for pattern in "$@"; do
+    if ! grep -Fq -- "$pattern" "$prompt_path"; then
+      printf '%s\n' "ERROR: runtime prompt contract missing required text: $pattern" >&2
+      missing=1
+    fi
+  done
+  return "$missing"
 }
 
 install_failure_message() {
@@ -143,6 +239,16 @@ idle_sentinel="$(idle_sentinel_for_personality "$personality" || true)"
 idle_sentinel_options="$(idle_sentinel_options_for_personality "$personality" || true)"
 partial_idle="$(partial_idle_sentinel)"
 disable_reusable_prompt="${AGENIC_PONY_DISABLE_REUSABLE_PROMPT:-0}"
+display_name="$(display_name_for_personality "$personality")"
+runtime_role="$(runtime_role_for_personality "$personality")"
+runtime_status="$(status_from_worker_slug "$worker_slug")"
+runtime_scope="$(scope_from_workfile "$workfile")"
+prompt_glyph="$(codex_prompt_glyph_for_personality "$personality" 2>/dev/null || true)"
+prompt_background="$(codex_prompt_background_for_personality "$personality" 2>/dev/null || true)"
+prompt_label="$(prompt_label_for_personality "$personality")"
+terminal_title="$(terminal_title_for_personality "$personality")"
+session_name="$worker_slug"
+audio_fifo_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/audio.host.fifo"
 
 if [[ "$disable_reusable_prompt" != "1" ]] && [[ ! -f "$promptfile" ]]; then
   echo "ERROR: prompt file not found: $promptfile" >&2
@@ -218,6 +324,18 @@ fi
   esac
 
   printf '\n'
+  printf '%s\n' "Startup identity contract:"
+  printf '%s\n' "- Identity: ${display_name}${prompt_glyph:+ (${prompt_glyph})}${prompt_background:+ with accent ${prompt_background}}."
+  printf '%s\n' "- Runtime role: ${runtime_role}."
+  printf '%s\n' "- Active project: ${AGENIC_PROJECT_ROOT} on branch ${AGENIC_PROJECT_BRANCH}."
+  printf '%s\n' "- Active workspace: ${worker_rootdir}."
+  printf '%s\n' "- Runtime state: ${runtime_status:-unknown status}; scope ${runtime_scope:-unassigned}; assigned workfile ${workfile}; tmux session ${session_name}."
+  printf '%s\n' "- Prompt and title: prompt label ${prompt_label}; terminal title ${terminal_title}."
+  printf '%s\n' "- Interoperation: direct live messaging via ${AGENIC_PROJECT_PONY_BIN_DIR}/pony-tell, shared pony state under ${AGENIC_PROJECT_PONY_DIR}, and coordinator files under ${AGENIC_TEAM_COORDINATION_DIR}."
+  printf '%s\n' "- Feedback and handoff: approval alert via ${AGENIC_PROJECT_PONY_BIN_DIR}/ponyalert ${personality}, completion chime via ${AGENIC_PROJECT_PONY_BIN_DIR}/ponydone ${personality}, and audio host FIFO at ${audio_fifo_path}."
+  printf '%s\n' "- Startup rule: begin from this pony identity and live runtime context before summarizing any broader developer instructions."
+
+  printf '\n'
   if [[ "$disable_reusable_prompt" == "1" ]]; then
     printf '%s\n' "Reusable-coordination-prompt rule: disabled for this run via AGENIC_PONY_DISABLE_REUSABLE_PROMPT=1. Keep the pony behavior layer active and rely on direct user instructions plus the current project's local coordinator and work files."
   else
@@ -285,6 +403,7 @@ fi
   done <<<"$idle_sentinel_options"
   printf '%s\n' "- Do not emit either idle marker after required questions, approvals, escalations, or any response that still needs immediate user input."
 } >"$runtime_promptfile"
+validate_runtime_prompt_contract   "$runtime_promptfile"   "Startup identity contract:"   "- Identity:"   "- Runtime role:"   "- Active project:"   "- Active workspace:"   "- Runtime state:"   "- Prompt and title:"   "- Interoperation:"   "- Feedback and handoff:"   "Project root:"   "Assigned workfile:"   "Direct-message rule:"   "Alert rule:"   "Done rule:"   "Idle-sentinel rule:" || exit 1
 pony_launch_debug "runtime prompt written: runtime_promptfile=$runtime_promptfile promptfile=$promptfile"
 
 if [[ "$personality" == "TWILIGHT_SPARKLE" ]]; then

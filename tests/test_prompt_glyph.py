@@ -320,5 +320,73 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn("/pony/", exclude_text)
 
 
+    def test_bootstrapped_start_session_writes_startup_identity_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            (project_root / "pony/work/governor-celestia.md").write_text(
+                "Status: active\nScope: source governance\n",
+                encoding="utf-8",
+            )
+            (project_root / "pony/team.coordination/celestia.status.md").write_text(
+                "STATUS: ACTIVE\n",
+                encoding="utf-8",
+            )
+            (project_root / "pony/scripts/enter-worker-from-prompt-file.sh").write_text(
+                "#!/usr/bin/env bash\nset -euo pipefail\nexit 0\n",
+                encoding="utf-8",
+            )
+            (project_root / "pony/scripts/enter-worker-from-prompt-file.sh").chmod(0o755)
+            (project_root / "pony/scripts/enter-twi-session.sh").write_text(
+                "#!/usr/bin/env bash\nset -euo pipefail\nexit 0\n",
+                encoding="utf-8",
+            )
+            (project_root / "pony/scripts/enter-twi-session.sh").chmod(0o755)
+
+            subprocess.run(
+                [
+                    "bash",
+                    str(project_root / "pony/scripts/start-session.sh"),
+                    "PRINCESS_CELESTIA_SOL_INVICTUS",
+                    str(project_root),
+                ],
+                check=True,
+                cwd=project_root,
+                env={
+                    **os.environ,
+                    "AGENIC_PONY_DISABLE_REUSABLE_PROMPT": "1",
+                },
+            )
+
+            prompt_text = (project_root / "pony/runtime/celestia.launch.prompt.txt").read_text(encoding="utf-8")
+            self.assertIn("Startup identity contract:", prompt_text)
+            self.assertIn("- Identity: Princess Celestia Sol Invictus (☀︎)", prompt_text)
+            self.assertIn("- Runtime role: source-repo governance pony.", prompt_text)
+            self.assertIn(f"- Active project: {project_root} on branch no-git-branch.", prompt_text)
+            self.assertIn(f"- Active workspace: {project_root}.", prompt_text)
+            self.assertIn("- Runtime state: ACTIVE; scope source governance; assigned workfile", prompt_text)
+            self.assertIn("- Prompt and title: prompt label Princess Celestia Sol Invictus ☀︎ >; terminal title Celestia · project.", prompt_text)
+            self.assertIn(f"- Interoperation: direct live messaging via {project_root / 'pony/bin/pony-tell'}", prompt_text)
+            self.assertIn(f"- Feedback and handoff: approval alert via {project_root / 'pony/bin/ponyalert'} PRINCESS_CELESTIA_SOL_INVICTUS", prompt_text)
+            self.assertIn("- Startup rule: begin from this pony identity and live runtime context before summarizing any broader developer instructions.", prompt_text)
+
+    def test_start_session_contains_runtime_contract_validation(self) -> None:
+        script_text = (REPO_ROOT / "pony/scripts/start-session.sh").read_text(encoding="utf-8")
+        self.assertIn("validate_runtime_prompt_contract", script_text)
+        self.assertIn('"Startup identity contract:"', script_text)
+        self.assertIn('"- Prompt and title:"', script_text)
+        self.assertIn('"Direct-message rule:"', script_text)
+        self.assertIn('"Alert rule:"', script_text)
+        self.assertIn('"Done rule:"', script_text)
+        self.assertIn('"Idle-sentinel rule:"', script_text)
+
+
 if __name__ == "__main__":
     unittest.main()
