@@ -134,7 +134,7 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             self.assertIn("--add-dir", host.bootstrap_codex_args)
             self.assertIn(str(project_root), host.bootstrap_codex_args)
 
-    def test_ready_keep_live_defers_initial_codex_start(self) -> None:
+    def test_ready_keep_live_starts_codex_quietly(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             rootdir = Path(tmpdir)
             promptfile = rootdir / "prompt.txt"
@@ -151,5 +151,4 @@ class PonySessionHostPreflightTests(unittest.TestCase):
                 host = pony_session_host.PonySessionHost(args)
 
             self.assertEqual(host.preflight_result, "READY_KEEP_LIVE")
-            self.assertTrue(host.should_defer_initial_codex_start())
-            self.assertIn("no concrete task is assigned yet", host.bootstrap_prompt)
+            self.assertEqual(host.bootstrap_prompt, "")

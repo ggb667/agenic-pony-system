@@ -135,8 +135,9 @@ if [[ -f "$installed_entry_launcher" ]]; then
 fi
 
 if [[ -f "$installed_host" ]]; then
-  expect_contains "$installed_host" 'def should_defer_initial_codex_start(self) -> bool:' "installed pony session host"
-  expect_contains "$installed_host" 'return self.preflight_result == "READY_KEEP_LIVE"' "installed pony session host"
+  expect_contains "$installed_host" 'if result == "READY_KEEP_LIVE":' "installed pony session host"
+  expect_contains "$installed_host" 'return result, codex_args, ""' "installed pony session host"
+  expect_contains "$installed_host" 'capture=True, check=False' "installed pony session host"
 fi
 
 if [[ -f "$installed_wrapper" ]]; then
@@ -161,4 +162,4 @@ printf '%s\n' "- runtime state token is ready"
 printf '%s\n' "- runtime fingerprint matches source: $source_fingerprint"
 printf '%s\n' "- source and installed pony-tell are executable and legacy pony-mail is absent"
 printf '%s\n' "- Twilight prompt contains live ping reply guidance and compact source summary reference"
-printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, and deferred parked-host entry path"
+printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, quiet READY_KEEP_LIVE startup, and parked-host entry path"

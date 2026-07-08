@@ -192,7 +192,7 @@ class PonySessionHost:
         if result == "READY_NO_LLM":
             return result, codex_args, ready_no_llm_notice(self.personality, self.initial_prompt)
         if result == "READY_KEEP_LIVE":
-            return result, codex_args, waiting_for_task_notice(self.personality, self.args.workfile)
+            return result, codex_args, ""
         if result == "BLOCKED_DIRTY_FIX_FIRST":
             return result, codex_args, dirty_fix_first_prompt(self.args.rootdir, self.initial_prompt)
         if result == "ESCALATE_MINI":
@@ -201,11 +201,8 @@ class PonySessionHost:
             return result, codex_args, escalate_twi_notice(self.personality, self.initial_prompt)
         return result, codex_args, f"Preflight error: unexpected result '{result}'.\n\n{self.initial_prompt}".strip()
 
-    def should_defer_initial_codex_start(self) -> bool:
-        return self.preflight_result == "READY_KEEP_LIVE"
-
     def session_exists(self) -> bool:
-        return self.tmux("has-session", "-t", self.session_name, check=False).returncode == 0
+        return self.tmux("has-session", "-t", self.session_name, capture=True, check=False).returncode == 0
 
     def current_pane_id(self) -> str:
         result = self.tmux("display-message", "-p", "-t", self.session_name, "#{pane_id}", capture=True)
@@ -252,7 +249,7 @@ class PonySessionHost:
         session = PromptSession(history=FileHistory(str(self.history_path)))
         if self.session_exists():
             self.attach()
-        elif not self.should_defer_initial_codex_start():
+        else:
             self.create_session(self.bootstrap_prompt, self.bootstrap_codex_args)
             self.attach()
 
@@ -278,11 +275,6 @@ class PonySessionHost:
                 continue
 
             if not self.session_exists():
-                if self.should_defer_initial_codex_start():
-                    self.create_session(text, self.bootstrap_codex_args)
-                    self.draft_path.write_text("")
-                    self.attach()
-                    continue
                 self.create_session(self.bootstrap_prompt, self.bootstrap_codex_args)
             self.send_prompt(text)
             self.attach()
