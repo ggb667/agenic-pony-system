@@ -103,6 +103,54 @@ class PonyTellTests(unittest.TestCase):
 
             self.assertIn("TWILIGHT_SPARKLE", result.stdout)
 
+    def test_pony_tell_accepts_full_display_name_and_splits_subject_body(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            project_root = tmp / "project"
+            project_root.mkdir()
+            chat_log = tmp / "chat.jsonl"
+            registry_log = tmp / "registry.jsonl"
+            registry_log.write_text(
+                json.dumps(
+                    {
+                        "uuid": "celestia-uuid",
+                        "pony_name": "PRINCESS_CELESTIA_SOL_INVICTUS",
+                        "path": str(project_root),
+                        "git_branch": "main",
+                        "pid": 100,
+                        "last_seen_at": "2099-01-01T00:00:00Z",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    "bash",
+                    str(PONY_TELL),
+                    "Twilight Sparkle",
+                    "Ping from Celestia. Please confirm receipt.",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                env={
+                    **os.environ,
+                    "AGENIC_PROJECT_ROOT": str(project_root),
+                    "AGENIC_LAUNCH_PERSONALITY": "PRINCESS_CELESTIA_SOL_INVICTUS",
+                    "AGENIC_PONY_CHAT_LOG_PATH": str(chat_log),
+                    "AGENIC_PONY_REGISTRY_LOG_PATH": str(registry_log),
+                },
+            )
+
+            self.assertTrue(result.stdout.strip())
+            payload = json.loads(chat_log.read_text(encoding="utf-8").strip())
+            self.assertEqual(payload["from_instance_id"], "celestia-uuid")
+            self.assertEqual(payload["to"], "TWILIGHT_SPARKLE")
+            self.assertEqual(payload["subject"], "Ping from Celestia")
+            self.assertEqual(payload["body"], ". Please confirm receipt.")
+
 
 if __name__ == "__main__":
     unittest.main()

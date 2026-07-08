@@ -113,6 +113,18 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn('FLUTTERSHY) pony_func="fluttershy" ;;', launch_script)
             self.assertIn('RAINBOW_DASH) pony_func="rainbow" ;;', launch_script)
             self.assertNotIn("CODEX_PONY_PROFILE", launch_script)
+            self.assertIn('PRINCESS_CELESTIA_SOL_INVICTUS) pony_label="Celestia" ;;', launch_script)
+            self.assertIn('TWILIGHT_SPARKLE) pony_label="Twilight" ;;', launch_script)
+            self.assertIn('APPLEJACK) pony_label="Applejack" ;;', launch_script)
+            self.assertIn('PINKIE_PIE) pony_label="Pinkie" ;;', launch_script)
+            self.assertIn('FLUTTERSHY) pony_label="Fluttershy" ;;', launch_script)
+            self.assertIn('RARITY) pony_label="Rarity" ;;', launch_script)
+            self.assertIn('RAINBOW_DASH) pony_label="Rainbow Dash" ;;', launch_script)
+            self.assertIn('SPIKE) pony_label="Spike" ;;', launch_script)
+            self.assertIn('NR > 1 && $3 == personality { print $9; exit }', launch_script)
+            self.assertIn('"$pony_scope" != "Idle"', launch_script)
+            self.assertIn('"$pony_scope" != "idle"', launch_script)
+            self.assertIn('"$pony_scope" != "unassigned"', launch_script)
 
     def test_manual_celestia_profile_requires_canonical_profile_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

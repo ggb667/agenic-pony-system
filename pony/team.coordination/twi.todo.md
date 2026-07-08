@@ -6,5 +6,4 @@ Contract: Shared coordinator artifact, but still secondary to the live shared co
 Generated: 2026-07-08 00:00:00
 
 ## Pending Follow-up
-- add narrow runtime self-tests for live `pony-tell` send, Twilight auto-pong reply, and installed title mapping so behavior checks stop consuming large Codex turns
 - keep installed target-project live coordination routed through Twilight by default and reserve Celestia contact for explicit source-repo governance assignments only

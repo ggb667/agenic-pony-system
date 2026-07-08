@@ -41,6 +41,7 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
         self.assertIn("shared authoritative state", text)
         self.assertIn("treat `/tell` messages as live coordination signals", text)
         self.assertIn("simple `/tell` ping, greeting, acknowledgement, or short live coordination note", text)
+        self.assertIn("answer immediately with a short direct `/tell` reply", text)
         self.assertIn("still applies when Twilight is otherwise WAITING, unassigned", text)
         self.assertNotIn(
             "treat `pony/work/*.md` as the canonical home for worker-local task state",
