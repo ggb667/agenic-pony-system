@@ -77,6 +77,7 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Installed runtime validation passed", result.stdout)
+        self.assertIn("source and installed pony-tell are executable", result.stdout)
 
     def test_validator_reports_stale_prompt_and_fingerprint(self) -> None:
         (self.project_root / "pony" / "runtime" / "source-runtime.fingerprint").write_text(

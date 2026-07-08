@@ -18,6 +18,7 @@ installed_wrapper="$resolved_target_root/pony/bin/codex-pony"
 installed_pony_tell="$resolved_target_root/pony/bin/pony-tell"
 legacy_pony_mail="$resolved_target_root/pony/bin/pony-mail"
 source_codex_pony="$agenic_root/pony/bin/codex-pony"
+source_pony_tell="$agenic_root/pony/bin/pony-tell"
 source_start_session="$agenic_root/pony/scripts/start-session.sh"
 
 failures=()
@@ -61,10 +62,15 @@ require_file "$installed_shell_launcher" "installed shell launcher"
 require_file "$installed_wrapper" "installed codex-pony wrapper"
 require_file "$installed_pony_tell" "installed pony-tell"
 require_file "$source_codex_pony" "source codex-pony"
+require_file "$source_pony_tell" "source pony-tell"
 require_file "$source_start_session" "source start-session"
 
 if [[ ! -x "$installed_pony_tell" ]]; then
   record_failure "installed pony-tell is not executable: $installed_pony_tell"
+fi
+
+if [[ ! -x "$source_pony_tell" ]]; then
+  record_failure "source pony-tell is not executable: $source_pony_tell"
 fi
 
 if [[ -e "$legacy_pony_mail" ]]; then
@@ -127,6 +133,6 @@ fi
 printf '%s\n' "Installed runtime validation passed for $resolved_target_root"
 printf '%s\n' "- install state: complete"
 printf '%s\n' "- runtime fingerprint matches source: $source_fingerprint"
-printf '%s\n' "- pony-tell is present and legacy pony-mail is absent"
+printf '%s\n' "- source and installed pony-tell are executable and legacy pony-mail is absent"
 printf '%s\n' "- Twilight prompt contains live ping reply guidance and compact source summary reference"
 printf '%s\n' "- launcher surfaces retain the expected title and pony-name mappings"
