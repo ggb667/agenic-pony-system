@@ -90,7 +90,7 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
         self.assertIn("Installed runtime validation passed", result.stdout)
         self.assertIn("source and installed pony-tell are executable", result.stdout)
         self.assertIn("runtime state token is ready", result.stdout)
-        self.assertIn("hidden model instructions, startup self-brief handoff, and parked-host entry path", result.stdout)
+        self.assertIn("hidden model instructions, direct worker Codex surface, and parked-host coordinator path", result.stdout)
 
     def test_validator_reports_stale_prompt_and_fingerprint(self) -> None:
         (self.project_root / "pony" / "runtime" / "source-runtime.fingerprint").write_text(

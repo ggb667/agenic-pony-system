@@ -129,6 +129,8 @@ if [[ -f "$installed_shell_launcher" ]]; then
 fi
 
 if [[ -f "$installed_entry_launcher" ]]; then
+  expect_contains "$installed_entry_launcher" 'direct_launcher="$(pony_script_path enter-worker-and-codex.sh)"' "installed worker entry launcher"
+  expect_contains "$installed_entry_launcher" 'if [[ "$personality" != "TWILIGHT_SPARKLE" && "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then' "installed worker entry launcher"
   expect_contains "$installed_entry_launcher" 'host_script="$(pony_script_path pony-session-host.py)"' "installed worker entry launcher"
   expect_contains "$installed_entry_launcher" '--session-name "$session_name"' "installed worker entry launcher"
   expect_contains "$installed_entry_launcher" '--socket-path "$socket_path"' "installed worker entry launcher"
@@ -163,4 +165,4 @@ printf '%s\n' "- runtime state token is ready"
 printf '%s\n' "- runtime fingerprint matches source: $source_fingerprint"
 printf '%s\n' "- source and installed pony-tell are executable and legacy pony-mail is absent"
 printf '%s\n' "- Twilight prompt contains live ping reply guidance and compact source summary reference"
-printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, hidden model instructions, startup self-brief handoff, and parked-host entry path"
+printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, hidden model instructions, direct worker Codex surface, and parked-host coordinator path"

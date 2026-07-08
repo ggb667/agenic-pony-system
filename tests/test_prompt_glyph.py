@@ -149,6 +149,8 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn('FLUTTERSHY) pony_func="fluttershy" ;;', launch_script)
             self.assertIn('RAINBOW_DASH) pony_func="rainbow" ;;', launch_script)
             self.assertNotIn("CODEX_PONY_PROFILE", launch_script)
+            self.assertIn('direct_launcher="$(pony_script_path enter-worker-and-codex.sh)"', entry_script)
+            self.assertIn('if [[ "$personality" != "TWILIGHT_SPARKLE" && "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then', entry_script)
             self.assertIn('host_script="$(pony_script_path pony-session-host.py)"', entry_script)
             self.assertIn('--session-name "$session_name"', entry_script)
             self.assertIn('--socket-path "$socket_path"', entry_script)
