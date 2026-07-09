@@ -129,5 +129,9 @@ if [[ -n "$effective_codex_profile" ]]; then
 elif [[ "${1:-}" == "-p" ]] && [[ -n "${2:-}" ]]; then
   profile_arg="$2"
 fi
-pony_launch_debug "codex-pony exec: codex_bin=$codex_bin profile=$profile_arg project_root=$project_root"
+pony_launch_debug "codex-pony exec: codex_bin=$codex_bin profile=$profile_arg project_root=$project_root stdin_tty=$( [[ -t 0 ]] && printf yes || printf no ) project_root=$project_root"
+if [[ ! -t 0 && -r /dev/tty ]]; then
+  pony_launch_debug "codex-pony rebind stdio to /dev/tty before exec"
+  exec "$codex_bin" "${codex_args[@]}" "$@" </dev/tty >/dev/tty 2>&1
+fi
 exec "$codex_bin" "${codex_args[@]}" "$@"

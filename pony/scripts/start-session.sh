@@ -193,7 +193,7 @@ source_fingerprint=${source_fingerprint:-unknown}
 previous_state=${install_state:-missing}
 EOF
   pony_launch_debug "install-project lock acquired: lock_dir=$install_lock_dir owner_file=$install_lock_info_file state=${install_state:-missing}"
-  if ! "$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null; then
+  if ! AGENIC_PONY_INSTALL_LOCK_HELD=1 "$agenic_root/scripts/install-project.sh" "$target_project_root" >/dev/null; then
     cleanup_install_lock
     trap - EXIT
     pony_launch_debug "install-project failed: target_project_root=$target_project_root"
