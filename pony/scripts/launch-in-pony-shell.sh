@@ -134,7 +134,7 @@ _agenic_pony_log "after identity apply: pwd=$PWD personality=${PERSONALITY:-unse
 _agenic_pony_start_audio_host() {
   local source_root runtime_dir host_script pid_file fifo_path log_path host_pid
 
-  source_root="$(./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"
+  source_root="$(bash ./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"
   export AGENIC_PONY_SOURCE_ROOT="${source_root}"
   runtime_dir="${AGENIC_PROJECT_ROOT}/pony/runtime"
   mkdir -p "$runtime_dir"
