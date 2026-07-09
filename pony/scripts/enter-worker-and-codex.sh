@@ -88,7 +88,7 @@ clean_stale_tmux_state_for_direct_launch() {
 
 startup_brief_prompt() {
   local state_hint="${1-}"
-  local prompt="Startup behavior: greet the developer in character with a concise startup self-brief. Cover your pony identity, role, active project and workspace, current state and scope, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions."
+  local prompt="Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief. Cover your pony identity, role, active project and workspace, current state and scope, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief."
   if [[ -n "$state_hint" ]]; then
     printf '%s Current condition: %s\n' "$prompt" "$state_hint"
   else

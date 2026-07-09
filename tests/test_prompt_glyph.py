@@ -157,6 +157,7 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn('--socket-path "$socket_path"', entry_script)
             self.assertIn('--promptfile "$promptfile"', entry_script)
             self.assertIn('clean_stale_tmux_state_for_direct_launch()', direct_script)
+            self.assertIn('Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief.', direct_script)
             self.assertIn('tmux -S "$socket_path" kill-server', direct_script)
             self.assertIn('rm -f "$socket_path"', direct_script)
             self.assertIn('clean_stale_tmux_state_for_direct_launch "$PERSONALITY"', direct_script)

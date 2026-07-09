@@ -53,11 +53,11 @@ def prompt_fragments_for(personality: str) -> list[tuple[str, str]]:
 
 def startup_brief_prompt(state_hint: str = "") -> str:
     prompt = (
-        "Startup behavior: greet the developer in character with a concise startup self-brief. "
+        "Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief. "
         "Cover your pony identity, role, active project and workspace, current state and scope, "
         "prompt symbol, terminal title, accent color, and live interoperation mechanisms such as "
         "/tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your "
-        "full instructions."
+        "full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief."
     )
     if state_hint:
         return f"{prompt} Current condition: {state_hint}"

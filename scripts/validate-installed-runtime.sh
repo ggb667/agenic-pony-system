@@ -147,7 +147,8 @@ fi
 if [[ -f "$installed_host" ]]; then
   expect_contains "$installed_host" 'if result == "READY_KEEP_LIVE":' "installed pony session host"
   expect_contains "$installed_host" 'model_instructions_file=' "installed pony session host"
-  expect_contains "$installed_host" 'Startup behavior: greet the developer in character with a concise startup self-brief.' "installed pony session host"
+  expect_contains "$installed_host" 'Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief.' "installed pony session host"
+  expect_contains "$installed_host" 'Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief.' "installed pony session host"
   expect_contains "$installed_host" 'capture=True, check=False' "installed pony session host"
 fi
 
