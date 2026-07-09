@@ -134,6 +134,7 @@ class PromptGlyphTests(unittest.TestCase):
             )
             launch_script = (project_root / "pony/scripts/launch-in-pony-shell.sh").read_text(encoding="utf-8")
             entry_script = (project_root / "pony/scripts/enter-worker-from-prompt-file.sh").read_text(encoding="utf-8")
+            direct_script = (project_root / "pony/scripts/enter-worker-and-codex.sh").read_text(encoding="utf-8")
             self.assertIn(
                 'source_root="$(./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"',
                 launch_script,
@@ -150,11 +151,15 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn('RAINBOW_DASH) pony_func="rainbow" ;;', launch_script)
             self.assertNotIn("CODEX_PONY_PROFILE", launch_script)
             self.assertIn('direct_launcher="$(pony_script_path enter-worker-and-codex.sh)"', entry_script)
-            self.assertIn('if [[ "$personality" != "TWILIGHT_SPARKLE" && "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then', entry_script)
+            self.assertIn('if [[ "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then', entry_script)
             self.assertIn('host_script="$(pony_script_path pony-session-host.py)"', entry_script)
             self.assertIn('--session-name "$session_name"', entry_script)
             self.assertIn('--socket-path "$socket_path"', entry_script)
             self.assertIn('--promptfile "$promptfile"', entry_script)
+            self.assertIn('clean_stale_tmux_state_for_direct_launch()', direct_script)
+            self.assertIn('tmux -S "$socket_path" kill-server', direct_script)
+            self.assertIn('rm -f "$socket_path"', direct_script)
+            self.assertIn('clean_stale_tmux_state_for_direct_launch "$PERSONALITY"', direct_script)
             self.assertIn('PRINCESS_CELESTIA_SOL_INVICTUS) pony_label="Celestia" ;;', launch_script)
             self.assertIn('TWILIGHT_SPARKLE) pony_label="Twilight" ;;', launch_script)
             self.assertIn('APPLEJACK) pony_label="Applejack" ;;', launch_script)

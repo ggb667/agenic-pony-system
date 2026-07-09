@@ -16,6 +16,7 @@ runtime_state_file="$runtime_dir/runtime.state"
 installed_prompt="$resolved_target_root/pony/launch.prompts/twi.txt"
 installed_shell_launcher="$resolved_target_root/pony/scripts/launch-in-pony-shell.sh"
 installed_entry_launcher="$resolved_target_root/pony/scripts/enter-worker-from-prompt-file.sh"
+installed_direct_launcher="$resolved_target_root/pony/scripts/enter-worker-and-codex.sh"
 installed_host="$resolved_target_root/pony/scripts/pony-session-host.py"
 installed_wrapper="$resolved_target_root/pony/bin/codex-pony"
 installed_pony_tell="$resolved_target_root/pony/bin/pony-tell"
@@ -64,6 +65,7 @@ require_file "$runtime_state_file" "runtime state"
 require_file "$installed_prompt" "installed Twilight prompt"
 require_file "$installed_shell_launcher" "installed shell launcher"
 require_file "$installed_entry_launcher" "installed worker entry launcher"
+require_file "$installed_direct_launcher" "installed direct worker launcher"
 require_file "$installed_host" "installed pony session host"
 require_file "$installed_wrapper" "installed codex-pony wrapper"
 require_file "$installed_pony_tell" "installed pony-tell"
@@ -130,10 +132,16 @@ fi
 
 if [[ -f "$installed_entry_launcher" ]]; then
   expect_contains "$installed_entry_launcher" 'direct_launcher="$(pony_script_path enter-worker-and-codex.sh)"' "installed worker entry launcher"
-  expect_contains "$installed_entry_launcher" 'if [[ "$personality" != "TWILIGHT_SPARKLE" && "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then' "installed worker entry launcher"
+  expect_contains "$installed_entry_launcher" 'if [[ "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then' "installed worker entry launcher"
   expect_contains "$installed_entry_launcher" 'host_script="$(pony_script_path pony-session-host.py)"' "installed worker entry launcher"
   expect_contains "$installed_entry_launcher" '--session-name "$session_name"' "installed worker entry launcher"
   expect_contains "$installed_entry_launcher" '--socket-path "$socket_path"' "installed worker entry launcher"
+fi
+
+if [[ -f "$installed_direct_launcher" ]]; then
+  expect_contains "$installed_direct_launcher" 'clean_stale_tmux_state_for_direct_launch()' "installed direct worker launcher"
+  expect_contains "$installed_direct_launcher" 'tmux -S "$socket_path" kill-server' "installed direct worker launcher"
+  expect_contains "$installed_direct_launcher" 'clean_stale_tmux_state_for_direct_launch "$PERSONALITY"' "installed direct worker launcher"
 fi
 
 if [[ -f "$installed_host" ]]; then
@@ -165,4 +173,4 @@ printf '%s\n' "- runtime state token is ready"
 printf '%s\n' "- runtime fingerprint matches source: $source_fingerprint"
 printf '%s\n' "- source and installed pony-tell are executable and legacy pony-mail is absent"
 printf '%s\n' "- Twilight prompt contains live ping reply guidance and compact source summary reference"
-printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, hidden model instructions, direct worker Codex surface, and parked-host coordinator path"
+printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, hidden model instructions, stale tmux cleanup for direct-launch ponies, direct worker and Twilight Codex surface, and parked-host Celestia path"

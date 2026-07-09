@@ -59,6 +59,10 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
             self.project_root / "pony" / "scripts" / "enter-worker-from-prompt-file.sh",
         )
         shutil.copy2(
+            REPO_ROOT / "pony" / "scripts" / "enter-worker-and-codex.sh",
+            self.project_root / "pony" / "scripts" / "enter-worker-and-codex.sh",
+        )
+        shutil.copy2(
             REPO_ROOT / "pony" / "scripts" / "pony-session-host.py",
             self.project_root / "pony" / "scripts" / "pony-session-host.py",
         )
@@ -90,7 +94,7 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
         self.assertIn("Installed runtime validation passed", result.stdout)
         self.assertIn("source and installed pony-tell are executable", result.stdout)
         self.assertIn("runtime state token is ready", result.stdout)
-        self.assertIn("hidden model instructions, direct worker Codex surface, and parked-host coordinator path", result.stdout)
+        self.assertIn("hidden model instructions, stale tmux cleanup for direct-launch ponies, direct worker and Twilight Codex surface, and parked-host Celestia path", result.stdout)
 
     def test_validator_reports_stale_prompt_and_fingerprint(self) -> None:
         (self.project_root / "pony" / "runtime" / "source-runtime.fingerprint").write_text(

@@ -4,7 +4,7 @@ set -euo pipefail
 personality="${1:?missing personality}"
 workfile="${2:?missing workfile}"
 rootdir="${3:?missing rootdir}"
-initial_prompt="${4-}"
+promptfile="${4:?missing prompt file}"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/launch-debug.sh"
@@ -47,6 +47,13 @@ codex_config_args_for_personality() {
   esac
 }
 
+hidden_instructions_arg() {
+  local prompt_path="${1:?missing prompt file}"
+  local escaped="${prompt_path//\\/\\\\}"
+  escaped="${escaped//\"/\\\"}"
+  printf '%s\n' '-c' "model_instructions_file=\"$escaped\""
+}
+
 additional_codex_args_for_rootdir() {
   local active_rootdir="${1:?missing rootdir}"
   local project_root="${AGENIC_PROJECT_ROOT:-}"
@@ -55,14 +62,42 @@ additional_codex_args_for_rootdir() {
   fi
 }
 
-dirty_fix_first_prompt() {
-  local cleanup_prompt=""
-  cleanup_prompt="Coordinator preflight detected a dirty worktree in ${rootdir}. First, inspect and reconcile or put away the pending local changes in that repo. Do not ignore them or defer that cleanup. After the worktree is in a deliberate state, continue with normal coordination behavior for the active pony."
-  if [[ -n "$initial_prompt" ]]; then
-    printf '%s\n\n%s\n' "$cleanup_prompt" "$initial_prompt"
-  else
-    printf '%s\n' "$cleanup_prompt"
+clean_stale_tmux_state_for_direct_launch() {
+  local active_personality="${1:?missing personality}"
+  local active_slug=""
+  local socket_path=""
+  local draft_path=""
+  local history_path=""
+
+  [[ "$active_personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]] || return 0
+
+  active_slug="$(worker_slug_for_personality "$active_personality" || true)"
+  [[ -n "$active_slug" ]] || return 0
+
+  socket_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${active_slug}.tmux.sock"
+  draft_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${active_slug}.draft.txt"
+  history_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${active_slug}.history.txt"
+
+  if [[ -S "$socket_path" ]]; then
+    tmux -S "$socket_path" kill-server >/dev/null 2>&1 || true
+    rm -f "$socket_path"
   fi
+
+  rm -f "$draft_path" "$history_path"
+}
+
+startup_brief_prompt() {
+  local state_hint="${1-}"
+  local prompt="Startup behavior: greet the developer in character with a concise startup self-brief. Cover your pony identity, role, active project and workspace, current state and scope, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions."
+  if [[ -n "$state_hint" ]]; then
+    printf '%s Current condition: %s\n' "$prompt" "$state_hint"
+  else
+    printf '%s\n' "$prompt"
+  fi
+}
+
+dirty_fix_first_prompt() {
+  startup_brief_prompt "Dirty-worktree preflight in ${rootdir}: inspect and reconcile or put away the pending local changes before any other coordination work."
 }
 
 waiting_for_task_notice() {
@@ -75,40 +110,34 @@ waiting_for_task_notice() {
     }
   ' "$workfile")"
   if [[ -n "$scope_text" && "$scope_text" != "unassigned" ]]; then
-    printf 'Preflight: no concrete task is assigned yet for %s. Scope is %s. Remain live at the Codex prompt and wait for Twilight or the user to hand you the next specific task.\n' "$PERSONALITY" "$scope_text"
+    startup_brief_prompt "No concrete task is assigned yet for ${PERSONALITY}; current scope is ${scope_text}; remain live for Twilight or the user to hand you the next specific task."
   else
-    printf 'Preflight: no concrete task is assigned yet for %s. Remain live at the Codex prompt and wait for Twilight or the user to hand you the next specific task.\n' "$PERSONALITY"
+    startup_brief_prompt "No concrete task is assigned yet for ${PERSONALITY}; remain live for Twilight or the user to hand you the next specific task."
   fi
 }
 
 escalate_twi_notice() {
-  local notice=""
-  notice="Preflight detected a coordinator-routing issue for ${PERSONALITY}. Launch Codex anyway, inspect the local pony state, summarize the mismatch or blocker plainly, and hand the routing question to Twilight or the user instead of stopping at the launcher."
-  if [[ -n "$initial_prompt" ]]; then
-    printf '%s\n\n%s\n' "$notice" "$initial_prompt"
-  else
-    printf '%s\n' "$notice"
-  fi
+  startup_brief_prompt "Coordinator-routing issue for ${PERSONALITY}: inspect the local pony state, summarize the mismatch or blocker plainly, and hand the routing question to Twilight or the user instead of stopping at the launcher."
 }
 
 ready_no_llm_notice() {
-  local notice=""
-  notice="Preflight says there is no immediate active coding slice for ${PERSONALITY}. Launch Codex anyway, verify the local state, and remain available for direct follow-up input rather than stopping at the launcher."
-  if [[ -n "$initial_prompt" ]]; then
-    printf '%s\n\n%s\n' "$notice" "$initial_prompt"
-  else
-    printf '%s\n' "$notice"
-  fi
+  startup_brief_prompt "There is no immediate active coding slice for ${PERSONALITY}; verify the local state and remain available for direct follow-up input."
 }
 
 workfile="$(resolve_path "$workfile")"
 rootdir="$(resolve_path "$rootdir")"
+promptfile="$(resolve_path "$promptfile")"
 
 export PERSONALITY="$personality"
 export WORKING_ON="$workfile"
 
 if [[ ! -f "$workfile" ]]; then
   echo "ERROR: workfile not found: $workfile" >&2
+  exit 1
+fi
+
+if [[ ! -f "$promptfile" ]]; then
+  echo "ERROR: prompt file not found: $promptfile" >&2
   exit 1
 fi
 
@@ -119,7 +148,8 @@ preflight_result="$(
     "$WORKING_ON" \
     "$PWD"
 )"
-pony_launch_debug "worker handoff preflight: personality=$PERSONALITY rootdir=$rootdir workfile=$workfile result=$preflight_result"
+pony_launch_debug "worker handoff preflight: personality=$PERSONALITY rootdir=$rootdir workfile=$workfile promptfile=$promptfile result=$preflight_result"
+clean_stale_tmux_state_for_direct_launch "$PERSONALITY"
 
 codex_args=()
 while IFS= read -r arg; do
@@ -127,9 +157,12 @@ while IFS= read -r arg; do
 done < <(codex_config_args_for_personality "$PERSONALITY")
 while IFS= read -r arg; do
   codex_args+=("$arg")
+done < <(hidden_instructions_arg "$promptfile")
+while IFS= read -r arg; do
+  codex_args+=("$arg")
 done < <(additional_codex_args_for_rootdir "$rootdir")
-prompt="$initial_prompt"
 
+prompt=""
 case "$preflight_result" in
   READY_NO_LLM)
     prompt="$(ready_no_llm_notice)"
@@ -141,31 +174,21 @@ case "$preflight_result" in
     prompt="$(dirty_fix_first_prompt)"
     ;;
   ESCALATE_MINI)
+    prompt="$(startup_brief_prompt "Proceed with the active task immediately after the self-brief.")"
     ;;
   ESCALATE_TWI)
     prompt="$(escalate_twi_notice)"
     ;;
   *)
-    echo "Preflight error: unexpected result '$preflight_result'."
+    echo "Preflight error: unexpected result '$preflight_result'." >&2
     exit 1
     ;;
-esac
+ esac
 
-pony_launch_debug "worker handoff launch selection: personality=$PERSONALITY codex_args_count=${#codex_args[@]} prompt_length=${#prompt} rootdir=$rootdir repo_codex_pony=$repo_codex_pony"
-
-if (( ${#codex_args[@]} > 0 )); then
-  if [[ -n "$prompt" ]]; then
-    pony_launch_debug "exec codex with explicit config args and prompt"
-    exec "$repo_codex_pony" "${codex_args[@]}" "$prompt"
-  fi
-  pony_launch_debug "exec codex with explicit config args only"
-  exec "$repo_codex_pony" "${codex_args[@]}"
-fi
+pony_launch_debug "worker handoff direct codex launch: personality=$PERSONALITY codex_args_count=${#codex_args[@]} prompt_length=${#prompt} rootdir=$rootdir repo_codex_pony=$repo_codex_pony"
 
 if [[ -n "$prompt" ]]; then
-  pony_launch_debug "exec codex with prompt only"
-  exec "$repo_codex_pony" "$prompt"
+  exec "$repo_codex_pony" "${codex_args[@]}" "$prompt"
 fi
 
-pony_launch_debug "exec codex with no prompt and no profile override"
-exec "$repo_codex_pony"
+exec "$repo_codex_pony" "${codex_args[@]}"

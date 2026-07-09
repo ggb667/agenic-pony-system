@@ -103,7 +103,7 @@ if [[ ! -f "$promptfile" ]]; then
 fi
 
 pony_ensure_layout_dirs
-if [[ "$personality" != "TWILIGHT_SPARKLE" && "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then
+if [[ "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then
   direct_launcher="$(pony_script_path enter-worker-and-codex.sh)"
   pony_launch_debug "exec direct worker codex handoff: personality=$personality workfile=$workfile rootdir=$rootdir promptfile=$promptfile launcher=$direct_launcher"
   exec "$direct_launcher"     "$personality"     "$workfile"     "$rootdir"     "$promptfile"
