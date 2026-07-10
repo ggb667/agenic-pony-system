@@ -76,7 +76,7 @@ def main() -> int:
           default=draft_text,
           style=style,
           bottom_toolbar=toolbar,
-          multiline=True,
+          multiline=False,
       )
     except KeyboardInterrupt:
       return 130

@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import shlex
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -46,6 +48,20 @@ def prompt_label_for(personality: str) -> str:
         "SPIKE": "Spike 🐲",
     }
     return labels.get(personality, personality)
+
+
+def prompt_glyph_for(personality: str) -> str:
+    glyphs = {
+        "PRINCESS_CELESTIA_SOL_INVICTUS": "☀︎",
+        "TWILIGHT_SPARKLE": "✶",
+        "APPLEJACK": "🍎",
+        "PINKIE_PIE": "🎈",
+        "RARITY": "💎",
+        "FLUTTERSHY": "🦋",
+        "RAINBOW_DASH": "⚡",
+        "SPIKE": "🐲",
+    }
+    return glyphs.get(personality, "")
 
 def prompt_fragments_for(personality: str) -> list[tuple[str, str]]:
     return [("class:prompt", f"{prompt_label_for(personality)} > ")]
@@ -208,6 +224,20 @@ class PonySessionHost:
         result = self.tmux("display-message", "-p", "-t", self.session_name, "#{pane_id}", capture=True)
         return result.stdout.strip()
 
+    def current_pane_command(self) -> str:
+        result = self.tmux(
+            "display-message",
+            "-p",
+            "-t",
+            self.session_name,
+            "#{pane_current_command}",
+            capture=True,
+        )
+        return result.stdout.strip()
+
+    def session_running_codex(self) -> bool:
+        return self.current_pane_command().startswith("codex")
+
     def create_session(self, bootstrap_prompt: str, codex_args: list[str]) -> None:
         env_pairs = {
             "PERSONALITY": self.personality,
@@ -219,13 +249,53 @@ class PonySessionHost:
             wrapper_parts.append(shlex.quote(bootstrap_prompt))
         shell_cmd = (
             f"cd {shlex.quote(str(self.rootdir))} && "
-            f"exec env {' '.join(f'{key}={shlex.quote(value)}' for key, value in env_pairs.items())} "
+            "set -m && "
+            f"env {' '.join(f'{key}={shlex.quote(value)}' for key, value in env_pairs.items())} "
             f"{' '.join(wrapper_parts)}"
         )
         self.tmux("new-session", "-d", "-s", self.session_name, shell_cmd)
+        self.tmux("set-option", "-t", self.session_name, "history-limit", "100000")
+        self.tmux("set-option", "-t", self.session_name, "mouse", "on")
+        self.tmux("set-window-option", "-t", self.session_name, "alternate-screen", "off")
 
-    def attach(self) -> None:
-        self.tmux("attach-session", "-t", self.session_name, check=False)
+    def attach_until_idle(self) -> None:
+        if not self.session_running_codex():
+            return
+
+        pane_id = self.current_pane_id()
+        monitor = subprocess.Popen(
+            [
+                self.monitor_script,
+                pane_id,
+                prompt_glyph_for(self.personality),
+                str(self.socket_path),
+                self.args.idle_sentinel,
+                self.args.partial_idle_sentinel,
+                self.session_name,
+            ],
+            cwd=self.rootdir,
+        )
+        try:
+            self.tmux("attach-session", "-t", self.session_name, check=False)
+        finally:
+            if monitor.poll() is None:
+                monitor.terminate()
+                try:
+                    monitor.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    monitor.kill()
+
+    def resume_if_needed(self) -> None:
+        if not self.session_exists() or self.session_running_codex():
+            return
+
+        pane_id = self.current_pane_id()
+        self.tmux("send-keys", "-t", pane_id, "fg", "Enter")
+        deadline = time.time() + 3.0
+        while time.time() < deadline:
+            if self.session_running_codex():
+                return
+            time.sleep(0.1)
 
     def send_prompt(self, text: str) -> None:
         pane_id = self.current_pane_id()
@@ -239,45 +309,68 @@ class PonySessionHost:
 
     def prompt_loop(self) -> int:
         from prompt_toolkit import PromptSession
+        from prompt_toolkit.input.defaults import create_input
         from prompt_toolkit.history import FileHistory
+        from prompt_toolkit.output.defaults import create_output
         from prompt_toolkit.styles import Style
 
         self.draft_path.parent.mkdir(parents=True, exist_ok=True)
         self.history_path.parent.mkdir(parents=True, exist_ok=True)
 
         style = Style.from_dict({"prompt": "bold", "toolbar": "reverse"})
-        session = PromptSession(history=FileHistory(str(self.history_path)))
-        if self.session_exists():
-            self.attach()
-        else:
-            self.create_session(self.bootstrap_prompt, self.bootstrap_codex_args)
-            self.attach()
+        tty_input = None
+        tty_output = None
+        prompt_kwargs = {}
+        try:
+            tty_input = open("/dev/tty", "r")
+            tty_output = open("/dev/tty", "w")
+            prompt_kwargs = {
+                "input": create_input(tty_input),
+                "output": create_output(tty_output),
+            }
+        except OSError:
+            prompt_kwargs = {}
 
-        while True:
-            default_text = self.draft_path.read_text() if self.draft_path.exists() else ""
-            notice_text = self.read_notice()
-            toolbar = notice_text or "Enter submits to the parked pony session. Ctrl-C exits the host."
-            try:
-                text = session.prompt(
-                    prompt_fragments_for(self.personality),
-                    default=default_text,
-                    style=style,
-                    bottom_toolbar=toolbar,
-                    multiline=True,
-                )
-            except KeyboardInterrupt:
-                return 130
-            except EOFError:
-                return 130
+        with contextlib.ExitStack() as stack:
+            if tty_input is not None:
+                stack.enter_context(tty_input)
+            if tty_output is not None:
+                stack.enter_context(tty_output)
 
-            self.draft_path.write_text(text)
-            if not text.strip():
-                continue
-
-            if not self.session_exists():
+            session = PromptSession(history=FileHistory(str(self.history_path)), **prompt_kwargs)
+            if self.session_exists():
+                self.attach_until_idle()
+            else:
                 self.create_session(self.bootstrap_prompt, self.bootstrap_codex_args)
-            self.send_prompt(text)
-            self.attach()
+                self.attach_until_idle()
+
+            while True:
+                default_text = self.draft_path.read_text() if self.draft_path.exists() else ""
+                notice_text = self.read_notice()
+                toolbar = notice_text or "Enter submits to the parked pony session. Ctrl-C exits the host."
+                try:
+                    text = session.prompt(
+                        prompt_fragments_for(self.personality),
+                        default=default_text,
+                        style=style,
+                        bottom_toolbar=toolbar,
+                        multiline=False,
+                    )
+                except KeyboardInterrupt:
+                    return 130
+                except EOFError:
+                    return 130
+
+                self.draft_path.write_text(text)
+                if not text.strip():
+                    continue
+
+                if not self.session_exists():
+                    self.create_session(self.bootstrap_prompt, self.bootstrap_codex_args)
+                else:
+                    self.resume_if_needed()
+                self.send_prompt(text)
+                self.attach_until_idle()
 
 
 def main() -> int:

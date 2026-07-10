@@ -130,8 +130,10 @@ elif [[ "${1:-}" == "-p" ]] && [[ -n "${2:-}" ]]; then
   profile_arg="$2"
 fi
 pony_launch_debug "codex-pony exec: codex_bin=$codex_bin profile=$profile_arg project_root=$project_root stdin_tty=$( [[ -t 0 ]] && printf yes || printf no ) project_root=$project_root"
-if [[ ! -t 0 && -r /dev/tty ]]; then
-  pony_launch_debug "codex-pony rebind stdio to /dev/tty before exec"
-  exec "$codex_bin" "${codex_args[@]}" "$@" </dev/tty >/dev/tty 2>&1
+if [[ ! -t 0 || ! -t 1 ]]; then
+  if ( : </dev/tty ) 2>/dev/null; then
+    pony_launch_debug "codex-pony rebind stdio to /dev/tty before exec: stdin_tty=$( [[ -t 0 ]] && printf yes || printf no ) stdout_tty=$( [[ -t 1 ]] && printf yes || printf no )"
+    exec "$codex_bin" "${codex_args[@]}" "$@" </dev/tty >/dev/tty 2>&1
+  fi
 fi
 exec "$codex_bin" "${codex_args[@]}" "$@"

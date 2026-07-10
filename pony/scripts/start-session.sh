@@ -353,6 +353,8 @@ fi
   printf '%s\n' "Assigned workfile: $workfile"
   if [[ "$personality" != "TWILIGHT_SPARKLE" && "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then
     printf '%s\n' "Approval-memory rule: when the user grants a permission, approval, exception, or recurring instruction, record it in the Assigned workfile and the matching status file during that same run, then treat the recorded approval as durable on future launches unless it is explicitly revoked."
+    printf '%s\n' "Restart-capsule rule: before you stop at an idle or handoff point, refresh the Assigned workfile with a concise restart capsule naming what you were doing, why it matters, the exact next file, command, or check, and any blocker or expected owner needed to resume cleanly after restart."
+    printf '%s\n' "Shared-state continuation rule: if that restart context changes shared coordination, also tell Twilight the exact durable delta to record during that same run instead of assuming your local scratch context will survive."
     printf '%s\n' "Blank-worker rule: if the local state is blank, WAITING, or unassigned, do not scan the repository for self-assigned work. Report the waiting state plainly, mention any recorded approvals if they matter, and remain live for a concrete task."
   fi
   if [[ "$worker_rootdir" != "$AGENIC_PROJECT_ROOT" ]]; then
@@ -411,9 +413,9 @@ if [[ "$personality" == "TWILIGHT_SPARKLE" ]]; then
   exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/enter-twi-session.sh" "$runtime_promptfile"
 fi
 
-pony_launch_debug "exec enter-worker-from-prompt-file: workfile=$workfile worker_rootdir=$worker_rootdir runtime_promptfile=$runtime_promptfile assignment_row_present=$( [[ -n "$assignment_row" ]] && printf yes || printf no )"
+pony_launch_debug "exec enter-worker-and-codex: workfile=$workfile worker_rootdir=$worker_rootdir runtime_promptfile=$runtime_promptfile assignment_row_present=$( [[ -n "$assignment_row" ]] && printf yes || printf no )"
 
-exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/enter-worker-from-prompt-file.sh" \
+exec "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/enter-worker-and-codex.sh" \
   "$personality" \
   "$workfile" \
   "$worker_rootdir" \

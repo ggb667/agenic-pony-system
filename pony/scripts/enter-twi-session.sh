@@ -49,6 +49,6 @@ fi
 
 pony_launch_debug "enter-twi-session resolved paths: workfile=$twi_workfile rootdir=$twi_rootdir promptfile=$twi_promptfile assignment_override=$( [[ -n "$assignment_row" ]] && printf yes || printf no )"
 
-direct_launcher="$(pony_script_path enter-worker-and-codex.sh)"
-pony_launch_debug "enter-twi-session exec direct Twilight codex handoff: launcher=$direct_launcher workfile=$twi_workfile rootdir=$twi_rootdir promptfile=$twi_promptfile"
-exec "$direct_launcher"   TWILIGHT_SPARKLE   "$twi_workfile"   "$twi_rootdir"   "$twi_promptfile"
+entry_launcher="$(pony_script_path enter-worker-and-codex.sh)"
+pony_launch_debug "enter-twi-session exec direct Twilight handoff: launcher=$entry_launcher workfile=$twi_workfile rootdir=$twi_rootdir promptfile=$twi_promptfile"
+exec "$entry_launcher"   TWILIGHT_SPARKLE   "$twi_workfile"   "$twi_rootdir"   "$twi_promptfile"

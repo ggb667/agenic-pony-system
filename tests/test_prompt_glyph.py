@@ -122,8 +122,16 @@ class PromptGlyphTests(unittest.TestCase):
                 check=True,
                 cwd=project_root,
             )
+            codex_wrapper = (REPO_ROOT / "pony/bin/codex-pony").read_text(encoding="utf-8")
+            self.assertIn('rebind stdio to /dev/tty before exec', codex_wrapper)
+            self.assertIn('stdin_tty=$( [[ -t 0 ]] && printf yes || printf no ) stdout_tty=$( [[ -t 1 ]] && printf yes || printf no )', codex_wrapper)
             subprocess.run(
                 ["bash", "-n", str(project_root / "pony/scripts/start-session.sh")],
+                check=True,
+                cwd=project_root,
+            )
+            subprocess.run(
+                ["bash", "-n", str(project_root / "pony/scripts/watch-twi.sh")],
                 check=True,
                 cwd=project_root,
             )
@@ -133,12 +141,9 @@ class PromptGlyphTests(unittest.TestCase):
                 cwd=project_root,
             )
             launch_script = (project_root / "pony/scripts/launch-in-pony-shell.sh").read_text(encoding="utf-8")
-            entry_script = (project_root / "pony/scripts/enter-worker-from-prompt-file.sh").read_text(encoding="utf-8")
+            entry_script = (project_root / "pony/scripts/enter-twi-session.sh").read_text(encoding="utf-8")
             direct_script = (project_root / "pony/scripts/enter-worker-and-codex.sh").read_text(encoding="utf-8")
-            self.assertIn(
-                'source_root="$(./pony/scripts/resolve-system-root.sh "${AGENIC_PROJECT_ROOT}")"',
-                launch_script,
-            )
+            self.assertIn('source_root="${AGENIC_PONY_SOURCE_ROOT}"', launch_script)
             self.assertIn(
                 '"${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}"',
                 launch_script,
@@ -147,20 +152,34 @@ class PromptGlyphTests(unittest.TestCase):
                 '"${source_root}/pony/scripts/start-session.sh" "${AGENIC_LAUNCH_PERSONALITY}" "${AGENIC_PROJECT_ROOT}" </dev/tty >/dev/tty 2>&1',
                 launch_script,
             )
+            team_member_script = (project_root / "pony/scripts/launch-team-member.sh").read_text(encoding="utf-8")
+            self.assertIn('Usage: $(basename "$0") [--direct] PERSONALITY', team_member_script)
+            self.assertNotIn('--parked', team_member_script)
+            self.assertNotIn('AGENIC_PONY_TEAM_MEMBER_HOST_MODE', team_member_script)
             self.assertIn('FLUTTERSHY) pony_func="fluttershy" ;;', launch_script)
             self.assertIn('RAINBOW_DASH) pony_func="rainbow" ;;', launch_script)
             self.assertNotIn("CODEX_PONY_PROFILE", launch_script)
-            self.assertIn('direct_launcher="$(pony_script_path enter-worker-and-codex.sh)"', entry_script)
-            self.assertIn('if [[ "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then', entry_script)
-            self.assertIn('host_script="$(pony_script_path pony-session-host.py)"', entry_script)
-            self.assertIn('--session-name "$session_name"', entry_script)
-            self.assertIn('--socket-path "$socket_path"', entry_script)
-            self.assertIn('--promptfile "$promptfile"', entry_script)
+            self.assertIn('entry_launcher="$(pony_script_path enter-worker-and-codex.sh)"', entry_script)
+            self.assertIn('exec "$entry_launcher"   TWILIGHT_SPARKLE', entry_script)
+            self.assertIn('multiline=False', (project_root / "pony/scripts/pony-line-editor.py").read_text(encoding="utf-8"))
             self.assertIn('clean_stale_tmux_state_for_direct_launch()', direct_script)
             self.assertIn('Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief.', direct_script)
             self.assertIn('tmux -S "$socket_path" kill-server', direct_script)
             self.assertIn('rm -f "$socket_path"', direct_script)
             self.assertIn('clean_stale_tmux_state_for_direct_launch "$PERSONALITY"', direct_script)
+            host_script = (project_root / "pony/scripts/pony-session-host.py").read_text(encoding="utf-8")
+            self.assertIn('open("/dev/tty", "r")', host_script)
+            self.assertIn('multiline=False', host_script)
+            self.assertIn('history-limit", "100000"', host_script)
+            self.assertIn('alternate-screen", "off"', host_script)
+            self.assertIn('set -m && ', host_script)
+            self.assertIn('def resume_if_needed(self) -> None:', host_script)
+            self.assertIn('self.tmux("send-keys", "-t", pane_id, "fg", "Enter")', host_script)
+            monitor_script = (project_root / "pony/scripts/codex-tmux-monitor.sh").read_text(encoding="utf-8")
+            self.assertIn('detach-client -s "$session_name"', monitor_script)
+            source_start_session = (REPO_ROOT / "pony/scripts/start-session.sh").read_text(encoding="utf-8")
+            self.assertIn('exec enter-worker-and-codex:', source_start_session)
+            self.assertNotIn('enter-worker-from-prompt-file.sh', source_start_session)
             self.assertIn('PRINCESS_CELESTIA_SOL_INVICTUS) pony_label="Celestia" ;;', launch_script)
             self.assertIn('TWILIGHT_SPARKLE) pony_label="Twilight" ;;', launch_script)
             self.assertIn('APPLEJACK) pony_label="Applejack" ;;', launch_script)
@@ -296,6 +315,12 @@ class PromptGlyphTests(unittest.TestCase):
             workfile, worktree = result.stdout.strip().split("\t")
             self.assertEqual(workfile, str(project_root / "pony/work/aj.md"))
             self.assertEqual(worktree, str(project_root / "pony/worktrees/aj"))
+            pending_approvals = (project_root / "pony/team.coordination/twi.pending-approvals.md").read_text(encoding="utf-8")
+            review_queue = (project_root / "pony/team.coordination/twi.review-queue.md").read_text(encoding="utf-8")
+            event_history = (project_root / "pony/team.coordination/twi.event.stream.history.md").read_text(encoding="utf-8")
+            self.assertIn("No pending user approvals.", pending_approvals)
+            self.assertIn("Generated helper output only.", review_queue)
+            self.assertIn("durable_coordination_history: none", event_history)
 
     def test_git_project_bootstrap_keeps_generated_pony_tree_out_of_status_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -352,6 +377,11 @@ class PromptGlyphTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (project_root / "pony/scripts/enter-worker-from-prompt-file.sh").chmod(0o755)
+            (project_root / "pony/scripts/enter-worker-and-codex.sh").write_text(
+                "#!/usr/bin/env bash\nset -euo pipefail\nexit 0\n",
+                encoding="utf-8",
+            )
+            (project_root / "pony/scripts/enter-worker-and-codex.sh").chmod(0o755)
             (project_root / "pony/scripts/enter-twi-session.sh").write_text(
                 "#!/usr/bin/env bash\nset -euo pipefail\nexit 0\n",
                 encoding="utf-8",
