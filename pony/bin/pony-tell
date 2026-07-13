@@ -13,8 +13,9 @@ Usage:
 EOF
 }
 
-chat_log_path="${AGENIC_PONY_CHAT_LOG_PATH:-${TMPDIR:-/tmp}/codex-pony-chat.jsonl}"
-registry_log_path="${AGENIC_PONY_REGISTRY_LOG_PATH:-${TMPDIR:-/tmp}/codex-pony-registry.jsonl}"
+chat_log_path="${AGENIC_PONY_CHAT_LOG_PATH:-$(agent_message_log_path)}"
+registry_log_path="${AGENIC_PONY_REGISTRY_LOG_PATH:-$(agent_registry_log_path)}"
+agent_config_script="$AGENIC_PROJECT_PONY_SCRIPTS_DIR/agent-config.py"
 
 command="${1:-}"
 case "$command" in
@@ -66,60 +67,35 @@ PY
       printf '%s\n' "pony-tell requires AGENIC_LAUNCH_PERSONALITY or PERSONALITY in the environment." >&2
       exit 64
     }
-    python3 - "$target" "$message" "$sender_personality" "$AGENIC_PROJECT_ROOT" "$registry_log_path" "$chat_log_path" <<'PY'
+    agent_config_path="${CODEX_AGENT_CONFIG:-${AGENIC_AGENT_CONFIG_PATH:-$(agent_session_config_path "$sender_personality")}}"
+    if [[ -f "$agent_config_script" ]]; then
+      python3 "$agent_config_script" write-session \
+        --agent "$sender_personality" \
+        --project-root "$AGENIC_PROJECT_ROOT" \
+        --output "$agent_config_path" \
+        --registry-path "$registry_log_path" \
+        --message-log-path "$chat_log_path"
+    fi
+    python3 - "$target" "$message" "$sender_personality" "$AGENIC_PROJECT_ROOT" "$registry_log_path" "$chat_log_path" "$agent_config_path" <<'PY'
 import json
-import os
 import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-target, text, sender_name, project_root, registry_path_raw, chat_path_raw = sys.argv[1:]
+target, text, sender_name, project_root, registry_path_raw, chat_path_raw, config_path_raw = sys.argv[1:]
 registry_path = Path(registry_path_raw)
 chat_path = Path(chat_path_raw)
-
-ALIASES = {
-    "TIA": "PRINCESS_CELESTIA_SOL_INVICTUS",
-    "CELESTIA": "PRINCESS_CELESTIA_SOL_INVICTUS",
-    "PRINCESS": "PRINCESS_CELESTIA_SOL_INVICTUS",
-    "CELLY": "PRINCESS_CELESTIA_SOL_INVICTUS",
-    "SUNBUTT": "PRINCESS_CELESTIA_SOL_INVICTUS",
-    "PRINCESS_CELESTIA_SOL_INVICTUS": "PRINCESS_CELESTIA_SOL_INVICTUS",
-    "TWI": "TWILIGHT_SPARKLE",
-    "TWILIGHT": "TWILIGHT_SPARKLE",
-    "TWILIGHT_SPARKLE": "TWILIGHT_SPARKLE",
-    "AJ": "APPLEJACK",
-    "APPLEJACK": "APPLEJACK",
-    "FS": "FLUTTERSHY",
-    "FLUTTERSHY": "FLUTTERSHY",
-    "SHY": "FLUTTERSHY",
-    "FLUTTERS": "FLUTTERSHY",
-    "PINKIE": "PINKIE_PIE",
-    "PINKIE_PIE": "PINKIE_PIE",
-    "RARITY": "RARITY",
-    "RARES": "RARITY",
-    "RD": "RAINBOW_DASH",
-    "RAINBOW": "RAINBOW_DASH",
-    "RAINBOW_DASH": "RAINBOW_DASH",
-    "DASH": "RAINBOW_DASH",
-    "SPIKE": "SPIKE",
-}
-SYMBOLS = {
-    "PRINCESS_CELESTIA_SOL_INVICTUS": "☀︎",
-    "TWILIGHT_SPARKLE": "✶",
-    "APPLEJACK": "🍎",
-    "FLUTTERSHY": "🦋",
-    "PINKIE_PIE": "🎈",
-    "RARITY": "💎",
-    "RAINBOW_DASH": "⚡",
-    "SPIKE": "🐲",
-}
+config_path = Path(config_path_raw)
 
 def canonicalize(name: str) -> str:
     normalized = name.strip().upper().replace(" ", "_").replace("-", "_")
     if normalized == "ALL":
         return "*"
-    return ALIASES.get(normalized, normalized)
+    return normalized
+
+def normalize_alias(name: str) -> str:
+    return name.strip().casefold()
 
 def split_subject_and_body(text: str) -> tuple[str, str]:
     split_at = len(text)
@@ -136,13 +112,118 @@ def split_subject_and_body(text: str) -> tuple[str, str]:
     body = text[split_at:]
     return subject or text[:25], body
 
-sender = canonicalize(sender_name)
-recipient = canonicalize(target)
-known = set(SYMBOLS) | {"*"}
-if sender not in SYMBOLS:
-    raise SystemExit(f"Unknown sender pony '{sender_name}'.")
-if recipient not in known:
-    raise SystemExit(f"Unknown target pony '{target}'.")
+def fallback_agent(personality: str) -> dict[str, str]:
+    symbols = {
+        "PRINCESS_CELESTIA_SOL_INVICTUS": "☀︎",
+        "TWILIGHT_SPARKLE": "✶",
+        "APPLEJACK": "🍎",
+        "FLUTTERSHY": "🦋",
+        "PINKIE_PIE": "🎈",
+        "RARITY": "💎",
+        "RAINBOW_DASH": "⚡",
+        "SPIKE": "🐲",
+    }
+    labels = {
+        "PRINCESS_CELESTIA_SOL_INVICTUS": "Princess Celestia Sol Invictus",
+        "TWILIGHT_SPARKLE": "Twilight Sparkle",
+        "APPLEJACK": "Applejack",
+        "FLUTTERSHY": "Fluttershy",
+        "PINKIE_PIE": "Pinkie Pie",
+        "RARITY": "Rarity",
+        "RAINBOW_DASH": "Rainbow Dash",
+        "SPIKE": "Spike",
+    }
+    return {
+        "agentId": personality,
+        "routeId": personality,
+        "label": labels.get(personality, personality),
+        "icon": symbols.get(personality, ""),
+        "aliases": [personality],
+        "projectRoot": project_root,
+        "projectLabel": Path(project_root).name,
+        "mailboxPath": "",
+    }
+
+def fallback_roster(current_personality: str) -> dict:
+    personalities = [
+        "PRINCESS_CELESTIA_SOL_INVICTUS",
+        "TWILIGHT_SPARKLE",
+        "APPLEJACK",
+        "FLUTTERSHY",
+        "PINKIE_PIE",
+        "RARITY",
+        "RAINBOW_DASH",
+        "SPIKE",
+    ]
+    alias_map = {
+        "PRINCESS_CELESTIA_SOL_INVICTUS": ["PRINCESS_CELESTIA_SOL_INVICTUS", "Princess Celestia Sol Invictus", "Celestia", "Princess", "TIA", "CELLY", "SUNBUTT"],
+        "TWILIGHT_SPARKLE": ["TWILIGHT_SPARKLE", "Twilight Sparkle", "Twilight", "twi"],
+        "APPLEJACK": ["APPLEJACK", "Applejack", "AJ"],
+        "FLUTTERSHY": ["FLUTTERSHY", "Fluttershy", "FS", "Shy", "Flutters"],
+        "PINKIE_PIE": ["PINKIE_PIE", "Pinkie Pie", "Pinkie"],
+        "RARITY": ["RARITY", "Rarity", "Rares"],
+        "RAINBOW_DASH": ["RAINBOW_DASH", "Rainbow Dash", "Rainbow", "RD", "Dash"],
+        "SPIKE": ["SPIKE", "Spike"],
+    }
+    agents = []
+    for personality in personalities:
+        entry = fallback_agent(personality)
+        entry["aliases"] = alias_map[personality]
+        agents.append(entry)
+    current = next((agent for agent in agents if agent["agentId"] == current_personality), fallback_agent(current_personality))
+    return {
+        **current,
+        "agents": agents,
+    }
+
+def load_config() -> dict:
+    if config_path.exists():
+        return json.loads(config_path.read_text(encoding="utf-8"))
+    sender = canonicalize(sender_name)
+    return fallback_roster(sender)
+
+def resolve_sender(payload: dict) -> dict:
+    sender = canonicalize(sender_name)
+    for agent in payload.get("agents", []):
+        if agent.get("agentId") == sender and agent.get("projectRoot") == project_root:
+            return agent
+    if payload.get("agentId") == sender:
+        return payload
+    return fallback_agent(sender)
+
+def resolve_target(payload: dict, raw_target: str) -> dict:
+    if raw_target.strip().casefold() == "all":
+        return {
+            "agentId": "*",
+            "routeId": "*",
+            "label": "all",
+            "icon": "",
+            "projectRoot": project_root,
+            "projectLabel": Path(project_root).name,
+            "mailboxPath": "",
+        }
+    matches = []
+    needle = normalize_alias(raw_target)
+    for agent in payload.get("agents", []):
+        aliases = agent.get("aliases", [])
+        if any(normalize_alias(alias) == needle for alias in aliases):
+            matches.append(agent)
+    if not matches:
+        canonical = canonicalize(raw_target)
+        for agent in payload.get("agents", []):
+            if agent.get("agentId") == canonical or agent.get("routeId") == canonical:
+                matches.append(agent)
+    unique = {match.get("routeId", match.get("agentId")): match for match in matches}
+    if not unique:
+        raise SystemExit(f"Unknown target pony '{raw_target}'.")
+    if len(unique) > 1:
+        options = ", ".join(sorted(unique))
+        raise SystemExit(f"Ambiguous target '{raw_target}'. Use a disambiguated alias such as <project>:<name>. Matches: {options}")
+    return next(iter(unique.values()))
+
+payload = load_config()
+sender = resolve_sender(payload)
+recipient = resolve_target(payload, target)
 
 sender_instance_id = str(uuid.uuid4())
 cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
@@ -158,17 +239,25 @@ if registry_path.exists():
             continue
         if seen < cutoff:
             continue
-        if entry.get("pony_name") == sender and entry.get("path") == project_root:
+        if entry.get("pony_name") == sender["agentId"] and entry.get("path") == project_root:
             sender_instance_id = entry.get("uuid") or sender_instance_id
             break
 
 subject, body = split_subject_and_body(text.strip())
 entry = {
     "id": str(uuid.uuid4()),
+    "project_root": project_root,
+    "project_label": sender.get("projectLabel", Path(project_root).name),
     "from_instance_id": sender_instance_id,
-    "from_pony_name": sender,
-    "from_symbol": SYMBOLS[sender],
-    "to": recipient,
+    "from_agent_id": sender["agentId"],
+    "from_route_id": sender.get("routeId", sender["agentId"]),
+    "from_label": sender.get("label", sender["agentId"]),
+    "from_pony_name": sender["agentId"],
+    "from_symbol": sender.get("icon", ""),
+    "to_agent_id": recipient["agentId"],
+    "to_route_id": recipient.get("routeId", recipient["agentId"]),
+    "to_label": recipient.get("label", recipient["agentId"]),
+    "to": recipient["agentId"],
     "subject": subject,
     "body": body,
     "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),

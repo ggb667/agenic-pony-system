@@ -49,9 +49,9 @@ prompt_label_for_personality() {
   display_name="$(display_name_for_personality "${1:-}")"
   glyph="$(codex_prompt_glyph_for_personality "${1:-}" 2>/dev/null || true)"
   if [[ -n "$glyph" ]]; then
-    printf '%s\n' "${display_name} ${glyph} >"
+    printf '%s\n' "${display_name} ${glyph} ›"
   else
-    printf '%s\n' "${display_name} >"
+    printf '%s\n' "${display_name} ›"
   fi
 }
 
@@ -131,7 +131,7 @@ install_failure_message() {
   fi
 
   printf '%s\n' "ERROR: pony runtime refresh did not complete for $project_root."
-  printf '%s\n' "Refusing to launch $personality_name with stale installed scripts or a stale parked worker session."
+  printf '%s\n' "Refusing to launch $personality_name with stale installed scripts or a stale worker session."
   printf '%s\n' "Current install state: ${current_state:-missing}"
   if [[ -n "$metadata_text" ]]; then
     printf '%s\n' ''

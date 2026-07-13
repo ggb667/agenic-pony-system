@@ -64,7 +64,10 @@ def prompt_glyph_for(personality: str) -> str:
     return glyphs.get(personality, "")
 
 def prompt_fragments_for(personality: str) -> list[tuple[str, str]]:
-    return [("class:prompt", f"{prompt_label_for(personality)} > ")]
+    glyph = prompt_glyph_for(personality)
+    if glyph:
+        return [("class:prompt", f"{glyph} › ")]
+    return [("class:prompt", f"{prompt_label_for(personality)} › ")]
 
 
 def startup_brief_prompt(state_hint: str = "") -> str:
@@ -347,7 +350,7 @@ class PonySessionHost:
             while True:
                 default_text = self.draft_path.read_text() if self.draft_path.exists() else ""
                 notice_text = self.read_notice()
-                toolbar = notice_text or "Enter submits to the parked pony session. Ctrl-C exits the host."
+                toolbar = notice_text or "Enter submits to Codex. Ctrl-C exits the launcher."
                 try:
                     text = session.prompt(
                         prompt_fragments_for(self.personality),

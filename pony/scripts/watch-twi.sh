@@ -9,10 +9,12 @@ coord_dir="$AGENIC_TEAM_COORDINATION_DIR"
 inbox="$(pony_twi_event_stream_history_path)"
 decisions="$(pony_twi_decisions_path)"
 todo="$(pony_twi_todo_path)"
+pending_approvals="$(pony_twi_pending_approvals_path)"
+review_queue="$(pony_twi_review_queue_path)"
 flag="$(pony_twi_review_needed_path)"
 
 pony_ensure_layout_dirs
-touch "$inbox" "$decisions" "$todo" "$flag"
+touch "$inbox" "$decisions" "$todo" "$pending_approvals" "$review_queue" "$flag"
 
 is_twilight_owned_trigger() {
   case "${1:-}" in
@@ -43,7 +45,11 @@ normalize_pending_field() {
   local value="${1:-}"
   local lower
   lower="$(printf '%s' "$value" | tr '[:upper:]' '[:lower:]')"
-  if [[ -z "$lower" || "$lower" == "none" || "$lower" == "n/a" ]]; then
+  if [[ -z "$lower" ||
+        "$lower" == "none" ||
+        "$lower" == "none recorded" ||
+        "$lower" == "none recorded;"* ||
+        "$lower" == "n/a" ]]; then
     return 1
   fi
   printf '%s' "$value"
@@ -113,6 +119,43 @@ refresh_todo() {
   } >"$todo"
 }
 
+refresh_pending_approvals() {
+  {
+    echo "# TWILIGHT PENDING APPROVALS"
+    echo
+    echo "Generated: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo
+    found=0
+    for status_file in "$coord_dir"/*.status.md; do
+      [[ -f "$status_file" ]] || continue
+      worker="$(basename "$status_file" .status.md)"
+      branch="$(sed -n 's/^BRANCH: //p' "$status_file")"
+      worktree="$(sed -n 's/^WORKTREE: //p' "$status_file")"
+      status="$(sed -n 's/^STATUS: //p' "$status_file")"
+      blockers="$(sed -n 's/^BLOCKERS: //p' "$status_file" | head -n1)"
+      next_step="$(sed -n 's/^NEXT_STEP: //p' "$status_file" | head -n1)"
+      decision_needed="$(normalize_pending_field "$(sed -n 's/^DECISION_NEEDED: //p' "$status_file")" || true)"
+      combined="$(printf '%s\n%s\n%s\n' "$blockers" "$next_step" "$decision_needed" | tr '[:upper:]' '[:lower:]')"
+
+      if [[ "$combined" == *approval* ]]; then
+        found=1
+        echo "## ${worker^^}"
+        echo "- branch: ${branch:-unknown}"
+        echo "- worktree: ${worktree:-unknown}"
+        echo "- status: ${status:-unknown}"
+        [[ -n "$decision_needed" ]] && echo "- decision_needed: $decision_needed"
+        [[ -n "$blockers" ]] && echo "- blockers: $blockers"
+        [[ -n "$next_step" ]] && echo "- next_step: $next_step"
+        echo
+      fi
+    done
+
+    if [[ "$found" -eq 0 ]]; then
+      echo "No pending user approvals."
+    fi
+  } >"$pending_approvals"
+}
+
 maybe_play_done() {
   local status_file="$1"
   local worker status next_step decision_needed marker personality
@@ -126,7 +169,11 @@ maybe_play_done() {
 
   if [[ "$status" == "done" ]] &&
      [[ -z "$next_step" || "$next_step" == "none" || "$next_step" == "n/a" ]] &&
-     [[ -z "$decision_needed" || "$decision_needed" == "none" || "$decision_needed" == "n/a" ]]; then
+     [[ -z "$decision_needed" ||
+        "$decision_needed" == "none" ||
+        "$decision_needed" == "none recorded" ||
+        "$decision_needed" == "none recorded;"* ||
+        "$decision_needed" == "n/a" ]]; then
     if [[ ! -f "$marker" ]]; then
       personality="$(normalize_worker_to_personality "$worker")"
       "$(pony_bin_path ponydone)" "$personality" || true
@@ -136,6 +183,9 @@ maybe_play_done() {
     rm -f "$marker"
   fi
 }
+
+refresh_todo
+refresh_pending_approvals
 
 echo "Watching $coord_dir for worker status changes..."
 
@@ -163,11 +213,12 @@ inotifywait -m -e close_write,move,create "$coord_dir" --format '%f' | while rea
           fi
           echo
         )"
-        printf '%s\n' "$review_block" >>"$inbox"
+        printf '%s\n' "$review_block" >>"$review_queue"
         printf '%s\n' "$current_hash" >"$marker_file"
       fi
 
       refresh_todo
+      refresh_pending_approvals
       maybe_play_done "$changed_path"
       touch "$flag"
 

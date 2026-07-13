@@ -32,7 +32,7 @@ shell_pid_file="$runtime_root/${slug}.shell.pid"
 codex_pid_file="$runtime_root/${slug}.codex.pid"
 
 if [[ ! -f "$shell_pid_file" ]]; then
-  echo "No parked or active codex-pony shell found for '$pony'." >&2
+  echo "No active codex-pony shell found for '$pony'." >&2
   exit 1
 fi
 

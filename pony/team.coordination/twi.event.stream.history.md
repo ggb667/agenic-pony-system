@@ -4,7 +4,7 @@ Purpose: Coordinator-maintained log of notable coordination and runtime events.
 Contract: Shared historical context maintained by Twilight. Useful for audit and recovery, but not a replacement for current authoritative routing or decision state.
 
 ## Current State
-- pending_review_needed_content: none
+- durable_coordination_history: none
 
 ## Recent Events
 - hardened `pony/scripts/launch-in-pony-shell.sh` so the first startup handoff now runs `start-session.sh` directly from a one-shot shell-init hook instead of typing a synthesized command into the interactive buffer, which removes a fragile quoting/parsing path for installed target-project launches such as EVH Rarity

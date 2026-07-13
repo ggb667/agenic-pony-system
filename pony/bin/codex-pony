@@ -54,6 +54,26 @@ source_launch_env() {
 
 source_launch_env
 
+write_agent_session_config() {
+  local personality="${1:-}"
+  [[ -n "$personality" ]] || return 0
+  local config_script="$AGENIC_PROJECT_PONY_SCRIPTS_DIR/agent-config.py"
+  local session_config="${CODEX_AGENT_CONFIG:-${AGENIC_AGENT_CONFIG_PATH:-$(agent_session_config_path "$personality")}}"
+  local registry_path="${AGENIC_PONY_REGISTRY_LOG_PATH:-$(agent_registry_log_path)}"
+  local message_log_path="${AGENIC_PONY_CHAT_LOG_PATH:-$(agent_message_log_path)}"
+  [[ -f "$config_script" ]] || return 0
+  python3 "$config_script" write-session \
+    --agent "$personality" \
+    --project-root "$AGENIC_PROJECT_ROOT" \
+    --output "$session_config" \
+    --registry-path "$registry_path" \
+    --message-log-path "$message_log_path"
+  export CODEX_AGENT_CONFIG="$session_config"
+  export AGENIC_AGENT_CONFIG_PATH="$session_config"
+}
+
+write_agent_session_config "${PERSONALITY:-${AGENIC_LAUNCH_PERSONALITY:-}}"
+
 preferred_repo_codex="/home/ggb66/dev/codex/codex-rs/target/debug/codex-tui"
 effective_codex_profile="${CODEX_PONY_PROFILE:-}"
 profile_config_path=""

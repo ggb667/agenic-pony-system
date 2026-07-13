@@ -37,7 +37,20 @@ def prompt_label_for(personality: str) -> str:
     return labels.get(personality, personality)
 
 def prompt_fragments_for(personality: str) -> list[tuple[str, str]]:
-    return [("class:prompt", f"{prompt_label_for(personality)} > ")]
+    labels = {
+        "PRINCESS_CELESTIA_SOL_INVICTUS": "☀︎",
+        "TWILIGHT_SPARKLE": "✶",
+        "APPLEJACK": "🍎",
+        "PINKIE_PIE": "🎈",
+        "RARITY": "💎",
+        "FLUTTERSHY": "🦋",
+        "RAINBOW_DASH": "⚡",
+        "SPIKE": "🐲",
+    }
+    glyph = labels.get(personality, "")
+    if glyph:
+        return [("class:prompt", f"{glyph} › ")]
+    return [("class:prompt", f"{prompt_label_for(personality)} › ")]
 
 
 def main() -> int:
@@ -68,7 +81,7 @@ def main() -> int:
         }
     )
 
-    toolbar = notice_text or "Enter submits to the parked pony session. Ctrl-C leaves the session parked."
+    toolbar = notice_text or "Enter submits to Codex. Ctrl-C exits the launcher."
     session = PromptSession(history=FileHistory(str(history_path)))
     try:
       text = session.prompt(

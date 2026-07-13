@@ -132,24 +132,22 @@ fi
 
 if [[ -f "$installed_entry_launcher" ]]; then
   expect_contains "$installed_entry_launcher" 'direct_launcher="$(pony_script_path enter-worker-and-codex.sh)"' "installed worker entry launcher"
-  expect_contains "$installed_entry_launcher" 'if [[ "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then' "installed worker entry launcher"
-  expect_contains "$installed_entry_launcher" 'host_script="$(pony_script_path pony-session-host.py)"' "installed worker entry launcher"
-  expect_contains "$installed_entry_launcher" '--session-name "$session_name"' "installed worker entry launcher"
-  expect_contains "$installed_entry_launcher" '--socket-path "$socket_path"' "installed worker entry launcher"
+  expect_contains "$installed_entry_launcher" 'exec "$direct_launcher"   "$personality"   "$workfile"   "$rootdir"   "$promptfile"' "installed worker entry launcher"
+  expect_absent "$installed_entry_launcher" 'pony-session-host.py' "installed worker entry launcher"
+  expect_absent "$installed_entry_launcher" 'codex-tmux-monitor.sh' "installed worker entry launcher"
 fi
 
 if [[ -f "$installed_direct_launcher" ]]; then
-  expect_contains "$installed_direct_launcher" 'clean_stale_tmux_state_for_direct_launch()' "installed direct worker launcher"
-  expect_contains "$installed_direct_launcher" 'tmux -S "$socket_path" kill-server' "installed direct worker launcher"
-  expect_contains "$installed_direct_launcher" 'clean_stale_tmux_state_for_direct_launch "$PERSONALITY"' "installed direct worker launcher"
+  expect_contains "$installed_direct_launcher" 'exec "$repo_codex_pony" "${codex_args[@]}" "$prompt"' "installed direct worker launcher"
+  expect_contains "$installed_direct_launcher" 'Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief.' "installed direct worker launcher"
+  expect_absent "$installed_direct_launcher" 'clean_stale_tmux_state_for_direct_launch' "installed direct worker launcher"
 fi
 
 if [[ -f "$installed_host" ]]; then
-  expect_contains "$installed_host" 'if result == "READY_KEEP_LIVE":' "installed pony session host"
-  expect_contains "$installed_host" 'model_instructions_file=' "installed pony session host"
-  expect_contains "$installed_host" 'Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief.' "installed pony session host"
-  expect_contains "$installed_host" 'Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief.' "installed pony session host"
-  expect_contains "$installed_host" 'capture=True, check=False' "installed pony session host"
+  expect_contains "$installed_host" 'Enter submits to Codex. Ctrl-C exits the launcher.' "installed pony session host"
+  expect_contains "$installed_host" 'prompt_fragments_for(self.personality)' "installed pony session host"
+  expect_contains "$installed_host" 'self.send_prompt(text)' "installed pony session host"
+  expect_absent "$installed_host" 'Enter submits to the parked pony session' "installed pony session host"
 fi
 
 if [[ -f "$installed_wrapper" ]]; then
@@ -174,4 +172,4 @@ printf '%s\n' "- runtime state token is ready"
 printf '%s\n' "- runtime fingerprint matches source: $source_fingerprint"
 printf '%s\n' "- source and installed pony-tell are executable and legacy pony-mail is absent"
 printf '%s\n' "- Twilight prompt contains live ping reply guidance and compact source summary reference"
-printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, hidden model instructions, stale tmux cleanup for direct-launch ponies, direct worker and Twilight Codex surface, and parked-host Celestia path"
+printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, hidden model instructions, and direct interactive Codex startup for Twilight and team members"

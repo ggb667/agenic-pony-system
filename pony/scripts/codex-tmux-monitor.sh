@@ -2,11 +2,11 @@
 set -euo pipefail
 
 pane_id="${1:?missing tmux pane id}"
-codex_pid="${2:?missing codex pid}"
-prompt_glyph="${3:?missing prompt glyph}"
-tmux_socket_path="${4:-}"
-idle_sentinel="${5:-awaiting new instructions. Ω}"
-partial_idle_sentinel="${6:-Ω}"
+prompt_glyph="${2:?missing prompt glyph}"
+tmux_socket_path="${3:-}"
+idle_sentinel="${4:-awaiting new instructions. Ω}"
+partial_idle_sentinel="${5:-Ω}"
+session_name="${6:-}"
 
 consecutive_idle_polls=0
 tmux_cmd=(tmux)
@@ -40,7 +40,7 @@ pane_looks_idle() {
   return 1
 }
 
-while kill -0 "$codex_pid" 2>/dev/null; do
+while "${tmux_cmd[@]}" display-message -p -t "$pane_id" '#{pane_id}' >/dev/null 2>&1; do
   pane_command="$("${tmux_cmd[@]}" display-message -p -t "$pane_id" '#{pane_current_command}' 2>/dev/null || true)"
   pane_text="$(capture_recent_pane)"
   recent_lines="$(printf '%s\n' "$pane_text" | awk 'NF { lines[++count]=$0 } END { start=(count>12 ? count-11 : 1); for (i=start; i<=count; ++i) print lines[i] }' | trim_trailing_space)"
@@ -53,6 +53,10 @@ while kill -0 "$codex_pid" 2>/dev/null; do
 
   if (( consecutive_idle_polls >= 2 )); then
     "${tmux_cmd[@]}" send-keys -t "$pane_id" C-z >/dev/null 2>&1 || true
+    if [[ -n "$session_name" ]]; then
+      sleep 0.1
+      "${tmux_cmd[@]}" detach-client -s "$session_name" >/dev/null 2>&1 || true
+    fi
     exit 0
   fi
 

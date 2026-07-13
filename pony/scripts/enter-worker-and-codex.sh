@@ -62,30 +62,6 @@ additional_codex_args_for_rootdir() {
   fi
 }
 
-clean_stale_tmux_state_for_direct_launch() {
-  local active_personality="${1:?missing personality}"
-  local active_slug=""
-  local socket_path=""
-  local draft_path=""
-  local history_path=""
-
-  [[ "$active_personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]] || return 0
-
-  active_slug="$(worker_slug_for_personality "$active_personality" || true)"
-  [[ -n "$active_slug" ]] || return 0
-
-  socket_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${active_slug}.tmux.sock"
-  draft_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${active_slug}.draft.txt"
-  history_path="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${active_slug}.history.txt"
-
-  if [[ -S "$socket_path" ]]; then
-    tmux -S "$socket_path" kill-server >/dev/null 2>&1 || true
-    rm -f "$socket_path"
-  fi
-
-  rm -f "$draft_path" "$history_path"
-}
-
 startup_brief_prompt() {
   local state_hint="${1-}"
   local prompt="Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief. Cover your pony identity, role, active project and workspace, current state and scope, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief."
@@ -149,7 +125,6 @@ preflight_result="$(
     "$PWD"
 )"
 pony_launch_debug "worker handoff preflight: personality=$PERSONALITY rootdir=$rootdir workfile=$workfile promptfile=$promptfile result=$preflight_result"
-clean_stale_tmux_state_for_direct_launch "$PERSONALITY"
 
 codex_args=()
 while IFS= read -r arg; do

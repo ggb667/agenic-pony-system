@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "agents": [
+    {
+      "personality": "PRINCESS_CELESTIA_SOL_INVICTUS",
+      "workerSlug": "celestia",
+      "label": "Princess Celestia Sol Invictus",
+      "shortLabel": "Celestia",
+      "routeBase": "PRINCESS_CELESTIA_SOL_INVICTUS",
+      "icon": "☀︎",
+      "accent": "#FDF5B7",
+      "runtimeRole": "source-repo governance pony",
+      "terminalTitle": "Celestia",
+      "promptLabel": "Princess Celestia Sol Invictus ☀︎ ›",
+      "mailboxFile": "celestia.mailbox.md",
+      "aliases": [
+        "celestia",
+        "princess celestia",
+        "princess celestia sol invictus",
+        "princess",
+        "tia",
+        "celly",
+        "sunbutt",
+        "sol"
+      ],
+      "globalSingleton": true
+    },
+    {
+      "personality": "TWILIGHT_SPARKLE",
+      "workerSlug": "twi",
+      "label": "Twilight Sparkle",
+      "shortLabel": "Twilight",
+      "routeBase": "TWILIGHT_SPARKLE",
+      "icon": "✶",
+      "accent": "#c79dd7",
+      "runtimeRole": "project coordinator pony",
+      "terminalTitle": "Twilight",
+      "promptLabel": "Twilight Sparkle ✶ ›",
+      "mailboxFile": "twi.mailbox.md",
+      "aliases": [
+        "twi",
+        "twilight",
+        "twilight sparkle",
+        "sparkle",
+        "twilight_sparkle"
+      ]
+    },
+    {
+      "personality": "APPLEJACK",
+      "workerSlug": "aj",
+      "label": "Applejack",
+      "shortLabel": "AJ",
+      "routeBase": "APPLEJACK",
+      "icon": "🍎",
+      "accent": "#fff4a3",
+      "runtimeRole": "specialist worker pony",
+      "terminalTitle": "Applejack",
+      "promptLabel": "Applejack 🍎 ›",
+      "mailboxFile": "aj.mailbox.md",
+      "aliases": [
+        "aj",
+        "applejack"
+      ]
+    },
+    {
+      "personality": "FLUTTERSHY",
+      "workerSlug": "fs",
+      "label": "Fluttershy",
+      "shortLabel": "Fluttershy",
+      "routeBase": "FLUTTERSHY",
+      "icon": "🦋",
+      "accent": "#fdf6af",
+      "runtimeRole": "specialist worker pony",
+      "terminalTitle": "Fluttershy",
+      "promptLabel": "Fluttershy 🦋 ›",
+      "mailboxFile": "fs.mailbox.md",
+      "aliases": [
+        "fs",
+        "fluttershy",
+        "flutters",
+        "shy"
+      ]
+    },
+    {
+      "personality": "PINKIE_PIE",
+      "workerSlug": "pinkie",
+      "label": "Pinkie Pie",
+      "shortLabel": "Pinkie",
+      "routeBase": "PINKIE_PIE",
+      "icon": "🎈",
+      "accent": "#f0afd1",
+      "runtimeRole": "specialist worker pony",
+      "terminalTitle": "Pinkie",
+      "promptLabel": "Pinkie Pie 🎈 ›",
+      "mailboxFile": "pinkie.mailbox.md",
+      "aliases": [
+        "pinkie",
+        "pinkie pie",
+        "pinkie_pie"
+      ]
+    },
+    {
+      "personality": "RARITY",
+      "workerSlug": "rarity",
+      "label": "Rarity",
+      "shortLabel": "Rarity",
+      "routeBase": "RARITY",
+      "icon": "💎",
+      "accent": "#e4e7ec",
+      "runtimeRole": "specialist worker pony",
+      "terminalTitle": "Rarity",
+      "promptLabel": "Rarity 💎 ›",
+      "mailboxFile": "rarity.mailbox.md",
+      "aliases": [
+        "rarity",
+        "rares"
+      ]
+    },
+    {
+      "personality": "RAINBOW_DASH",
+      "workerSlug": "rd",
+      "label": "Rainbow Dash",
+      "shortLabel": "RD",
+      "routeBase": "RAINBOW_DASH",
+      "icon": "⚡",
+      "accent": "#9edbf9",
+      "runtimeRole": "specialist worker pony",
+      "terminalTitle": "Rainbow Dash",
+      "promptLabel": "Rainbow Dash ⚡ ›",
+      "mailboxFile": "rd.mailbox.md",
+      "aliases": [
+        "rd",
+        "rainbow",
+        "rainbow dash",
+        "dash",
+        "dashie",
+        "rainbow_dash"
+      ]
+    },
+    {
+      "personality": "SPIKE",
+      "workerSlug": "spike",
+      "label": "Spike",
+      "shortLabel": "Spike",
+      "routeBase": "SPIKE",
+      "icon": "🐲",
+      "accent": "#D5EBAD",
+      "runtimeRole": "specialist worker pony",
+      "terminalTitle": "Spike",
+      "promptLabel": "Spike 🐲 ›",
+      "mailboxFile": "spike.mailbox.md",
+      "aliases": [
+        "spike"
+      ]
+    }
+  ]
+}

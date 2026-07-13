@@ -143,6 +143,11 @@ Branch: $AGENIC_PROJECT_BRANCH
 Status: blank
 Scope: unassigned
 Permissions granted: none recorded
+Restart capsule:
+- task: none recorded
+- why: none recorded
+- next: none recorded
+- blocker: none recorded
 Notes:
 - no assigned work yet
 EOF
@@ -174,6 +179,47 @@ for line in lines:
         inserted = True
 if not inserted:
     result.append("Permissions granted: none recorded")
+path.write_text("\n".join(result) + "\n", encoding="utf-8")
+PY
+}
+
+ensure_workfile_restart_capsule_field() {
+  local slug="${1:?missing worker slug}"
+  local workfile="$AGENIC_PROJECT_PONY_WORK_DIR/$(workfile_name_for_slug "$slug")"
+  [[ -f "$workfile" ]] || return 0
+  python3 - "$workfile" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+lines = path.read_text(encoding="utf-8").splitlines()
+result = []
+inserted = False
+replacement = [
+    "Restart capsule:",
+    "- task: none recorded",
+    "- why: none recorded",
+    "- next: none recorded",
+    "- blocker: none recorded",
+]
+i = 0
+while i < len(lines):
+    line = lines[i]
+    if line.startswith("Restart capsule:"):
+        if not inserted:
+            result.extend(replacement)
+            inserted = True
+        i += 1
+        while i < len(lines) and (lines[i].startswith("- ") or lines[i].strip() == ""):
+            i += 1
+        continue
+    result.append(line)
+    if line.startswith("Permissions granted:") and not inserted:
+        result.extend(replacement)
+        inserted = True
+    i += 1
+if not inserted:
+    result.extend(replacement)
 path.write_text("\n".join(result) + "\n", encoding="utf-8")
 PY
 }
@@ -685,6 +731,11 @@ write_install_state "launch_prompts_syncing"
 for prompt_template in "$source_pony_launch_prompts_dir"/*.txt; do
   write_managed_file "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/$(basename "$prompt_template")" "$(cat "$prompt_template")"
 done
+if [[ -f "$source_pony_root/launch.configs/pony-agent-roster.json" ]]; then
+  write_managed_file \
+    "$AGENIC_PROJECT_PONY_LAUNCH_CONFIGS_DIR/pony-agent-roster.json" \
+    "$(cat "$source_pony_root/launch.configs/pony-agent-roster.json")"
+fi
 
 if [[ -d "$source_pony_root/assets" ]] && [[ "$source_pony_root/assets" != "$AGENIC_PROJECT_PONY_ASSETS_DIR" ]]; then
   sync_managed_tree "$source_pony_root/assets" "$AGENIC_PROJECT_PONY_ASSETS_DIR"
@@ -709,6 +760,7 @@ remove_if_exists "$AGENIC_PROJECT_PONY_BIN_DIR/pony-mail"
 
 for managed_script in \
   codex-tmux-monitor.sh \
+  agent-config.py \
   pony-paths.sh \
   pony-audio.sh \
   pony-audio-host.sh \
@@ -800,6 +852,7 @@ write_install_state "coordination_state_syncing"
 for slug in aj pinkie fs rarity rd spike twi; do
   write_workfile_if_missing "$slug"
   ensure_workfile_permissions_field "$slug"
+  ensure_workfile_restart_capsule_field "$slug"
   if [[ "$slug" == "twi" ]]; then
     ensure_workfile_branch_matches_assignment "$slug"
   fi
@@ -833,7 +886,23 @@ write_file_if_missing "$AGENIC_TEAM_COORDINATION_DIR/twi.event.stream.history.md
 # TWILIGHT EVENT STREAM HISTORY
 
 ## Current State
-- pending_review_needed_content: none
+- durable_coordination_history: none
+EOF
+)"
+
+write_file_if_missing "$AGENIC_TEAM_COORDINATION_DIR/twi.pending-approvals.md" "$(cat <<EOF
+# TWILIGHT PENDING APPROVALS
+
+Generated: blank
+
+No pending user approvals.
+EOF
+)"
+
+write_file_if_missing "$AGENIC_TEAM_COORDINATION_DIR/twi.review-queue.md" "$(cat <<EOF
+# TWILIGHT REVIEW QUEUE
+
+Generated helper output only. Do not treat this file as durable coordinator history.
 EOF
 )"
 

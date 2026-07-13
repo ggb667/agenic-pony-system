@@ -34,13 +34,19 @@ That means:
 
 The source repo has its own special case: the agenic source installation should keep the live Warp launcher set focused on source-repo governance and coordination work, with Celestia as the dedicated source-repo Warp launcher while Twilight remains the coordinator. Normal Celestia launches should not depend on a Codex profile file in `~/.codex`; the launcher stack should pass the required model, approval, and sandbox settings explicitly. If an operator deliberately invokes `codex-pony` with `CODEX_PONY_PROFILE=celestia`, only the canonical `celestia` profile name is supported. Worker launcher behavior is validated from project-local installs. In the current runtime model, per-worker local `pony/work` and `pony/team.coordination` files inside individual pony workspaces are not the shared authority; workers are expected to report durable state changes to Twilight, and Twilight updates the shared coordination mechanism.
 
+Continuity rule: worker sessions should be restart-friendly by default. A normal relaunch should preserve local tmux/editor history and draft state unless the operator explicitly requests a reset or the runtime is cleaning up a provably stale transport artifact. Before a worker stops at idle or handoff, it should refresh a concise restart capsule in its assigned workfile naming the current task, why it matters, the exact next file/command/check, and any blocker or expected owner needed to resume.
+
 After source-layer changes, prefer the narrow scripted check in `scripts/validate-installed-runtime.sh <target-project-root>` before spending a live pony launch on manual confirmation. That validator should fail clearly when the installed project is stale, prompting a refresh through `scripts/install-project.sh`, and should pass once the managed installed surfaces match the current source runtime contract.
 
 If a worker changes state in a way that Twilight or another pony must act on, the worker should issue the needed direct `/tell` messages in the same run. If shared durable state must change, the sender should tell Twilight the exact state delta Twilight should record in shared state. If another pony must act, the sender should also issue a direct `/tell` to that pony in that same run, and the runtime should accept either the pony's short alias or full display name for delivery. Workers should not assume per-workspace local coordination files are the authoritative sink for durable shared state.
 
+Direct `/tell` traffic should prefer the current project-local team by default, but the routing model must support explicit cross-repo disambiguation through generated agent config. Ambiguous targets such as `twilight` should resolve to the local team lane, while fully qualified targets such as `EVH:Twilight Sparkle` may route across repo boundaries when the active agent config and selected message bus expose that live session. `Princess Celestia Sol Invictus` is the deliberate singleton exception: there is only one Celestia identity, so her unqualified aliases may resolve globally for shared `agenic-pony-system` governance requests.
+
 Simple direct `/tell` pings, acknowledgements, and short live coordination notes should stay in the live IPC lane by default. They should normally receive a direct `/tell` reply rather than being copied into mailbox or coordinator-history files unless the message also carries a durable state change, blocker, decision request, or exact write request.
 
 Mailbox files themselves are not durable reboot-state storage. When a worker is blocked by a missing connection string, secret, endpoint, approval, or similar external prerequisite, the worker should tell Twilight the exact missing artifact, the expected owner, and the next unblock step so shared restart state stays truthful.
+
+Pending user approvals should remain isolated from routine mailbox acknowledgements and generated review helper text. In particular, unresolved approval decisions belong in a distinct coordinator approval lane, while generated snippets such as `Twilight review needed` belong in a non-durable review queue rather than in durable coordinator history.
 
 Installed launchers may still bootstrap through the reusable source layer before returning to the project-local runtime. That bootstrap hop is expected managed plumbing, not a cross-repo coordination violation. Policy and work state remain authoritative in the target project's local `pony/` tree once the launcher hands control back to the installed project runtime.
 
@@ -240,6 +246,8 @@ Those launchers should:
 - use the same project-local `pony/` structure
 - avoid requiring Warp
 - preload the selected pony shell identity before handing control to the session host so `Ctrl-C` or `Ctrl-Z` falls back to a branded pony prompt instead of a raw shell
+- start ordinary team-member launches in an interactive foreground Codex session by default
+- never route ordinary launches into a parked-host or prompt-toolkit TUI mode; that behavior is not supported for normal operation
 
 ## Optional `.zshrc` Support
 

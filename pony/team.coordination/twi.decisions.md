@@ -16,6 +16,11 @@ Contract: Shared coordinator artifact maintained by Twilight. Use it for settled
 - Twilight should address the user as `Mister`, `Sir`, or `Commander`
 - the parked host should move toward a `prompt_toolkit` line editor rather than leaving the operator on a raw shell prompt
 - if the current shell-first parked host still leaks raw `zsh`, the next iteration should make the editor the effective parent control surface instead of stacking more shell prompt hooks
+- worker continuity is a first-class runtime requirement: ordinary relaunch must preserve local draft/history state, and each worker stopping point should refresh a concise restart capsule in the assigned workfile plus any exact Twilight delta needed for shared durable state
+- lightweight parked-host behavior should extend beyond Celestia so Twilight and ordinary workers preserve tmux scrollback and restart continuity instead of relying on disposable foreground Codex launches
+- pending user approvals should remain isolated from routine mailbox acknowledgements in a dedicated coordinator lane until explicitly answered by the user
+- generated `Twilight review needed` snippets should not be appended to durable coordinator history; they belong in generated review-queue surfaces only
+- possible later enhancement: for `READY_KEEP_LIVE` ponies, keep a lightweight local parked host awake while Codex sleeps, and wake Codex automatically on real inbound work such as direct user input, unread `/tell` delivery, or another runtime notice explicitly marked as requiring model work; the pony-style startup identity banner should be host-rendered locally, while the model-only startup self-brief should run only after that wake event
 - pony behavior and horseshow runtime rules must remain always-on even when reusable coordination instructions are disabled for a run
 - reusable launch-prompt coordination instructions should be optional at startup and disableable via `AGENIC_PONY_DISABLE_REUSABLE_PROMPT=1` without removing pony voice, alerting, or idle behavior
 - project installs should self-refresh managed pony launchers, scripts, and reusable prompt templates on rerun so repo-local startup behavior can heal stale installs

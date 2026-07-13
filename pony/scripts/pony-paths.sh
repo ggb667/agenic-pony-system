@@ -77,6 +77,20 @@ detect_project_branch() {
   printf 'no-git-branch\n'
 }
 
+project_label() {
+  local project_root="${1:?missing project root}"
+  local config_path="$project_root/pony/pony.system.config.yaml"
+  local configured_name=""
+  if [[ -f "$config_path" ]]; then
+    configured_name="$(awk -F': ' '$1 == "project_name" {print substr($0, index($0, ": ") + 2); exit}' "$config_path")"
+  fi
+  if [[ -n "$configured_name" ]]; then
+    printf '%s\n' "$configured_name"
+    return 0
+  fi
+  printf '%s\n' "$(basename "$project_root")"
+}
+
 project_slug() {
   local project_root="${1:?missing project root}"
   printf '%s' "$(basename "$project_root")" | tr -cs '[:alnum:]._+-' '-' | sed 's/^-*//; s/-*$//'
@@ -313,7 +327,7 @@ load_project_paths() {
   export AGENIC_PROJECT_BRANCH
   AGENIC_PROJECT_BRANCH="$(detect_project_branch "$project_root")"
   export AGENIC_PROJECT_NAME
-  AGENIC_PROJECT_NAME="$(basename "$project_root")"
+  AGENIC_PROJECT_NAME="$(project_label "$project_root")"
   export AGENIC_PROJECT_SLUG
   AGENIC_PROJECT_SLUG="$(project_slug "$project_root")"
 
@@ -338,6 +352,10 @@ load_project_paths() {
   export AGENIC_PROJECT_PONY_RUNTIME_ACTIVE_PROMPT_PATH="$AGENIC_PROJECT_PONY_RUNTIME_DIR/active.prompt"
   export AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_PATH="$AGENIC_PROJECT_PONY_RUNTIME_DIR/pending.notice"
   export AGENIC_PROJECT_PONY_RUNTIME_PENDING_NOTICE_SEEN_PATH="$AGENIC_PROJECT_PONY_RUNTIME_DIR/pending.notice.seen"
+  : "${AGENIC_PONY_CHAT_LOG_PATH:=$AGENIC_PROJECT_PONY_RUNTIME_DIR/pony.chat.jsonl}"
+  : "${AGENIC_PONY_REGISTRY_LOG_PATH:=$AGENIC_PROJECT_PONY_RUNTIME_DIR/pony.registry.jsonl}"
+  export AGENIC_PONY_CHAT_LOG_PATH
+  export AGENIC_PONY_REGISTRY_LOG_PATH
 
   export AGENIC_PROJECT_PONY_WINDOWS_WARP_MARKER="$AGENIC_PROJECT_PONY_DIR/pony.system.configured.windows.warp"
   export AGENIC_PROJECT_PONY_LINUX_SHELL_MARKER="$AGENIC_PROJECT_PONY_DIR/pony.system.configured.linux.shell"
@@ -415,6 +433,62 @@ pony_twi_decisions_path() {
 
 pony_twi_event_stream_history_path() {
   pony_coordination_path "twi.event.stream.history.md"
+}
+
+pony_twi_pending_approvals_path() {
+  pony_coordination_path "twi.pending-approvals.md"
+}
+
+pony_twi_review_queue_path() {
+  pony_coordination_path "twi.review-queue.md"
+}
+
+pony_chat_log_path() {
+  printf '%s\n' "$AGENIC_PROJECT_PONY_RUNTIME_DIR/pony.chat.jsonl"
+}
+
+pony_registry_log_path() {
+  printf '%s\n' "$AGENIC_PROJECT_PONY_RUNTIME_DIR/pony.registry.jsonl"
+}
+
+agent_bus_mode() {
+  local mode="${AGENIC_AGENT_BUS_MODE:-project}"
+  case "$mode" in
+    global|project)
+      printf '%s\n' "$mode"
+      ;;
+    *)
+      printf '%s\n' "project"
+      ;;
+  esac
+}
+
+global_agent_runtime_dir() {
+  local state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
+  printf '%s\n' "$state_home/agenic-pony-system/runtime"
+}
+
+agent_registry_log_path() {
+  if [[ "$(agent_bus_mode)" == "global" ]]; then
+    printf '%s\n' "$(global_agent_runtime_dir)/agent.registry.jsonl"
+    return 0
+  fi
+  pony_registry_log_path
+}
+
+agent_message_log_path() {
+  if [[ "$(agent_bus_mode)" == "global" ]]; then
+    printf '%s\n' "$(global_agent_runtime_dir)/agent.messages.jsonl"
+    return 0
+  fi
+  pony_chat_log_path
+}
+
+agent_session_config_path() {
+  local personality="${1:?missing personality}"
+  local slug
+  slug="$(worker_slug_for_personality "$personality")"
+  printf '%s\n' "$AGENIC_PROJECT_PONY_RUNTIME_DIR/${slug}.agent-session.json"
 }
 
 resolve_worker_assignment_by_personality() {

@@ -84,10 +84,20 @@ They are related, but they are not yet unified.
 
 Behavior rule for direct `/tell`:
 
+- direct `/tell` transport should resolve ambiguous short names locally by default so same-named workers in different repos do not cross-deliver by accident
+- generated agent config may also expose explicit cross-repo aliases such as `<project>:Twilight Sparkle`; those fully qualified targets may route across repo boundaries when the selected registry/message bus includes both live sessions
+- `Princess Celestia Sol Invictus` is a global singleton for source-governance escalation, so unqualified Celestia aliases may remain globally valid
 - a simple ping, acknowledgement, or short live coordination note between ponies should normally be answered with a direct `/tell` reply
 - that immediate reply rule still applies when the receiving pony is otherwise WAITING, blank, or unassigned
 - do not promote that kind of message into mailbox or coordinator-history churn by default
 - only persist the interaction when it carries a durable state change, blocker, decision request, or explicit write request that must survive restart
+
+Approval-isolation rule:
+
+- pending user approvals should live in a distinct authoritative coordinator lane, not inside the same generated stream as routine mailbox acknowledgements
+- a worker acknowledgement must not clear, replace, or visually bury an unresolved approval decision
+- generated helper phrases such as `Twilight review needed` are review-queue text, not durable coordination history
+- durable coordination history should only receive explicit coordinator-authored or explicitly approved durable entries
 
 ## Queue Model
 
@@ -158,6 +168,7 @@ A prompt is at a stopping point when:
 - it is waiting for direction such as `continue`
 - it has no required question pending
 - it has already persisted any task-relevant state that the next launch will need, such as workfile status, coordinator status, blockers, or next-step notes
+- for workers, it has refreshed a concise restart capsule in canonical state naming the current task, why it matters, the next exact file/command/check, and any blocker or expected owner
 
 Examples that are stopping points:
 
@@ -169,6 +180,7 @@ Special worker-launch exception:
 - when a non-coordinator worker has just launched, reads local state, and finds `blank`, `WAITING`, or `unassigned`, it should report that status but remain live at the Codex prompt for immediate follow-up input rather than emitting an idle sentinel and parking itself
 - when a non-coordinator worker is in that blank or waiting state, it should not scan the repository looking for self-assigned work; it should wait for a concrete assignment
 - if the user grants a permission, approval, recurring exception, or standing instruction, the worker should persist that approval into the local workfile and status file during the same run so the next launch does not ask again unless the approval is revoked
+- before a worker stops at idle or handoff, it should refresh its restart capsule in the assigned workfile; if shared durable state also changed, it should tell Twilight the exact delta to record in shared state during that same run
 
 Examples that are not stopping points:
 
@@ -223,21 +235,23 @@ Requirements:
 - the draft text must be restorable unchanged
 - if the editor supports it, cursor and edit state should also be restored
 - queued notices must not destroy, overwrite, or silently submit the user's draft
+- ordinary relaunch should not wipe a worker's local draft/history files unless the operator explicitly requests a reset or the runtime is removing provably stale transport state such as a dead tmux socket
 
 ## Editor UX Requirement
 
-The parked host experience should feel like Codex, not like a shell transcript.
+The supported launcher experience is a normal interactive Codex session, not a parked host, tmux parking layer, or prompt-toolkit shell wrapper.
 
 Requirements:
 
 - scrolling backward should move line by line without pane redraw jumps or mixed shell noise
-- Codex output history and parked-editor input must not share one messy inline transcript
-- the parked host should present a real editor surface, not a raw shell prompt
-- resuming after a stopping point should preserve a stable reading history instead of appending shell job-control artifacts like `zsh: suspended`
+- Codex output history and composer input must not share one messy inline transcript
+- the launcher must hand off directly to Codex instead of presenting a parked-editor surface
+- interrupting the launcher must not leave the user in a parked host with `Enter submits` or `Ctrl-C exits the host` semantics
+- resuming after interruption should return to the normal Codex terminal, not a parked session
 
-In practice, this means the final host should prefer a dedicated editor surface such as the `prompt_toolkit` host over a reclaimed shell prompt, and it should avoid forcing Codex into degraded inline rendering modes that damage scrollback quality.
+Worker continuity should preserve the normal Codex session flow. If restart context needs to be saved, it should be captured in project files, not by keeping a parked host alive.
 
-When a shell launcher is used as the entrypoint, that launcher shell must still preload the pony prompt identity before starting the session host. If the foreground host is interrupted or suspended, control should fall back to a branded pony shell prompt instead of a raw project shell that requires a manual recovery command such as `tia`.
+When a shell launcher is used as the entrypoint, that launcher shell must still preload the pony prompt identity before starting Codex. If the foreground session is interrupted or suspended, control should fall back to a branded pony shell prompt instead of a parked editor host or raw project shell that requires a manual recovery command such as `tia`.
 
 Empty input is not a special case because no submission occurs until Enter is pressed.
 
