@@ -23,6 +23,7 @@ Contract: Distills the stable source-repo rules from `README.md`, `docs/runtime-
 - before a worker stops at idle or handoff, it should refresh a concise restart capsule in its assigned workfile; if that capsule changes shared durable state, the worker should tell Twilight the exact delta to record in the same run
 - direct `/tell` transport should keep ambiguous targets local by default so live teams in different repos do not cross-deliver same-named pony traffic by accident
 - generated agent roster config may also expose explicit cross-repo targets such as `<project>:Twilight Sparkle`; those fully qualified targets may route across repo boundaries when the active registry/message bus includes both live sessions
+- the generated `CODEX_AGENT_CONFIG` payload should carry `messageLogPath`, `registryPath`, the local roster, and any live cross-project targets discovered on that same bus so Codex and shell helpers share one routing surface
 - `Princess Celestia Sol Invictus` remains the uniquely disambiguated source-governance identity and may resolve globally
 - simple live `/tell` pings, acknowledgements, and short coordination notes stay in the live IPC lane by default and should normally receive a short direct `/tell` reply rather than mailbox or history churn
 - pending user approvals should stay isolated from routine acknowledgement traffic and should remain visible in a dedicated coordinator approval lane until the user answers

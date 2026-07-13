@@ -15,7 +15,7 @@ EOF
 
 chat_log_path="${AGENIC_PONY_CHAT_LOG_PATH:-$(agent_message_log_path)}"
 registry_log_path="${AGENIC_PONY_REGISTRY_LOG_PATH:-$(agent_registry_log_path)}"
-agent_config_script="$AGENIC_PROJECT_PONY_SCRIPTS_DIR/agent-config.py"
+agent_config_script="$(agent_config_script_path)"
 
 command="${1:-}"
 case "$command" in

@@ -57,7 +57,8 @@ source_launch_env
 write_agent_session_config() {
   local personality="${1:-}"
   [[ -n "$personality" ]] || return 0
-  local config_script="$AGENIC_PROJECT_PONY_SCRIPTS_DIR/agent-config.py"
+  local config_script
+  config_script="$(agent_config_script_path)"
   local session_config="${CODEX_AGENT_CONFIG:-${AGENIC_AGENT_CONFIG_PATH:-$(agent_session_config_path "$personality")}}"
   local registry_path="${AGENIC_PONY_REGISTRY_LOG_PATH:-$(agent_registry_log_path)}"
   local message_log_path="${AGENIC_PONY_CHAT_LOG_PATH:-$(agent_message_log_path)}"

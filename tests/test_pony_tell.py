@@ -86,12 +86,84 @@ class PonyTellTests(unittest.TestCase):
             self.assertEqual(payload["registryPath"], str(registry_log))
             self.assertEqual(payload["messageLogPath"], str(message_log))
             self.assertIn("evh:twilight sparkle", [alias.casefold() for alias in payload["aliases"]])
+            self.assertEqual(payload["projectRoot"], str(project_root))
 
             ops_twilight = next(
                 agent for agent in payload["agents"] if agent["routeId"] == "OPS:TWILIGHT_SPARKLE"
             )
             self.assertIn("ops:twilight sparkle", [alias.casefold() for alias in ops_twilight["aliases"]])
             self.assertEqual(ops_twilight["projectRoot"], str(other_root))
+            self.assertEqual(ops_twilight["registryPath"], str(registry_log))
+            self.assertEqual(ops_twilight["messageLogPath"], str(message_log))
+            self.assertGreater(len(payload["agents"]), 8)
+
+    def test_pony_tell_uses_source_agent_config_when_project_copy_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            project_root = tmp / "project"
+            runtime_dir = project_root / "pony" / "runtime"
+            scripts_dir = project_root / "pony" / "scripts"
+            runtime_dir.mkdir(parents=True)
+            scripts_dir.mkdir(parents=True)
+            (project_root / "pony" / "pony.system.config.yaml").write_text(
+                "project_name: EVH\nproject_root: " + str(project_root) + "\n",
+                encoding="utf-8",
+            )
+            chat_log = runtime_dir / "pony.chat.jsonl"
+            registry_log = runtime_dir / "pony.registry.jsonl"
+            registry_log.write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "uuid": "aj-uuid",
+                                "pony_name": "APPLEJACK",
+                                "path": str(project_root),
+                                "git_branch": "main",
+                                "pid": 100,
+                                "last_seen_at": "2099-01-01T00:00:00Z",
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "uuid": "twi-uuid",
+                                "pony_name": "TWILIGHT_SPARKLE",
+                                "path": str(project_root),
+                                "git_branch": "main",
+                                "pid": 101,
+                                "last_seen_at": "2099-01-01T00:00:00Z",
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            subprocess.run(
+                ["bash", str(PONY_TELL), "EVH:Twilight Sparkle", "cross-project-ready ping"],
+                check=True,
+                capture_output=True,
+                text=True,
+                env={
+                    **os.environ,
+                    "AGENIC_PROJECT_ROOT": str(project_root),
+                    "AGENIC_PONY_SOURCE_ROOT": str(REPO_ROOT),
+                    "AGENIC_LAUNCH_PERSONALITY": "APPLEJACK",
+                    "AGENIC_PONY_CHAT_LOG_PATH": str(chat_log),
+                    "AGENIC_PONY_REGISTRY_LOG_PATH": str(registry_log),
+                    "AGENIC_AGENT_CONFIG_PATH": "",
+                    "CODEX_AGENT_CONFIG": "",
+                },
+            )
+
+            config_path = runtime_dir / "aj.agent-session.json"
+            self.assertTrue(config_path.exists())
+            config_payload = json.loads(config_path.read_text(encoding="utf-8"))
+            twilight = next(agent for agent in config_payload["agents"] if agent["routeId"] == "EVH:TWILIGHT_SPARKLE")
+            self.assertIn("evh:twilight sparkle", [alias.casefold() for alias in twilight["aliases"]])
+            payload = json.loads(chat_log.read_text(encoding="utf-8").strip())
+            self.assertEqual(payload["to_route_id"], "EVH:TWILIGHT_SPARKLE")
 
     def test_pony_tell_appends_live_chat_entry(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

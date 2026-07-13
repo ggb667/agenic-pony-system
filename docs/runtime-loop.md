@@ -86,6 +86,7 @@ Behavior rule for direct `/tell`:
 
 - direct `/tell` transport should resolve ambiguous short names locally by default so same-named workers in different repos do not cross-deliver by accident
 - generated agent config may also expose explicit cross-repo aliases such as `<project>:Twilight Sparkle`; those fully qualified targets may route across repo boundaries when the selected registry/message bus includes both live sessions
+- that generated `CODEX_AGENT_CONFIG` contract should include `messageLogPath`, `registryPath`, the full current-project roster, and any live cross-project targets discovered on the same bus so Codex-side `/tell` routing matches shell-side `pony-tell`
 - `Princess Celestia Sol Invictus` is a global singleton for source-governance escalation, so unqualified Celestia aliases may remain globally valid
 - a simple ping, acknowledgement, or short live coordination note between ponies should normally be answered with a direct `/tell` reply
 - that immediate reply rule still applies when the receiving pony is otherwise WAITING, blank, or unassigned

@@ -491,6 +491,20 @@ agent_session_config_path() {
   printf '%s\n' "$AGENIC_PROJECT_PONY_RUNTIME_DIR/${slug}.agent-session.json"
 }
 
+agent_config_script_path() {
+  local project_script="${AGENIC_PROJECT_PONY_SCRIPTS_DIR:-}/agent-config.py"
+  local source_script="${AGENIC_PONY_SOURCE_ROOT:-$agenic_root}/pony/scripts/agent-config.py"
+  if [[ -f "$project_script" ]]; then
+    printf '%s\n' "$project_script"
+    return 0
+  fi
+  if [[ -f "$source_script" ]]; then
+    printf '%s\n' "$source_script"
+    return 0
+  fi
+  printf '%s\n' "$project_script"
+}
+
 resolve_worker_assignment_by_personality() {
   local personality="${1:?missing personality}"
   local registry_file
