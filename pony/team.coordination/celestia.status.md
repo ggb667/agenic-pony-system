@@ -11,7 +11,7 @@ STATUS: HOLD
 PUSH_STATUS: uncommitted_local_changes
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
-BLOCKERS: preflight: coordinator worktree is dirty; policy and runtime contract changes are now in progress inside that dirty tree and still need final reconciliation
-NEXT_STEP: finish the generated agent-roster handoff to Twilight, then reconcile or put away the pending source-repo changes before ordinary coordination resumes
+BLOCKERS: preflight: coordinator worktree is dirty; Twilight must reconcile or put away local changes before normal coordination work
+NEXT_STEP: launch Twilight in dirty-fix-first mode, put away or reconcile the pending changes, then continue with normal coordination work
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none

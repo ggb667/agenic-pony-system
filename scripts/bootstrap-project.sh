@@ -224,6 +224,29 @@ path.write_text("\n".join(result) + "\n", encoding="utf-8")
 PY
 }
 
+write_memory_capsule_if_missing() {
+  local slug="${1:?missing worker slug}"
+  local title memory_file
+  title="$(worker_label_for_slug "$slug")"
+  memory_file="$(pony_worker_memory_capsule_path "$slug")"
+  write_file_if_missing "$memory_file" "$(cat <<EOF
+# ${title} Memory Capsule
+
+Project: $AGENIC_PROJECT_NAME
+Branch: $AGENIC_PROJECT_BRANCH
+Status snapshot: none recorded
+Last updated: never
+
+Memory capsule:
+- focus: none recorded
+- status: none recorded
+- next: none recorded
+- blocker: none recorded
+- handoff: none recorded
+EOF
+)"
+}
+
 ensure_workfile_branch_matches_assignment() {
   local slug="${1:?missing worker slug}"
   local workfile="$AGENIC_PROJECT_PONY_WORK_DIR/$(workfile_name_for_slug "$slug")"
@@ -853,6 +876,7 @@ for slug in aj pinkie fs rarity rd spike twi; do
   write_workfile_if_missing "$slug"
   ensure_workfile_permissions_field "$slug"
   ensure_workfile_restart_capsule_field "$slug"
+  write_memory_capsule_if_missing "$slug"
   if [[ "$slug" == "twi" ]]; then
     ensure_workfile_branch_matches_assignment "$slug"
   fi

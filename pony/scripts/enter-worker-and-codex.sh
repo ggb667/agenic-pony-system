@@ -18,6 +18,26 @@ resolve_path() {
   printf '%s\n' "$path"
 }
 
+codex_profile_for_personality() {
+  case "$1" in
+    TWILIGHT_SPARKLE) printf '%s\n' 'twi_coordinator' ;;
+    PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' 'celestia_coordinator' ;;
+    APPLEJACK|FLUTTERSHY|PINKIE_PIE|RARITY|RAINBOW_DASH|SPIKE) printf '%s\n' 'worker_mini' ;;
+    *) return 0 ;;
+  esac
+}
+
+twilight_additional_writable_root_args() {
+  local personality_name="${1:-}"
+  [[ "$personality_name" == "TWILIGHT_SPARKLE" ]] || return 0
+  local source_root=""
+  source_root="$("$(pony_script_path resolve-system-root.sh)" "${AGENIC_PROJECT_ROOT:-$PWD}")"
+  [[ -n "$source_root" ]] || return 0
+  printf '%s\n' \
+    '-c' \
+    "sandbox_workspace_write.writable_roots=[\"${source_root}/pony/runtime\"]"
+}
+
 codex_config_args_for_personality() {
   case "$1" in
     TWILIGHT_SPARKLE)
@@ -106,6 +126,11 @@ promptfile="$(resolve_path "$promptfile")"
 
 export PERSONALITY="$personality"
 export WORKING_ON="$workfile"
+if codex_profile="$(codex_profile_for_personality "$PERSONALITY")" && [[ -n "$codex_profile" ]]; then
+  export CODEX_PONY_PROFILE="$codex_profile"
+else
+  unset CODEX_PONY_PROFILE
+fi
 
 if [[ ! -f "$workfile" ]]; then
   echo "ERROR: workfile not found: $workfile" >&2
@@ -136,6 +161,9 @@ done < <(hidden_instructions_arg "$promptfile")
 while IFS= read -r arg; do
   codex_args+=("$arg")
 done < <(additional_codex_args_for_rootdir "$rootdir")
+while IFS= read -r arg; do
+  codex_args+=("$arg")
+done < <(twilight_additional_writable_root_args "$PERSONALITY")
 
 prompt=""
 case "$preflight_result" in

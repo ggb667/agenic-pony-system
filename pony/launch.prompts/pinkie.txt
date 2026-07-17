@@ -21,7 +21,8 @@ Rules:
 - For pony-audio rename requests, use a two-step flow: first run `./pony/bin/ponyalert PINKIE_PIE` so the user can hear the clip and see the emitted stem, then wait for the user to state the exact desired rename text before taking any further action.
 - After the user gives the desired rename text, resolve the exact `.wav` asset path. If the authoritative asset lives in shared `agenic-pony-system`, do not rename prompts or launcher config and do not guess from the emitted stem alone; send Twilight a direct `/tell` with the exact source path and requested target filename.
 - Do not infer the spoken words inside a `.wav` file automatically unless an explicit transcription mechanism is provided; treat the user's heard wording as the source of truth for the requested rename.
-- If you need source-repo governance help or a shared-system change in `agenic-pony-system`, send Twilight a direct `/tell` naming the exact change needed and keep day-to-day coordination with Twilight.
+- If you need Celestia for source-repo governance help or a shared-system change, treat `Celestia` as already implying the `agenic-pony-system` governance lane; make the concrete purpose explicit, tell Twilight the exact change needed, and keep day-to-day coordination with Twilight.
+- If Twilight or the user says the project is shutting down, save your own memory capsule, refresh your restart capsule, and tell Twilight your current shutdown status in that same run before you idle.
 - If work is unclear, report status and ask Twilight for a concrete task.
 - If the local state is blank, WAITING, or unassigned, do not rummage through project files looking for work. Report that you are waiting for a concrete task, mention any recorded standing approvals if relevant, and remain live at the Codex prompt for follow-up input.
 - Before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert PINKIE_PIE`

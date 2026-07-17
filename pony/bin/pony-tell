@@ -141,7 +141,6 @@ def fallback_agent(personality: str) -> dict[str, str]:
         "aliases": [personality],
         "projectRoot": project_root,
         "projectLabel": Path(project_root).name,
-        "mailboxPath": "",
     }
 
 def fallback_roster(current_personality: str) -> dict:
@@ -200,7 +199,6 @@ def resolve_target(payload: dict, raw_target: str) -> dict:
             "icon": "",
             "projectRoot": project_root,
             "projectLabel": Path(project_root).name,
-            "mailboxPath": "",
         }
     matches = []
     needle = normalize_alias(raw_target)
@@ -224,6 +222,12 @@ def resolve_target(payload: dict, raw_target: str) -> dict:
 payload = load_config()
 sender = resolve_sender(payload)
 recipient = resolve_target(payload, target)
+delivery_chat_path_raw = recipient.get("messageLogPath") or chat_path_raw
+if recipient.get("globalSingleton") and not recipient.get("messageLogPath"):
+    raise SystemExit(
+        f"Global singleton target '{recipient.get('label', recipient['agentId'])}' is missing messageLogPath in agent config."
+    )
+delivery_chat_path = Path(delivery_chat_path_raw)
 
 sender_instance_id = str(uuid.uuid4())
 cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
@@ -263,8 +267,8 @@ entry = {
     "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
 }
 
-chat_path.parent.mkdir(parents=True, exist_ok=True)
-with chat_path.open("a", encoding="utf-8") as fh:
+delivery_chat_path.parent.mkdir(parents=True, exist_ok=True)
+with delivery_chat_path.open("a", encoding="utf-8") as fh:
     fh.write(json.dumps(entry, separators=(",", ":")))
     fh.write("\n")
 

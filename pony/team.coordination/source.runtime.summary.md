@@ -21,14 +21,17 @@ Contract: Distills the stable source-repo rules from `README.md`, `docs/runtime-
 - worker-local `pony/work/*.md` and `pony/team.coordination/*.status.md` files are workspace artifacts unless Twilight is explicitly assigned to maintain them
 - when a worker causes a durable shared-state change, the worker should tell Twilight the exact update to record in the same run
 - before a worker stops at idle or handoff, it should refresh a concise restart capsule in its assigned workfile; if that capsule changes shared durable state, the worker should tell Twilight the exact delta to record in the same run
+- if a worker memory capsule exists, the worker should read it at startup before acting and refresh it when shutdown or restart context materially changes
+- when the user says the project is shutting down, Twilight should collect save-memory and status reports from the live agents before saving Twilight's own memory capsule
 - direct `/tell` transport should keep ambiguous targets local by default so live teams in different repos do not cross-deliver same-named pony traffic by accident
 - generated agent roster config may also expose explicit cross-repo targets such as `<project>:Twilight Sparkle`; those fully qualified targets may route across repo boundaries when the active registry/message bus includes both live sessions
 - the generated `CODEX_AGENT_CONFIG` payload should carry `messageLogPath`, `registryPath`, the local roster, and any live cross-project targets discovered on that same bus so Codex and shell helpers share one routing surface
-- `Princess Celestia Sol Invictus` remains the uniquely disambiguated source-governance identity and may resolve globally
+- `Princess Celestia Sol Invictus` remains the uniquely disambiguated source-governance identity and may resolve globally; unqualified `Celestia` implies the `agenic-pony-system` source-repo governance lane, so repo and governance scope are already implicit in the recipient
 - simple live `/tell` pings, acknowledgements, and short coordination notes stay in the live IPC lane by default and should normally receive a short direct `/tell` reply rather than mailbox or history churn
 - pending user approvals should stay isolated from routine acknowledgement traffic and should remain visible in a dedicated coordinator approval lane until the user answers
 - generated `Twilight review needed` helper text should stay out of durable coordinator history and live in a review queue or todo surface instead
 - if a blocker depends on a missing secret, endpoint, approval, or similar prerequisite, the shared coordination state must name the exact missing artifact, expected owner, and next unblock step
+- any Twilight runtime acting for the agenic source-governance lane must be able to append to the resolved lane `messageLogPath`; if the path is correct but the append fails, classify the result as a permission-only delivery blocker rather than a routing defect
 
 ## Install And Validation Boundaries
 

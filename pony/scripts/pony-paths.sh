@@ -340,6 +340,7 @@ load_project_paths() {
   export AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR="$AGENIC_PROJECT_PONY_DIR/launch.prompts"
   export AGENIC_PROJECT_PONY_LAUNCH_CONFIGS_DIR="$AGENIC_PROJECT_PONY_DIR/launch.configs"
   export AGENIC_PROJECT_PONY_TEAM_COORDINATION_DIR="$AGENIC_PROJECT_PONY_DIR/team.coordination"
+  export AGENIC_PROJECT_PONY_MEMORY_DIR="$AGENIC_PROJECT_PONY_DIR/memory"
   export AGENIC_PROJECT_PONY_RUNTIME_DIR="$AGENIC_PROJECT_PONY_DIR/runtime"
   export AGENIC_PROJECT_PONY_WORK_DIR="$AGENIC_PROJECT_PONY_DIR/work"
   export AGENIC_PROJECT_PONY_WORKTREES_DIR="$AGENIC_PROJECT_PONY_DIR/worktrees"
@@ -376,6 +377,7 @@ project_pony_dirs() {
     "$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR" \
     "$AGENIC_PROJECT_PONY_LAUNCH_CONFIGS_DIR" \
     "$AGENIC_PROJECT_PONY_TEAM_COORDINATION_DIR" \
+    "$AGENIC_PROJECT_PONY_MEMORY_DIR" \
     "$AGENIC_PROJECT_PONY_RUNTIME_DIR" \
     "$AGENIC_PROJECT_PONY_RUNTIME_QUEUE_DIR" \
     "$AGENIC_PROJECT_PONY_RUNTIME_QUEUE_ITEMS_DIR" \
@@ -421,6 +423,11 @@ pony_worker_status_path() {
 pony_worker_mailbox_path() {
   local worker_slug="${1:?missing worker slug}"
   pony_coordination_path "${worker_slug}.mailbox.md"
+}
+
+pony_worker_memory_capsule_path() {
+  local worker_slug="${1:?missing worker slug}"
+  printf '%s\n' "$AGENIC_PROJECT_PONY_MEMORY_DIR/${worker_slug}.md"
 }
 
 pony_twi_todo_path() {

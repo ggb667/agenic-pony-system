@@ -87,11 +87,12 @@ Behavior rule for direct `/tell`:
 - direct `/tell` transport should resolve ambiguous short names locally by default so same-named workers in different repos do not cross-deliver by accident
 - generated agent config may also expose explicit cross-repo aliases such as `<project>:Twilight Sparkle`; those fully qualified targets may route across repo boundaries when the selected registry/message bus includes both live sessions
 - that generated `CODEX_AGENT_CONFIG` contract should include `messageLogPath`, `registryPath`, the full current-project roster, and any live cross-project targets discovered on the same bus so Codex-side `/tell` routing matches shell-side `pony-tell`
-- `Princess Celestia Sol Invictus` is a global singleton for source-governance escalation, so unqualified Celestia aliases may remain globally valid
+- `Princess Celestia Sol Invictus` is a global singleton for source-governance escalation, so unqualified Celestia aliases may remain globally valid; in practice `Celestia` already implies the `agenic-pony-system` source-repo governance lane, and the sender mainly needs to make the operational purpose clear
 - a simple ping, acknowledgement, or short live coordination note between ponies should normally be answered with a direct `/tell` reply
 - that immediate reply rule still applies when the receiving pony is otherwise WAITING, blank, or unassigned
 - do not promote that kind of message into mailbox or coordinator-history churn by default
 - only persist the interaction when it carries a durable state change, blocker, decision request, or explicit write request that must survive restart
+- when `/tell` resolves to the intended `messageLogPath` but the append fails because the current sandbox cannot write there, record a permission blocker rather than a routing blocker and rerun from a write-capable context
 
 Approval-isolation rule:
 
@@ -182,6 +183,8 @@ Special worker-launch exception:
 - when a non-coordinator worker is in that blank or waiting state, it should not scan the repository looking for self-assigned work; it should wait for a concrete assignment
 - if the user grants a permission, approval, recurring exception, or standing instruction, the worker should persist that approval into the local workfile and status file during the same run so the next launch does not ask again unless the approval is revoked
 - before a worker stops at idle or handoff, it should refresh its restart capsule in the assigned workfile; if shared durable state also changed, it should tell Twilight the exact delta to record in shared state during that same run
+- if a worker memory capsule exists, the worker should read it at startup before acting and refresh it when shutdown or restart context materially changes
+- when the user says the project is shutting down, Twilight should fan out a save-memory-and-report-status request to the live agents, then save Twilight's own memory capsule after the status fan-in
 
 Examples that are not stopping points:
 

@@ -43,6 +43,24 @@ def read_project_label(project_root: Path) -> str:
     return project_root.name
 
 
+def read_config_value(project_root: Path, key: str) -> str:
+    config_path = project_root / "pony" / "pony.system.config.yaml"
+    if config_path.exists():
+        for line in config_path.read_text(encoding="utf-8").splitlines():
+            if line.startswith(f"{key}:"):
+                value = line.split(":", 1)[1].strip()
+                if value:
+                    return value
+    return ""
+
+
+def read_system_root(project_root: Path) -> Path:
+    configured = read_config_value(project_root, "agenic_system_root")
+    if configured:
+        return Path(configured).resolve()
+    return Path(__file__).resolve().parents[2]
+
+
 def read_branch(project_root: Path) -> str:
     try:
         result = subprocess.run(
@@ -65,6 +83,14 @@ def read_branch(project_root: Path) -> str:
             return "no-git-branch"
 
 
+def default_runtime_registry_path(project_root: Path) -> Path:
+    return project_root / "pony" / "runtime" / "pony.registry.jsonl"
+
+
+def default_runtime_message_log_path(project_root: Path) -> Path:
+    return project_root / "pony" / "runtime" / "pony.chat.jsonl"
+
+
 @dataclass(frozen=True)
 class AgentMeta:
     personality: str
@@ -77,7 +103,6 @@ class AgentMeta:
     runtime_role: str
     terminal_title: str
     prompt_label: str
-    mailbox_file: str
     aliases: list[str]
     global_singleton: bool = False
 
@@ -98,7 +123,6 @@ def load_roster(script_path: Path) -> dict[str, AgentMeta]:
             runtime_role=raw["runtimeRole"],
             terminal_title=raw["terminalTitle"],
             prompt_label=raw["promptLabel"],
-            mailbox_file=raw["mailboxFile"],
             aliases=list(raw["aliases"]),
             global_singleton=bool(raw.get("globalSingleton", False)),
         )
@@ -119,6 +143,8 @@ def read_live_registry(registry_path: Path, roster: dict[str, AgentMeta]) -> lis
             entry = json.loads(raw)
         except json.JSONDecodeError:
             continue
+        if not isinstance(entry, dict):
+            continue
         personality = normalize(entry.get("pony_name", ""))
         if personality not in roster:
             continue
@@ -136,6 +162,57 @@ def read_live_registry(registry_path: Path, roster: dict[str, AgentMeta]) -> lis
             "project_root": project_root,
             "branch_label": entry.get("git_branch") or "no-git-branch",
             "instance_id": entry.get("uuid") or "",
+        }
+    return list(latest.values())
+
+
+def read_live_chat_targets(
+    message_log_path: Path,
+    roster: dict[str, AgentMeta],
+    *,
+    current_project_root: Path,
+) -> list[dict[str, str]]:
+    if not message_log_path.exists():
+        return []
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=6)
+    latest: dict[tuple[str, str], dict[str, str]] = {}
+    for raw in message_log_path.read_text(encoding="utf-8").splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            entry = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(entry, dict):
+            continue
+        try:
+            created_at = datetime.fromisoformat(entry["created_at"].replace("Z", "+00:00"))
+        except Exception:
+            continue
+        if created_at < cutoff:
+            continue
+        remote_personality = normalize(entry.get("from_agent_id", ""))
+        remote_project_root = entry.get("project_root", "")
+        remote_instance_id = entry.get("from_instance_id", "")
+        if remote_project_root and Path(remote_project_root).resolve() == current_project_root:
+            remote_project_root = ""
+        if remote_personality not in roster or not remote_project_root:
+            remote_personality = normalize(entry.get("to_agent_id", ""))
+            remote_project_root = entry.get("to_project_root", "")
+            remote_instance_id = entry.get("to_instance_id", "")
+        if not remote_project_root:
+            continue
+        if remote_personality not in roster:
+            continue
+        remote_root = Path(remote_project_root).resolve()
+        if remote_root == current_project_root:
+            continue
+        latest[(remote_personality, str(remote_root))] = {
+            "personality": remote_personality,
+            "project_root": str(remote_root),
+            "branch_label": read_branch(remote_root),
+            "instance_id": remote_instance_id,
         }
     return list(latest.values())
 
@@ -177,7 +254,6 @@ def session_entry(
     include_unqualified: bool,
     instance_id: str = "",
 ) -> dict[str, Any]:
-    mailbox_path = project_root / "pony" / "team.coordination" / meta.mailbox_file
     return {
         "agentId": meta.personality,
         "routeId": route_id_for(meta, project_label),
@@ -191,7 +267,6 @@ def session_entry(
         "branchLabel": branch_label,
         "registryPath": str(registry_path),
         "messageLogPath": str(message_log_path),
-        "mailboxPath": str(mailbox_path),
         "runtimeRole": meta.runtime_role,
         "terminalTitle": meta.terminal_title,
         "promptLabel": meta.prompt_label,
@@ -212,6 +287,10 @@ def build_session_config(args: argparse.Namespace, roster: dict[str, AgentMeta])
     registry_path = Path(args.registry_path).expanduser()
     message_log_path = Path(args.message_log_path).expanduser()
     current_meta = roster[current_personality]
+    source_repo_session = (
+        current_personality == "PRINCESS_CELESTIA_SOL_INVICTUS"
+        and project_label == "agenic-pony-system"
+    )
 
     current_entry = session_entry(
         current_meta,
@@ -225,8 +304,15 @@ def build_session_config(args: argparse.Namespace, roster: dict[str, AgentMeta])
 
     agents: list[dict[str, Any]] = []
     seen_routes: set[str] = set()
+    source_root = read_system_root(project_root)
+    source_label = read_project_label(source_root)
+    source_branch = read_branch(source_root)
 
     for meta in roster.values():
+        if source_repo_session and meta.personality != current_personality:
+            continue
+        if meta.global_singleton and meta.personality != current_personality:
+            continue
         entry = session_entry(
             meta,
             project_root=project_root,
@@ -239,7 +325,15 @@ def build_session_config(args: argparse.Namespace, roster: dict[str, AgentMeta])
         agents.append(entry)
         seen_routes.add(entry["routeId"])
 
-    for live in read_live_registry(registry_path, roster):
+    live_entries = read_live_registry(registry_path, roster)
+    live_entries.extend(
+        read_live_chat_targets(
+            message_log_path,
+            roster,
+            current_project_root=project_root,
+        )
+    )
+    for live in live_entries:
         personality = live["personality"]
         meta = roster[personality]
         live_project_root = Path(live["project_root"]).resolve()
@@ -253,13 +347,44 @@ def build_session_config(args: argparse.Namespace, roster: dict[str, AgentMeta])
                 project_root=live_project_root,
                 project_label=live_project_label,
                 branch_label=live["branch_label"],
-                registry_path=registry_path,
-                message_log_path=message_log_path,
+                registry_path=default_runtime_registry_path(live_project_root),
+                message_log_path=default_runtime_message_log_path(live_project_root),
                 include_unqualified=meta.global_singleton,
                 instance_id=live["instance_id"],
             )
         )
         seen_routes.add(route_id)
+
+    for meta in roster.values():
+        if not meta.global_singleton:
+            continue
+        singleton_root = project_root if current_personality == meta.personality else source_root
+        singleton_label = project_label if singleton_root == project_root else source_label
+        singleton_branch = branch_label if singleton_root == project_root else source_branch
+        singleton_registry_path = (
+            registry_path
+            if singleton_root == project_root
+            else default_runtime_registry_path(singleton_root)
+        )
+        singleton_message_log_path = (
+            message_log_path
+            if singleton_root == project_root
+            else default_runtime_message_log_path(singleton_root)
+        )
+        route_id = route_id_for(meta, singleton_label)
+        if route_id in seen_routes:
+            continue
+        entry = session_entry(
+            meta,
+            project_root=singleton_root,
+            project_label=singleton_label,
+            branch_label=singleton_branch,
+            registry_path=singleton_registry_path,
+            message_log_path=singleton_message_log_path,
+            include_unqualified=True,
+        )
+        agents.append(entry)
+        seen_routes.add(entry["routeId"])
 
     return {
         **current_entry,

@@ -225,6 +225,7 @@ pony_launch_debug "after load_project_paths: project_root=$AGENIC_PROJECT_ROOT b
 
 worker_slug="$(worker_slug_for_personality "$personality")"
 workfile="$AGENIC_PROJECT_PONY_WORK_DIR/$(workfile_name_for_slug "$worker_slug")"
+memory_capsule="$(pony_worker_memory_capsule_path "$worker_slug")"
 promptfile="$AGENIC_PROJECT_PONY_LAUNCH_PROMPTS_DIR/${worker_slug}.txt"
 runtime_promptfile="$AGENIC_PROJECT_PONY_RUNTIME_DIR/${worker_slug}.launch.prompt.txt"
 assignment_row=""
@@ -329,7 +330,7 @@ fi
   printf '%s\n' "- Runtime role: ${runtime_role}."
   printf '%s\n' "- Active project: ${AGENIC_PROJECT_ROOT} on branch ${AGENIC_PROJECT_BRANCH}."
   printf '%s\n' "- Active workspace: ${worker_rootdir}."
-  printf '%s\n' "- Runtime state: ${runtime_status:-unknown status}; scope ${runtime_scope:-unassigned}; assigned workfile ${workfile}; tmux session ${session_name}."
+  printf '%s\n' "- Runtime state: ${runtime_status:-unknown status}; scope ${runtime_scope:-unassigned}; assigned workfile ${workfile}; memory capsule ${memory_capsule}; tmux session ${session_name}."
   printf '%s\n' "- Prompt and title: prompt label ${prompt_label}; terminal title ${terminal_title}."
   printf '%s\n' "- Interoperation: direct live messaging via ${AGENIC_PROJECT_PONY_BIN_DIR}/pony-tell, shared pony state under ${AGENIC_PROJECT_PONY_DIR}, and coordinator files under ${AGENIC_TEAM_COORDINATION_DIR}."
   printf '%s\n' "- Feedback and handoff: approval alert via ${AGENIC_PROJECT_PONY_BIN_DIR}/ponyalert ${personality}, completion chime via ${AGENIC_PROJECT_PONY_BIN_DIR}/ponydone ${personality}, and audio host FIFO at ${audio_fifo_path}."
@@ -351,9 +352,14 @@ fi
   printf '%s\n' "Project-local coordination root: $AGENIC_TEAM_COORDINATION_DIR"
   printf '%s\n' "Project-local pony root: $AGENIC_PROJECT_PONY_DIR"
   printf '%s\n' "Assigned workfile: $workfile"
+  printf '%s\n' "Assigned memory capsule: $memory_capsule"
+  printf '%s\n' "Memory rule: if the Assigned memory capsule exists, read it at startup before acting and refresh it whenever shutdown or restart context materially changes."
   if [[ "$personality" != "TWILIGHT_SPARKLE" && "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then
     printf '%s\n' "Approval-memory rule: when the user grants a permission, approval, exception, or recurring instruction, record it in the Assigned workfile and the matching status file during that same run, then treat the recorded approval as durable on future launches unless it is explicitly revoked."
+    printf '%s\n' "Memory-capsule startup rule: if the Assigned memory capsule exists, read it at startup before acting so prior shutdown context is restored alongside the Assigned workfile."
     printf '%s\n' "Restart-capsule rule: before you stop at an idle or handoff point, refresh the Assigned workfile with a concise restart capsule naming what you were doing, why it matters, the exact next file, command, or check, and any blocker or expected owner needed to resume cleanly after restart."
+    printf '%s\n' "Memory-capsule persistence rule: when the durable restart context changes, refresh the Assigned memory capsule with the current focus, status, next step, blocker, and handoff notes."
+    printf '%s\n' "Shutdown-memory rule: if the user or Twilight says the project is shutting down, save your Assigned memory capsule, note your current state plainly, and tell Twilight your shutdown status in that same run before you idle."
     printf '%s\n' "Shared-state continuation rule: if that restart context changes shared coordination, also tell Twilight the exact durable delta to record during that same run instead of assuming your local scratch context will survive."
     printf '%s\n' "Blank-worker rule: if the local state is blank, WAITING, or unassigned, do not scan the repository for self-assigned work. Report the waiting state plainly, mention any recorded approvals if they matter, and remain live for a concrete task."
   fi
@@ -379,7 +385,7 @@ fi
     printf '%s\n' "Direct-message rule: for live pony-to-pony messaging, warnings, breakage reports, and quick escalation notes, use $AGENIC_PROJECT_PONY_BIN_DIR/pony-tell <pony|all> <message>."
   else
     printf '%s\n' "Direct-message rule: for live pony-to-pony messaging, warnings, breakage reports, and quick escalation notes inside this project, use $AGENIC_PROJECT_PONY_BIN_DIR/pony-tell <pony|all> <message>."
-    printf '%s\n' "Celestia rule: in installed target projects, do not route ordinary live coordination through Celestia; only contact her when the user explicitly assigns source-repo governance work."
+    printf '%s\n' "Celestia rule: in installed target projects, keep ordinary live coordination with the local team, but treat unqualified Celestia as the explicit agenic source-repo governance lane when shared-system or source-governance help is needed. The message should make the concrete purpose clear; repo and governance scope are already implied by Celestia."
   fi
   printf '\n\n'
   printf '%s\n' "Alert rule: before any real user-facing approval request or escalation request, run $AGENIC_PROJECT_PONY_BIN_DIR/ponyalert $personality."
