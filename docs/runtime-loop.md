@@ -181,9 +181,13 @@ Special worker-launch exception:
 
 - when a non-coordinator worker has just launched, reads local state, and finds `blank`, `WAITING`, or `unassigned`, it should report that status but remain live at the Codex prompt for immediate follow-up input rather than emitting an idle sentinel and parking itself
 - when a non-coordinator worker is in that blank or waiting state, it should not scan the repository looking for self-assigned work; it should wait for a concrete assignment
+- the first-turn startup self-brief should stay cheap and should not require file reads or tool use just to announce identity
+- once that self-brief is complete and there is a real task, routing question, or follow-up action, the worker should begin post-brief initialization by reading its assigned memory capsule first when present, then its assigned workfile, shared status, and any relevant coordinator state before acting
+- if the memory capsule is blank, stale, malformed, or conflicts with richer shared workfile, status, or coordinator state, the worker should treat the richer authoritative state as truth, continue from it, and refresh the capsule instead of blocking
 - if the user grants a permission, approval, recurring exception, or standing instruction, the worker should persist that approval into the local workfile and status file during the same run so the next launch does not ask again unless the approval is revoked
 - before a worker stops at idle or handoff, it should refresh its restart capsule in the assigned workfile; if shared durable state also changed, it should tell Twilight the exact delta to record in shared state during that same run
-- if a worker memory capsule exists, the worker should read it at startup before acting and refresh it when shutdown or restart context materially changes
+- if a worker memory capsule exists, the worker should refresh it whenever durable restart context materially changes, not only at shutdown; that includes changes to task, direction, branch or worktree, files in play, exact next step, open problem, or handoff
+- a good worker memory capsule is a compact restart map containing the current task, overall direction or why, branch and worktree, specific files in play, exact next step, open problem or uncertainty if any, blocker only if one truly exists, handoff note if relevant, and a real last-updated timestamp
 - when the user says the project is shutting down, Twilight should fan out a save-memory-and-report-status request to the live agents, then save Twilight's own memory capsule after the status fan-in
 
 Examples that are not stopping points:

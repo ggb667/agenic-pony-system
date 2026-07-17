@@ -234,14 +234,18 @@ write_memory_capsule_if_missing() {
 
 Project: $AGENIC_PROJECT_NAME
 Branch: $AGENIC_PROJECT_BRANCH
+Worktree: none recorded
 Status snapshot: none recorded
 Last updated: never
 
 Memory capsule:
-- focus: none recorded
+- task: none recorded
+- direction: none recorded
+- files: none recorded
 - status: none recorded
 - next: none recorded
-- blocker: none recorded
+- open problem: none recorded
+- blocker: none if any
 - handoff: none recorded
 EOF
 )"

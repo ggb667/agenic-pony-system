@@ -19,7 +19,7 @@ Notes:
 - Plan B for runtime transport: unify `/tell` delivery so project-local runtime logs and any legacy global `/tmp/codex-pony-*.jsonl` lane cannot diverge silently
 - approved policy direction: ambiguous `/tell` aliases stay team-local by default, while fully qualified generated-roster aliases such as `<project>:Twilight Sparkle` may cross repo boundaries; Celestia remains the unique global governance identity
 - restart capsule:
-  - task: land the generated agent-roster contract for `/tell` and Codex startup
-  - why: cross-repo Twilight-to-Twilight delivery needs explicit disambiguation without accidental same-name bleed, and Codex must stop hardcoding pony identity maps
-  - next: finish Agenic Pony config generation/validation, then hand Twilight the exact Codex `CODEX_AGENT_CONFIG` and alias-resolution contract
-  - blocker: none in source repo
+  - task: shutdown handoff after landing source memory-capsule governance changes
+  - why: preserve restart context and remind next launch to verify final remote push state
+  - next: verify whether commit b7c08da reached origin/main, then continue any remaining governance cleanup
+  - blocker: none recorded

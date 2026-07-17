@@ -20,6 +20,11 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
 
         for prompt_name in worker_prompts:
             text = (PROMPTS_DIR / f"{prompt_name}.txt").read_text(encoding="utf-8")
+            self.assertIn("First-turn startup rule", text)
+            self.assertIn("Post-brief initialization rule", text)
+            self.assertIn("Memory authority rule", text)
+            self.assertIn("Memory persistence rule", text)
+            self.assertIn("Memory content rule", text)
             self.assertIn("telling Twilight in the same run", text)
             self.assertIn("workspace artifacts", text)
             self.assertIn("shared coordination mechanism", text)
@@ -43,6 +48,8 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
         self.assertIn("simple `/tell` ping, greeting, acknowledgement, or short live coordination note", text)
         self.assertIn("answer immediately with a short direct `/tell` reply", text)
         self.assertIn("still applies when Twilight is otherwise WAITING, unassigned", text)
+        self.assertIn("empty, stale, malformed, or contradictory memory capsule", text)
+        self.assertIn("shutdown is the last safety pass, not the only save point", text)
         self.assertNotIn(
             "treat `pony/work/*.md` as the canonical home for worker-local task state",
             text,

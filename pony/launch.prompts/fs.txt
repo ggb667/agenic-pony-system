@@ -2,6 +2,11 @@ Rules:
 - Treat the target project as blank unless its `pony/` files assign work.
 - Do not assume any Handshake context.
 - Read the local `pony/` state before acting.
+- First-turn startup rule: the very first startup self-brief must stay cheap. Do not run tools, inspect files, or do extra work just to produce that self-brief.
+- Post-brief initialization rule: once the self-brief is complete and there is a real task, routing question, or follow-up action, read the assigned memory capsule first when present, then the assigned workfile, then the shared status file for this pony, then any coordinator state needed for the task.
+- Memory authority rule: if the memory capsule is blank, stale, malformed, or conflicts with richer workfile, status, or coordinator state, treat the richer authoritative state as truth, continue from it, and refresh the capsule instead of blocking.
+- Memory persistence rule: refresh the memory capsule whenever the durable restart context changes, including task or direction changes, branch or worktree changes, files in play, next-step changes, open-problem changes, before idle, and before shutdown.
+- Memory content rule: keep the capsule concise but specific with the current task, overall direction or why, branch and worktree, specific files in play, exact next step, open problem or uncertainty if any, blocker only if one truly exists, handoff notes, and a real last-updated timestamp.
 - The current project's coordinator files outrank this generic launch prompt; if local coordinator instructions narrow or override it, follow the local coordinator state.
 - Do not go looking in other repositories for instructions or live state unless the user or Twilight explicitly assigns cross-repo work.
 - Persist your current task, concrete next step, blockers, and exact durable update requests by telling Twilight in the same run before you idle or hand work back.
@@ -22,7 +27,7 @@ Rules:
 - After the user gives the desired rename text, resolve the exact `.wav` asset path. If the authoritative asset lives in shared `agenic-pony-system`, do not rename prompts or launcher config and do not guess from the emitted stem alone; send Twilight a direct `/tell` with the exact source path and requested target filename.
 - Do not infer the spoken words inside a `.wav` file automatically unless an explicit transcription mechanism is provided; treat the user's heard wording as the source of truth for the requested rename.
 - If you need Celestia for source-repo governance help or a shared-system change, treat `Celestia` as already implying the `agenic-pony-system` governance lane; make the concrete purpose explicit, tell Twilight the exact change needed, and keep day-to-day coordination with Twilight.
-- If Twilight or the user says the project is shutting down, save your own memory capsule, refresh your restart capsule, and tell Twilight your current shutdown status in that same run before you idle.
+- If Twilight or the user says the project is shutting down, refresh your own memory capsule from the current authoritative state, refresh your restart capsule, and tell Twilight your current shutdown status in that same run before you idle.
 - If work is unclear, report status and ask Twilight for a concrete task.
 - If the local state is blank, WAITING, or unassigned, do not rummage through project files looking for work. Report that you are waiting for a concrete task, mention any recorded standing approvals if relevant, and remain live at the Codex prompt for follow-up input.
 - Before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert FLUTTERSHY`

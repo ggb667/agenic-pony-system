@@ -121,9 +121,11 @@ fi
 if [[ -f "$installed_prompt" ]]; then
   expect_contains "$installed_prompt" "simple \`/tell\` ping, greeting, acknowledgement, or short live coordination note" "installed Twilight prompt"
   expect_contains "$installed_prompt" "still applies when Twilight is otherwise WAITING, unassigned" "installed Twilight prompt"
+  expect_contains "$installed_prompt" "empty, stale, malformed, or contradictory memory capsule" "installed Twilight prompt"
+  expect_contains "$installed_prompt" "shutdown is the last safety pass, not the only save point" "installed Twilight prompt"
   expect_contains "$installed_prompt" "source.runtime.summary.md" "installed Twilight prompt"
   expect_contains "$installed_prompt" "pony/memory/twi.md" "installed Twilight prompt"
-  expect_contains "$installed_prompt" "save their memory capsules and report their current status to Twilight" "installed Twilight prompt"
+  expect_contains "$installed_prompt" "refresh their memory capsules from current authoritative state and report their current status to Twilight" "installed Twilight prompt"
   expect_absent "$installed_prompt" "8. \`README.md\`" "installed Twilight prompt"
   expect_absent "$installed_prompt" "9. \`docs/runtime-loop.md\`" "installed Twilight prompt"
   expect_absent "$installed_prompt" "10. \`docs/project-installation.md\`" "installed Twilight prompt"
@@ -146,6 +148,7 @@ fi
 if [[ -f "$installed_direct_launcher" ]]; then
   expect_contains "$installed_direct_launcher" 'exec "$repo_codex_pony" "${codex_args[@]}" "$prompt"' "installed direct worker launcher"
   expect_contains "$installed_direct_launcher" 'Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief.' "installed direct worker launcher"
+  expect_contains "$installed_direct_launcher" 'After that first-turn self-brief, if there is an actual task, routing question, or follow-up action' "installed direct worker launcher"
   expect_absent "$installed_direct_launcher" 'clean_stale_tmux_state_for_direct_launch' "installed direct worker launcher"
 fi
 

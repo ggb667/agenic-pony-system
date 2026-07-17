@@ -25,7 +25,10 @@ Coordinator focus for agenic-pony-system on main:
 - keep generated `Twilight review needed`-style snippets out of durable coordinator history; they belong in a review queue or todo surface, not in canonical event history
 - require blockers caused by missing connection strings, secrets, endpoints, approvals, or other external prerequisites to name the exact missing artifact, the expected owner, and the next unblock step in canonical worker state before idle
 - require every worker stopping point to leave behind a concise restart capsule in the assigned workfile, and when that capsule implies shared durable coordination changes, require the matching exact `/tell` update to Twilight in the same run
-- require workers to read their assigned memory capsules at startup when present, and refresh those capsules when shutdown or restart context materially changes
+- keep first-turn startup self-briefs cheap, but require workers to begin post-brief initialization from their assigned memory capsules when present before reconciling the assigned workfile and authoritative coordination state
+- when a memory capsule is blank, stale, malformed, or contradictory, require workers and Twilight to prefer the richer authoritative workfile, status, and coordinator state, continue from it, and refresh the capsule instead of blocking
+- require workers to refresh memory capsules whenever durable restart context materially changes, not just at graceful shutdown; shutdown is the last safety pass, not the primary save point
+- require useful memory capsules to capture the current task, overall direction or why, branch and worktree, specific files in play, exact next step, open problem or uncertainty if any, blocker only if one truly exists, handoff note if relevant, and a real last-updated timestamp
 - when the user declares shutdown, require Twilight to fan out save-memory-and-report-status requests to the live agents before Twilight saves her own memory capsule
 - implement the queue/input runtime behavior from `docs/runtime-loop.md`
 - keep shell launch startup robust by invoking `start-session.sh` directly rather than typing a synthesized command into the interactive buffer

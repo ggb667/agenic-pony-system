@@ -76,7 +76,9 @@ def startup_brief_prompt(state_hint: str = "") -> str:
         "Cover your pony identity, role, active project and workspace, current state and scope, "
         "prompt symbol, terminal title, accent color, and live interoperation mechanisms such as "
         "/tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your "
-        "full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief."
+        "full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief. "
+        "After that first-turn self-brief, if there is an actual task, routing question, or follow-up action, begin post-brief initialization "
+        "by reading your assigned memory capsule first when present, then your assigned workfile and authoritative local pony state before acting."
     )
     if state_hint:
         return f"{prompt} Current condition: {state_hint}"

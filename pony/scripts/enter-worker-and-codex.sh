@@ -84,7 +84,7 @@ additional_codex_args_for_rootdir() {
 
 startup_brief_prompt() {
   local state_hint="${1-}"
-  local prompt="Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief. Cover your pony identity, role, active project and workspace, current state and scope, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief."
+  local prompt="Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief. Cover your pony identity, role, active project and workspace, current state and scope, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief. After that first-turn self-brief, if there is an actual task, routing question, or follow-up action, begin post-brief initialization by reading your assigned memory capsule first when present, then your assigned workfile and authoritative local pony state before acting."
   if [[ -n "$state_hint" ]]; then
     printf '%s Current condition: %s\n' "$prompt" "$state_hint"
   else
