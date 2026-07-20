@@ -75,6 +75,16 @@ has_pending_twilight_request() {
   return 0
 }
 
+pending_twilight_request_marker() {
+  local status_file="$1"
+  local summary
+
+  [[ -f "$status_file" ]] || return 1
+  summary="$(sed -n -e 's/^QUESTIONS_FOR_TWI: /Q:/p' -e 's/^DECISION_NEEDED: /D:/p' "$status_file")"
+  [[ -n "$summary" ]] || return 1
+  printf '%s' "$summary" | sha256sum | awk '{print $1}'
+}
+
 material_change_marker() {
   local status_file="$1"
   local summary
@@ -156,6 +166,26 @@ refresh_pending_approvals() {
   } >"$pending_approvals"
 }
 
+maybe_play_pending_request_alert() {
+  local status_file="$1"
+  local worker marker current_hash previous_hash
+
+  [[ -f "$status_file" ]] || return 0
+  worker="$(basename "$status_file" .status.md)"
+  marker="$coord_dir/.${worker}.pending_twilight_request_hash"
+
+  if has_pending_twilight_request "$status_file"; then
+    current_hash="$(pending_twilight_request_marker "$status_file" || true)"
+    previous_hash="$(cat "$marker" 2>/dev/null || true)"
+    if [[ -n "$current_hash" && "$current_hash" != "$previous_hash" ]]; then
+      PERSONALITY=TWILIGHT_SPARKLE "$(pony_bin_path ponyalert)" || true
+      printf '%s\n' "$current_hash" >"$marker"
+    fi
+  else
+    rm -f "$marker"
+  fi
+}
+
 maybe_play_done() {
   local status_file="$1"
   local worker status next_step decision_needed marker personality
@@ -219,12 +249,9 @@ inotifywait -m -e close_write,move,create "$coord_dir" --format '%f' | while rea
 
       refresh_todo
       refresh_pending_approvals
+      maybe_play_pending_request_alert "$changed_path"
       maybe_play_done "$changed_path"
       touch "$flag"
-
-      if [[ "$file" == *.status.md ]] && has_pending_twilight_request "$changed_path"; then
-        PERSONALITY=TWILIGHT_SPARKLE "$(pony_bin_path ponyalert)" || true
-      fi
 
       printf '\n[TWI REVIEW NEEDED] %s changed\n' "$file"
       ;;

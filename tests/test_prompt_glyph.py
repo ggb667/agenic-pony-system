@@ -138,6 +138,9 @@ class PromptGlyphTests(unittest.TestCase):
             watch_script = (project_root / "pony/scripts/watch-twi.sh").read_text(encoding="utf-8")
             self.assertIn('"$lower" == "none recorded"', watch_script)
             self.assertIn('"$decision_needed" == "none recorded"', watch_script)
+            self.assertIn('pending_twilight_request_marker()', watch_script)
+            self.assertIn('.pending_twilight_request_hash', watch_script)
+            self.assertIn('maybe_play_pending_request_alert "$changed_path"', watch_script)
             subprocess.run(
                 ["python3", "-m", "py_compile", str(project_root / "pony/scripts/pony-session-host.py")],
                 check=True,
