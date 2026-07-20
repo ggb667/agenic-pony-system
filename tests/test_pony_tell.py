@@ -900,6 +900,7 @@ class PonyTellTests(unittest.TestCase):
                 check=True,
                 capture_output=True,
                 text=True,
+                cwd=project_root,
                 env={
                     **os.environ,
                     "AGENIC_PROJECT_ROOT": str(project_root),
@@ -911,6 +912,86 @@ class PonyTellTests(unittest.TestCase):
             )
 
             payload = json.loads(chat_log.read_text(encoding="utf-8").strip())
+            self.assertEqual(payload["to"], "TWILIGHT_SPARKLE")
+            self.assertEqual(payload["to_route_id"], "EVH:TWILIGHT_SPARKLE")
+
+    def test_pony_tell_uses_current_project_root_instead_of_stale_env(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            source_root = tmp / "source"
+            project_root = tmp / "project"
+            source_runtime = source_root / "pony" / "runtime"
+            project_runtime = project_root / "pony" / "runtime"
+            source_runtime.mkdir(parents=True)
+            project_runtime.mkdir(parents=True)
+            (source_root / "pony" / "pony.system.config.yaml").write_text(
+                "project_name: SOURCE\nproject_root: " + str(source_root) + "\n",
+                encoding="utf-8",
+            )
+            (project_root / "pony" / "pony.system.config.yaml").write_text(
+                "project_name: EVH\nproject_root: " + str(project_root) + "\n",
+                encoding="utf-8",
+            )
+            project_chat_log = project_runtime / "pony.chat.jsonl"
+            project_registry_log = project_runtime / "pony.registry.jsonl"
+            project_registry_log.write_text(
+                json.dumps(
+                    {
+                        "uuid": "twi-evh",
+                        "pony_name": "TWILIGHT_SPARKLE",
+                        "path": str(project_root),
+                        "git_branch": "main",
+                        "pid": 100,
+                        "last_seen_at": "2099-01-01T00:00:00Z",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            stale_config_path = source_runtime / "celestia.agent-session.json"
+            stale_config_path.write_text(
+                json.dumps(
+                    {
+                        "agentId": "PRINCESS_CELESTIA_SOL_INVICTUS",
+                        "projectRoot": str(source_root),
+                        "agents": [
+                            {
+                                "agentId": "PRINCESS_CELESTIA_SOL_INVICTUS",
+                                "routeId": "PRINCESS_CELESTIA_SOL_INVICTUS",
+                                "label": "Princess Celestia Sol Invictus",
+                                "aliases": [
+                                    "PRINCESS_CELESTIA_SOL_INVICTUS",
+                                    "Celestia",
+                                ],
+                                "projectRoot": str(source_root),
+                                "projectLabel": "SOURCE",
+                                "branchLabel": "main",
+                                "registryPath": str(source_runtime / "pony.registry.jsonl"),
+                                "messageLogPath": str(source_runtime / "pony.chat.jsonl"),
+                                "globalSingleton": True,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            subprocess.run(
+                ["bash", str(PONY_TELL), "EVH:Twilight Sparkle", "root precedence probe"],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+                env={
+                    **os.environ,
+                    "AGENIC_PROJECT_ROOT": str(source_root),
+                    "AGENIC_LAUNCH_PERSONALITY": "PRINCESS_CELESTIA_SOL_INVICTUS",
+                    "CODEX_AGENT_CONFIG": str(stale_config_path),
+                },
+            )
+
+            payload = json.loads(project_chat_log.read_text(encoding="utf-8").strip())
+            self.assertEqual(payload["project_root"], str(project_root))
             self.assertEqual(payload["to"], "TWILIGHT_SPARKLE")
             self.assertEqual(payload["to_route_id"], "EVH:TWILIGHT_SPARKLE")
 

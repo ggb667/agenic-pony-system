@@ -3,7 +3,52 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/../scripts/pony-paths.sh"
-load_project_paths "${AGENIC_PROJECT_ROOT:-$PWD}"
+load_project_paths "$(detect_project_root "$PWD")"
+
+resolve_runtime_path() {
+  local candidate="${1:-}"
+  local default_path="${2:?missing default path}"
+  if [[ -n "$candidate" && "$candidate" == "$AGENIC_PROJECT_PONY_RUNTIME_DIR/"* ]]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+  printf '%s\n' "$default_path"
+}
+
+resolve_agent_config_path() {
+  local personality="${1:?missing personality}"
+  local default_path candidate
+  default_path="$(agent_session_config_path "$personality")"
+
+  for candidate in "${CODEX_AGENT_CONFIG:-}" "${AGENIC_AGENT_CONFIG_PATH:-}"; do
+    [[ -n "$candidate" ]] || continue
+    if [[ "$candidate" == "$AGENIC_PROJECT_PONY_RUNTIME_DIR/"* ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+    if [[ -f "$candidate" ]]; then
+      if python3 - "$candidate" "$AGENIC_PROJECT_ROOT" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+config_path = Path(sys.argv[1])
+project_root = sys.argv[2]
+try:
+    payload = json.loads(config_path.read_text(encoding="utf-8"))
+except Exception:
+    raise SystemExit(1)
+raise SystemExit(0 if payload.get("projectRoot") == project_root else 1)
+PY
+      then
+        printf '%s\n' "$candidate"
+        return 0
+      fi
+    fi
+  done
+
+  printf '%s\n' "$default_path"
+}
 
 usage() {
   cat <<'EOF'
@@ -13,8 +58,8 @@ Usage:
 EOF
 }
 
-chat_log_path="${AGENIC_PONY_CHAT_LOG_PATH:-$(agent_message_log_path)}"
-registry_log_path="${AGENIC_PONY_REGISTRY_LOG_PATH:-$(agent_registry_log_path)}"
+chat_log_path="$(resolve_runtime_path "${AGENIC_PONY_CHAT_LOG_PATH:-}" "$(agent_message_log_path)")"
+registry_log_path="$(resolve_runtime_path "${AGENIC_PONY_REGISTRY_LOG_PATH:-}" "$(agent_registry_log_path)")"
 agent_config_script="$(agent_config_script_path)"
 
 command="${1:-}"
@@ -67,7 +112,7 @@ PY
       printf '%s\n' "pony-tell requires AGENIC_LAUNCH_PERSONALITY or PERSONALITY in the environment." >&2
       exit 64
     }
-    agent_config_path="${CODEX_AGENT_CONFIG:-${AGENIC_AGENT_CONFIG_PATH:-$(agent_session_config_path "$sender_personality")}}"
+    agent_config_path="$(resolve_agent_config_path "$sender_personality")"
     if [[ -f "$agent_config_script" ]]; then
       python3 "$agent_config_script" write-session \
         --agent "$sender_personality" \
