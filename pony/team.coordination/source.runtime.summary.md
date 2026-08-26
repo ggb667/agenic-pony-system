@@ -22,6 +22,8 @@ Contract: Distills the stable source-repo rules from `README.md`, `docs/runtime-
 - when a worker causes a durable shared-state change, the worker should tell Twilight the exact update to record in the same run
 - before a worker stops at idle or handoff, it should refresh a concise restart capsule in its assigned workfile; if that capsule changes shared durable state, the worker should tell Twilight the exact delta to record in the same run
 - if a worker memory capsule exists, the worker should read it at startup before acting and refresh it when shutdown or restart context materially changes
+- if the startup handoff already contains a concrete `Current condition` task, routing issue, or follow-up action, the worker should treat the self-brief only as phase zero and then immediately read memory, workfile, status, and relevant coordinator state before answering or asking permission
+- if the user points out a non-file-changing mistake, the pony should correct it immediately instead of pausing to ask whether to proceed
 - when the user says the project is shutting down, Twilight should collect save-memory and status reports from the live agents before saving Twilight's own memory capsule
 - direct `/tell` transport should keep ambiguous targets local by default so live teams in different repos do not cross-deliver same-named pony traffic by accident
 - generated agent roster config may also expose explicit cross-repo targets such as `<project>:Twilight Sparkle`; those fully qualified targets may route across repo boundaries when the active registry/message bus includes both live sessions

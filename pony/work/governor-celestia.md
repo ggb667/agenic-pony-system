@@ -19,8 +19,8 @@ Notes:
 - Plan B for runtime transport: unify `/tell` delivery so project-local runtime logs and any legacy global `/tmp/codex-pony-*.jsonl` lane cannot diverge silently
 - approved policy direction: ambiguous `/tell` aliases stay team-local by default, while fully qualified generated-roster aliases such as `<project>:Twilight Sparkle` may cross repo boundaries; Celestia remains the unique global governance identity
 - restart capsule:
-  - task: shutdown save after source-governance launcher compatibility fixes
-  - why: on Sunday, August 2, 2026, source governance changed in two places: Celestia launches now request broader writable roots from live roster state, and worker-entry scripts now tolerate legacy `pony/prompts/*.txt` by rewriting to `pony/launch.prompts/*.txt` when available
-  - files: pony/bin/codex-pony; pony/scripts/enter-worker-and-codex.sh; pony/scripts/enter-worker-from-prompt-file.sh; docs/project-installation.md; README.md; pony/team.coordination/multi.agent.control.md
-  - next: after restart, verify a fresh Celestia session inherits the broader writable roots and verify Twilight's EVH worker launch succeeds with either the modern or legacy prompt path
+  - task: harden startup prompt-compliance guidance and propagate it into installed runtimes
+  - why: on Wednesday, August 26, 2026, Twilight reported that Applejack treated the required no-tool startup self-brief as a stopping point despite a concrete Current condition task; source guidance now explicitly requires immediate post-brief initialization and immediate correction of non-file-changing mistakes, and the installed runtimes for EVH, Handshake, and Codex were refreshed from source in the same run
+  - files: pony/launch.prompts/{aj,fs,pinkie,rarity,rd,spike,twi}.txt; pony/scripts/{enter-worker-and-codex.sh,pony-session-host.py,start-session.sh}; docs/{project-installation.md,runtime-loop.md}; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
+  - next: verify the refreshed installed runtimes surface the hardened startup wording during actual worker launches in EVH, Handshake, and Codex
   - blocker: none recorded

@@ -3,12 +3,12 @@
 Project: agenic-pony-system
 Branch: main
 Status snapshot: active
-Last updated: 2026-08-04T10:35:00-04:00
+Last updated: 2026-08-26T08:05:00-04:00
 
 Memory capsule:
-- task: shutdown save after source-governance launcher compatibility fixes
-- why: on Sunday, August 2, 2026, Celestia landed two source-governance changes: broader writable-root requests for source-governance launches via `pony/bin/codex-pony`, and legacy `pony/prompts/*.txt` to `pony/launch.prompts/*.txt` compatibility in worker entry launchers
-- files: pony/bin/codex-pony; pony/scripts/enter-worker-and-codex.sh; pony/scripts/enter-worker-from-prompt-file.sh; docs/project-installation.md; README.md; pony/team.coordination/multi.agent.control.md
-- next: on next launch, verify the patched source launcher is the one being used, then re-test Celestia cross-repo writable-root behavior and Twilight's legacy prompt-path launch from a fresh session
+- task: harden startup prompt-compliance guidance and propagate it into installed runtimes
+- why: on Wednesday, August 26, 2026, Twilight reported a shared startup-compliance risk from EVH worker testing; source guidance now makes concrete Current condition handoffs continue immediately into memory/workfile/state initialization, and user-pointed non-file-changing mistakes must be corrected without asking permission
+- files: pony/launch.prompts/{aj,fs,pinkie,rarity,rd,spike,twi}.txt; pony/scripts/{enter-worker-and-codex.sh,pony-session-host.py,start-session.sh}; docs/{project-installation.md,runtime-loop.md}; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
+- next: verify actual worker launches in EVH, Handshake, and Codex display and obey the hardened startup guidance
 - blocker: none recorded
-- handoff: writable-root policy is centralized in `pony/bin/codex-pony`; ordinary sessions get active project + git metadata roots, source-governance Celestia also absorbs live roster project roots plus registry/message-log paths, and worker-entry scripts now rewrite legacy prompt paths when the new launch-prompts path exists
+- handoff: installed target runtimes for `/home/ggb66/dev/EVH`, `/home/ggb66/dev/Handshake`, and `/home/ggb66/dev/codex` were refreshed from source via `scripts/install-project.sh` in the same run as the source guidance update
