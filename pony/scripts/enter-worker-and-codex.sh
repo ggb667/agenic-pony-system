@@ -15,6 +15,13 @@ pony_launch_debug_init
 
 resolve_path() {
   local path="${1:-}"
+  if [[ -n "$path" && ! -e "$path" && "$path" == *"/pony/prompts/"* ]]; then
+    local migrated="${path/\/pony\/prompts\//\/pony\/launch.prompts\/}"
+    if [[ -e "$migrated" ]]; then
+      printf '%s\n' "$migrated"
+      return 0
+    fi
+  fi
   printf '%s\n' "$path"
 }
 
@@ -25,17 +32,6 @@ codex_profile_for_personality() {
     APPLEJACK|FLUTTERSHY|PINKIE_PIE|RARITY|RAINBOW_DASH|SPIKE) printf '%s\n' 'worker_mini' ;;
     *) return 0 ;;
   esac
-}
-
-twilight_additional_writable_root_args() {
-  local personality_name="${1:-}"
-  [[ "$personality_name" == "TWILIGHT_SPARKLE" ]] || return 0
-  local source_root=""
-  source_root="$("$(pony_script_path resolve-system-root.sh)" "${AGENIC_PROJECT_ROOT:-$PWD}")"
-  [[ -n "$source_root" ]] || return 0
-  printf '%s\n' \
-    '-c' \
-    "sandbox_workspace_write.writable_roots=[\"${source_root}/pony/runtime\"]"
 }
 
 codex_config_args_for_personality() {
@@ -161,9 +157,6 @@ done < <(hidden_instructions_arg "$promptfile")
 while IFS= read -r arg; do
   codex_args+=("$arg")
 done < <(additional_codex_args_for_rootdir "$rootdir")
-while IFS= read -r arg; do
-  codex_args+=("$arg")
-done < <(twilight_additional_writable_root_args "$PERSONALITY")
 
 prompt=""
 case "$preflight_result" in

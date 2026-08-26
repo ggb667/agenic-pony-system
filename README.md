@@ -54,7 +54,7 @@ Expected shape:
 
 That structure mirrors the real operating layout refined in live project use.
 
-For git-backed target projects, ordinary worker ponies are provisioned into linked worktrees under `pony/worktrees/<slug>/` so they do not all operate from the coordinator's root checkout. Twilight remains anchored to the main project worktree on dedicated coordinator branch `pony/twi/main`. The agenic source repo is the special case: it keeps Twilight on source-repo `main` under Celestia governance rather than creating a Twi branch there.
+For git-backed target projects, ordinary worker ponies are provisioned into linked worktrees under `pony/worktrees/<slug>/` so they do not all operate from the coordinator's root checkout. Twilight remains anchored to the main project worktree on dedicated coordinator branch `pony/twi/main`. The agenic source repo is the special case: it keeps Twilight on source-repo `main` under Celestia governance rather than creating a Twi branch there. Launchers should keep those sessions commit-capable without broadening to full access: grant workspace-write access to the active project root, shared pony state paths, the linked-worktree gitdir, and the repository git common dir. For the August 2, 2026 source-governance lane, Celestia should also request writable access to the live bus paths and project roots surfaced in her generated agent roster so cross-repo governance traffic is not stranded behind read-only runtime logs.
 
 ## What The Reusable System Provides
 

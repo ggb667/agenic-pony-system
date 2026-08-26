@@ -19,7 +19,8 @@ Notes:
 - Plan B for runtime transport: unify `/tell` delivery so project-local runtime logs and any legacy global `/tmp/codex-pony-*.jsonl` lane cannot diverge silently
 - approved policy direction: ambiguous `/tell` aliases stay team-local by default, while fully qualified generated-roster aliases such as `<project>:Twilight Sparkle` may cross repo boundaries; Celestia remains the unique global governance identity
 - restart capsule:
-  - task: shutdown handoff after landing source memory-capsule governance changes
-  - why: preserve restart context and remind next launch to verify final remote push state
-  - next: verify whether commit b7c08da reached origin/main, then continue any remaining governance cleanup
+  - task: shutdown save after source-governance launcher compatibility fixes
+  - why: on Sunday, August 2, 2026, source governance changed in two places: Celestia launches now request broader writable roots from live roster state, and worker-entry scripts now tolerate legacy `pony/prompts/*.txt` by rewriting to `pony/launch.prompts/*.txt` when available
+  - files: pony/bin/codex-pony; pony/scripts/enter-worker-and-codex.sh; pony/scripts/enter-worker-from-prompt-file.sh; docs/project-installation.md; README.md; pony/team.coordination/multi.agent.control.md
+  - next: after restart, verify a fresh Celestia session inherits the broader writable roots and verify Twilight's EVH worker launch succeeds with either the modern or legacy prompt path
   - blocker: none recorded

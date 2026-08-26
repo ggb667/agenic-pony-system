@@ -112,6 +112,8 @@ Expected project-local structure:
 
 The precise contents may expand over time, but the key rule is that runtime state and launcher glue live under the project's `pony/` tree.
 
+Prompt templates now live under `pony/launch.prompts/`. If an older launcher or manual command still passes a legacy `pony/prompts/*.txt` path, the worker-entry scripts should rewrite that path to `pony/launch.prompts/*.txt` as a compatibility shim rather than failing immediately.
+
 For git-backed installs, the default worker policy is:
 
 - Twilight stays in the main project worktree as coordinator on branch `main`
@@ -119,6 +121,10 @@ For git-backed installs, the default worker policy is:
 - ordinary worker branch names default to `pony/<slug>/main`
 - those worker worktrees are the paths recorded in `pony/team.coordination/assignment.registry.tsv`
 - when a worker launches from a linked worktree, its Codex sandbox must also add the project root as an extra writable directory so `pony/team.coordination/*` and `pony/work/*` remain writable from that session
+- commit-capable worker or Twilight sessions must also mount the active linked-worktree gitdir and the repository git common dir as writable roots; for a linked worktree that normally means both `<project>/.git/worktrees/<slug>/` and `<project>/.git/`
+- prefer this narrow writable-root expansion over `danger-full-access`; the launcher should grant only the active worktree, project-local pony shared-state paths, and the exact git metadata directories needed for `git add`, `git commit`, and `git push`
+- source-governance Celestia sessions are the broader exception: they should still remain on `workspace-write`, but may add writable roots for live project runtime logs, registries, and project roots that appear in Celestia's generated cross-repo agent roster so governance `/tell` traffic and exact follow-up writes are not blocked by a read-only recipient lane
+- Twilight has the narrower singleton exception: when her generated agent config exposes `Princess Celestia Sol Invictus`, Twilight's launcher should add only that resolved Celestia `messageLogPath` as an extra writable root so `/tell Celestia` works without turning Twilight into a general cross-repo writer
 
 If that root is not writable, workers should still publish the exact state delta to Twilight in the same run so Twilight can write or reconcile the shared authoritative state. Do not treat the worktree mirror as the source of truth.
 

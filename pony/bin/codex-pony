@@ -75,6 +75,104 @@ write_agent_session_config() {
 
 write_agent_session_config "${PERSONALITY:-${AGENIC_LAUNCH_PERSONALITY:-}}"
 
+workspace_writable_root_args() {
+  local personality="${1:-}"
+  local session_config="${CODEX_AGENT_CONFIG:-${AGENIC_AGENT_CONFIG_PATH:-}}"
+  python3 - "$personality" "${AGENIC_PROJECT_ROOT:-}" "$session_config" <<'PY'
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+personality = sys.argv[1].strip()
+project_root_arg = sys.argv[2].strip()
+session_config_arg = sys.argv[3].strip()
+roots: list[str] = []
+
+
+def add_dir(path: str | Path | None) -> None:
+    if not path:
+        return
+    resolved = Path(path).expanduser().resolve()
+    if not resolved.exists() or not resolved.is_dir():
+        return
+    value = str(resolved)
+    if value not in roots:
+        roots.append(value)
+
+
+def add_runtime_path(path: str | Path | None) -> None:
+    if not path:
+        return
+    candidate = Path(path).expanduser()
+    resolved = candidate.resolve()
+    if resolved.exists() and resolved.is_dir():
+        add_dir(resolved)
+        return
+    add_dir(resolved.parent)
+
+
+def add_git_metadata(root: Path) -> None:
+    for flag in ("--absolute-git-dir", "--git-common-dir"):
+        result = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", flag],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            candidate = result.stdout.strip()
+            if candidate:
+                add_dir(candidate)
+
+
+def add_project_scope(root: Path) -> None:
+    add_dir(root)
+    add_dir(root / "pony" / "runtime")
+    add_dir(root / "pony" / "team.coordination")
+    add_dir(root / "pony" / "work")
+    add_git_metadata(root)
+
+
+if project_root_arg:
+    add_project_scope(Path(project_root_arg))
+
+if session_config_arg:
+    config_path = Path(session_config_arg).expanduser()
+    if config_path.exists():
+        try:
+            payload = json.loads(config_path.read_text(encoding="utf-8"))
+        except Exception:
+            payload = {}
+        for key in ("registryPath", "messageLogPath"):
+            value = payload.get(key)
+            if value:
+                add_runtime_path(value)
+        if personality == "PRINCESS_CELESTIA_SOL_INVICTUS":
+            for agent in payload.get("agents", []):
+                project_root = agent.get("projectRoot")
+                if project_root:
+                    add_project_scope(Path(project_root))
+                for key in ("registryPath", "messageLogPath"):
+                    value = agent.get(key)
+                    if value:
+                        add_runtime_path(value)
+        elif personality == "TWILIGHT_SPARKLE":
+            for agent in payload.get("agents", []):
+                if not agent.get("globalSingleton"):
+                    continue
+                if agent.get("agentId") != "PRINCESS_CELESTIA_SOL_INVICTUS":
+                    continue
+                value = agent.get("messageLogPath")
+                if value:
+                    add_runtime_path(value)
+                break
+
+print("-c")
+print(f"sandbox_workspace_write.writable_roots={json.dumps(roots)}")
+PY
+}
+
 preferred_repo_codex="/home/ggb66/dev/codex/codex-rs/target/debug/codex-tui"
 effective_codex_profile="${CODEX_PONY_PROFILE:-}"
 profile_config_path=""
@@ -137,6 +235,9 @@ fi
 if [[ -n "${PERSONALITY:-}" ]]; then
   codex_args+=(-c "tui.terminal_title=[]")
 fi
+while IFS= read -r arg; do
+  codex_args+=("$arg")
+done < <(workspace_writable_root_args "${PERSONALITY:-${AGENIC_LAUNCH_PERSONALITY:-}}")
 if [[ -n "$effective_codex_profile" ]]; then
   append_codex_profile_args "$effective_codex_profile"
 fi

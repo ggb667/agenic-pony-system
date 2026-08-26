@@ -16,11 +16,14 @@ pony_launch_debug "enter-worker-from-prompt-file entry: personality=$personality
 
 resolve_path() {
   local path="${1:-}"
-  if [[ -e "$path" ]]; then
-    printf '%s\n' "$path"
-  else
-    printf '%s\n' "$path"
+  if [[ -n "$path" && ! -e "$path" && "$path" == *"/pony/prompts/"* ]]; then
+    local migrated="${path/\/pony\/prompts\//\/pony\/launch.prompts\/}"
+    if [[ -e "$migrated" ]]; then
+      printf '%s\n' "$migrated"
+      return 0
+    fi
   fi
+  printf '%s\n' "$path"
 }
 
 find_auto_switch_target() {

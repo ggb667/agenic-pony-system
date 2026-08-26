@@ -32,6 +32,7 @@ Contract: Distills the stable source-repo rules from `README.md`, `docs/runtime-
 - generated `Twilight review needed` helper text should stay out of durable coordinator history and live in a review queue or todo surface instead
 - if a blocker depends on a missing secret, endpoint, approval, or similar prerequisite, the shared coordination state must name the exact missing artifact, expected owner, and next unblock step
 - any Twilight runtime acting for the agenic source-governance lane must be able to append to the resolved lane `messageLogPath`; if the path is correct but the append fails, classify the result as a permission-only delivery blocker rather than a routing defect
+- implement that Twilight exception narrowly: add the resolved agenic Celestia `messageLogPath` as writable for Twilight when present in the active generated roster, without widening Twilight to general cross-repo writable roots
 
 ## Install And Validation Boundaries
 
