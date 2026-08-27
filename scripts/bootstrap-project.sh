@@ -695,6 +695,9 @@ ordered = []
 for assignment_id in ["aj", "pinkie", "fs", "rarity", "rd", "spike", "twi"]:
     label, personality, branch, worktree, workfile, promptfile, default_scope = managed[assignment_id]
     row = by_id.get(assignment_id, {})
+    existing_branch = row.get("branch", "").strip()
+    if existing_branch:
+        branch = existing_branch
     scope = row.get("scope") or default_scope
     ordered.append(
         {

@@ -174,6 +174,7 @@ if [[ -z "${AGENIC_PONY_AUTORAN:-}" ]]; then
   exit_code=$?
   if [[ $exit_code -ne 0 ]]; then
     _agenic_pony_log "start-session exited nonzero: exit_code=${exit_code}"
+    printf '%s\n' "${AGENIC_LAUNCH_PERSONALITY} launch exited early with code ${exit_code}. See ${AGENIC_PROJECT_ROOT}/pony/agents/${PONY_FUNC}.launch.log for details." >&2
   else
     _agenic_pony_log "start-session returned normally"
   fi

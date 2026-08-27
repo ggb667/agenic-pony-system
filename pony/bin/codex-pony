@@ -54,6 +54,32 @@ source_launch_env() {
 
 source_launch_env
 
+repair_or_reject_project_codex_dir() {
+  local codex_path="${AGENIC_PROJECT_ROOT}/.codex"
+  if [[ -d "$codex_path" ]]; then
+    if [[ ! -e "$codex_path/config.toml" ]]; then
+      : >"$codex_path/config.toml"
+    fi
+    return 0
+  fi
+
+  if [[ -e "$codex_path" ]]; then
+    if [[ ! -s "$codex_path" ]]; then
+      rm -f "$codex_path"
+      mkdir -p "$codex_path"
+      : >"$codex_path/config.toml"
+      pony_launch_debug "codex-pony repaired stray empty .codex file: path=$codex_path"
+      return 0
+    fi
+
+    pony_launch_debug "codex-pony error: project .codex path is not a directory: path=$codex_path"
+    printf '%s\n' "ERROR: ${codex_path} exists as a file, not a directory. Move or remove it, then create ${codex_path}/config.toml." >&2
+    exit 1
+  fi
+}
+
+repair_or_reject_project_codex_dir
+
 write_agent_session_config() {
   local personality="${1:-}"
   [[ -n "$personality" ]] || return 0
@@ -252,10 +278,18 @@ elif [[ "${1:-}" == "-p" ]] && [[ -n "${2:-}" ]]; then
   profile_arg="$2"
 fi
 pony_launch_debug "codex-pony exec: codex_bin=$codex_bin profile=$profile_arg project_root=$project_root stdin_tty=$( [[ -t 0 ]] && printf yes || printf no ) project_root=$project_root"
+run_codex_and_log_exit() {
+  "$@"
+  local exit_code=$?
+  pony_launch_debug "codex-pony child exited: exit_code=$exit_code"
+  return "$exit_code"
+}
 if [[ ! -t 0 || ! -t 1 ]]; then
   if ( : </dev/tty ) 2>/dev/null; then
     pony_launch_debug "codex-pony rebind stdio to /dev/tty before exec: stdin_tty=$( [[ -t 0 ]] && printf yes || printf no ) stdout_tty=$( [[ -t 1 ]] && printf yes || printf no )"
-    exec "$codex_bin" "${codex_args[@]}" "$@" </dev/tty >/dev/tty 2>&1
+    run_codex_and_log_exit "$codex_bin" "${codex_args[@]}" "$@" </dev/tty >/dev/tty 2> >(tee -a "${AGENIC_PONY_LAUNCH_DEBUG_LOG}" >&2)
+    exit $?
   fi
 fi
-exec "$codex_bin" "${codex_args[@]}" "$@"
+run_codex_and_log_exit "$codex_bin" "${codex_args[@]}" "$@" 2> >(tee -a "${AGENIC_PONY_LAUNCH_DEBUG_LOG}" >&2)
+exit $?
