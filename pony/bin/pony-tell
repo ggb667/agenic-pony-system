@@ -142,7 +142,20 @@ def canonicalize(name: str) -> str:
 def normalize_alias(name: str) -> str:
     return name.strip().casefold()
 
+SUBJECT_LIMIT = 40
+
 def split_subject_and_body(text: str) -> tuple[str, str]:
+    stripped = text.strip()
+    lowered = stripped.casefold()
+    subject_marker = "subject:"
+    body_marker = "\nbody:"
+    if lowered.startswith(subject_marker) and body_marker in lowered:
+        body_idx = lowered.index(body_marker)
+        subject = stripped[len(subject_marker):body_idx].strip()
+        body = stripped[body_idx + 1 + len("body:"):].lstrip()
+        if subject:
+            return subject, body
+
     split_at = len(text)
     chars_seen = 0
     for idx, ch in enumerate(text):
@@ -150,12 +163,12 @@ def split_subject_and_body(text: str) -> tuple[str, str]:
             split_at = idx
             break
         chars_seen += 1
-        if chars_seen == 25:
+        if chars_seen == SUBJECT_LIMIT:
             split_at = idx + 1
             break
     subject = text[:split_at].rstrip()
     body = text[split_at:]
-    return subject or text[:25], body
+    return subject or text[:SUBJECT_LIMIT], body
 
 def fallback_agent(personality: str) -> dict[str, str]:
     symbols = {

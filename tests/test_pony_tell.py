@@ -12,6 +12,70 @@ AGENT_CONFIG = REPO_ROOT / "pony/scripts/agent-config.py"
 
 
 class PonyTellTests(unittest.TestCase):
+    def test_pony_tell_uses_explicit_subject_and_body_headers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            project_root = tmp / "project"
+            runtime_dir = project_root / "pony" / "runtime"
+            runtime_dir.mkdir(parents=True)
+            chat_log = runtime_dir / "pony.chat.jsonl"
+            registry_log = runtime_dir / "pony.registry.jsonl"
+            registry_log.write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "uuid": "twi-uuid",
+                                "pony_name": "TWILIGHT_SPARKLE",
+                                "path": str(project_root),
+                                "git_branch": "main",
+                                "pid": 100,
+                                "last_seen_at": "2099-01-01T00:00:00Z",
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "uuid": "aj-uuid",
+                                "pony_name": "APPLEJACK",
+                                "path": str(project_root),
+                                "git_branch": "main",
+                                "pid": 101,
+                                "last_seen_at": "2099-01-01T00:00:00Z",
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            subprocess.run(
+                [
+                    "bash",
+                    str(PONY_TELL),
+                    "twi",
+                    "Subject: Durable update for EVH/RA\nBody:\nG tests and runtime: Instinct credentials must come from AWS Secrets Manager.",
+                ],
+                cwd=project_root,
+                check=True,
+                capture_output=True,
+                text=True,
+                env={
+                    **os.environ,
+                    "AGENIC_PROJECT_ROOT": str(project_root),
+                    "AGENIC_LAUNCH_PERSONALITY": "APPLEJACK",
+                    "AGENIC_PONY_CHAT_LOG_PATH": str(chat_log),
+                    "AGENIC_PONY_REGISTRY_LOG_PATH": str(registry_log),
+                },
+            )
+
+            payload = json.loads(chat_log.read_text(encoding="utf-8").strip())
+            self.assertEqual(payload["subject"], "Durable update for EVH/RA")
+            self.assertEqual(
+                payload["body"],
+                "G tests and runtime: Instinct credentials must come from AWS Secrets Manager.",
+            )
+
     def test_agent_config_ignores_non_object_registry_and_chat_entries(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
@@ -517,6 +581,63 @@ class PonyTellTests(unittest.TestCase):
             self.assertEqual(payload["to"], "TWILIGHT_SPARKLE")
             self.assertEqual(payload["subject"], "ping from AJ")
 
+    def test_pony_tell_truncates_implicit_subject_at_40_chars(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            project_root = tmp / "project"
+            runtime_dir = project_root / "pony" / "runtime"
+            runtime_dir.mkdir(parents=True)
+            chat_log = runtime_dir / "pony.chat.jsonl"
+            registry_log = runtime_dir / "pony.registry.jsonl"
+            registry_log.write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "uuid": "twi-uuid",
+                                "pony_name": "TWILIGHT_SPARKLE",
+                                "path": str(project_root),
+                                "git_branch": "main",
+                                "pid": 100,
+                                "last_seen_at": "2099-01-01T00:00:00Z",
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "uuid": "aj-uuid",
+                                "pony_name": "APPLEJACK",
+                                "path": str(project_root),
+                                "git_branch": "main",
+                                "pid": 101,
+                                "last_seen_at": "2099-01-01T00:00:00Z",
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            message = "1234567890123456789012345678901234567890and more body"
+            subprocess.run(
+                ["bash", str(PONY_TELL), "twi", message],
+                cwd=project_root,
+                check=True,
+                capture_output=True,
+                text=True,
+                env={
+                    **os.environ,
+                    "AGENIC_PROJECT_ROOT": str(project_root),
+                    "AGENIC_LAUNCH_PERSONALITY": "APPLEJACK",
+                    "AGENIC_PONY_CHAT_LOG_PATH": str(chat_log),
+                    "AGENIC_PONY_REGISTRY_LOG_PATH": str(registry_log),
+                },
+            )
+
+            payload = json.loads(chat_log.read_text(encoding="utf-8").strip())
+            self.assertEqual(payload["subject"], "1234567890123456789012345678901234567890")
+            self.assertEqual(payload["body"], "and more body")
+
     def test_pony_tell_lists_live_registry(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
@@ -556,9 +677,10 @@ class PonyTellTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             project_root = tmp / "project"
-            project_root.mkdir()
-            chat_log = tmp / "chat.jsonl"
-            registry_log = tmp / "registry.jsonl"
+            runtime_dir = project_root / "pony" / "runtime"
+            runtime_dir.mkdir(parents=True)
+            chat_log = runtime_dir / "pony.chat.jsonl"
+            registry_log = runtime_dir / "pony.registry.jsonl"
             registry_log.write_text(
                 json.dumps(
                     {
@@ -581,6 +703,7 @@ class PonyTellTests(unittest.TestCase):
                     "Twilight Sparkle",
                     "Ping from Celestia. Please confirm receipt.",
                 ],
+                cwd=project_root,
                 check=True,
                 capture_output=True,
                 text=True,
