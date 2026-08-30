@@ -1,6 +1,6 @@
 # Agenic Pony System
 
-Pony-flavored multi-agent project orchestration for people who like expressive tools and serious engineering.
+Multi-agent project orchestration for people who like expressive tools and serious engineering.  This is a simple way to categorize workers with symbols and colors so they can be kept straight.
 
 This repository is the reusable system layer. The live runtime belongs inside each target project's `pony/` tree, so multiple projects can run in parallel without leaking coordination state into each other.
 
