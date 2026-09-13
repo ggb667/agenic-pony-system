@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import json
 import os
 import shlex
 import subprocess
@@ -121,13 +122,59 @@ def ready_no_llm_notice(personality: str) -> str:
     )
 
 
+def _supported_codex_models_from_cache() -> set[str]:
+    cache_path = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "models_cache.json"
+    try:
+        payload = json.loads(cache_path.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+
+    supported: set[str] = set()
+    for model in payload.get("models", []):
+        if not isinstance(model, dict):
+            continue
+        if not model.get("supported_in_api", True):
+            continue
+        if model.get("visibility") == "hide":
+            continue
+        slug = str(model.get("slug", "")).strip()
+        if slug:
+            supported.add(slug)
+    return supported
+
+
+def _select_supported_codex_model(role: str, requested: str, fallbacks: list[str]) -> str:
+    supported = _supported_codex_models_from_cache()
+    selected = requested
+    if supported and requested not in supported:
+        selected = next((candidate for candidate in fallbacks if candidate in supported), requested)
+    elif not supported and requested.startswith("gpt-5.4") and fallbacks:
+        selected = fallbacks[0]
+
+    if selected != requested:
+        print(
+            f"WARNING: {role} requested {requested}; using {selected} instead because "
+            "the requested model is not currently listed as supported by Codex.",
+            file=sys.stderr,
+        )
+    return selected
+
+
 def codex_config_args_for(personality: str) -> list[str]:
     if personality == "TWILIGHT_SPARKLE":
+        model = _select_supported_codex_model(
+            "TWILIGHT_SPARKLE",
+            os.environ.get("AGENIC_PONY_TWILIGHT_MODEL", "gpt-5.5"),
+            os.environ.get(
+                "AGENIC_PONY_TWILIGHT_MODEL_FALLBACKS",
+                "gpt-5.6-sol gpt-5.6-terra gpt-5.5 gpt-6-astra",
+            ).split(),
+        )
         return [
             "-c",
             'model_provider="openai"',
             "-c",
-            'model="gpt-5.5"',
+            f'model="{model}"',
             "-c",
             'model_reasoning_effort="high"',
             "-a",
@@ -136,11 +183,19 @@ def codex_config_args_for(personality: str) -> list[str]:
             "workspace-write",
         ]
     if personality == "PRINCESS_CELESTIA_SOL_INVICTUS":
+        model = _select_supported_codex_model(
+            "PRINCESS_CELESTIA_SOL_INVICTUS",
+            os.environ.get("AGENIC_PONY_CELESTIA_MODEL", "gpt-5.4"),
+            os.environ.get(
+                "AGENIC_PONY_CELESTIA_MODEL_FALLBACKS",
+                "gpt-5.6-terra gpt-5.6-sol gpt-5.5 gpt-6-astra",
+            ).split(),
+        )
         return [
             "-c",
             'model_provider="openai"',
             "-c",
-            'model="gpt-5.4"',
+            f'model="{model}"',
             "-c",
             'model_reasoning_effort="medium"',
             "-a",
@@ -148,11 +203,19 @@ def codex_config_args_for(personality: str) -> list[str]:
             "-s",
             "workspace-write",
         ]
+    model = _select_supported_codex_model(
+        personality,
+        os.environ.get("AGENIC_PONY_WORKER_MODEL", "gpt-5.4-mini"),
+        os.environ.get(
+            "AGENIC_PONY_WORKER_MODEL_FALLBACKS",
+            "gpt-5.6-luna gpt-5.6-terra gpt-5.5 gpt-6-astra",
+        ).split(),
+    )
     return [
         "-c",
         'model_provider="openai"',
         "-c",
-        'model="gpt-5.4-mini"',
+        f'model="{model}"',
         "-c",
         'model_reasoning_effort="low"',
         "-a",

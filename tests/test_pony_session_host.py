@@ -48,7 +48,7 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             ):
                 host = pony_session_host.PonySessionHost(args)
 
-            self.assertIn('model="gpt-5.4"', host.bootstrap_codex_args)
+            self.assertIn('model="gpt-5.6-terra"', host.bootstrap_codex_args)
             self.assertIn("on-request", host.bootstrap_codex_args)
             self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
             self.assertIn("Startup behavior:", host.bootstrap_prompt)
@@ -69,7 +69,7 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             ):
                 host = pony_session_host.PonySessionHost(args)
 
-            self.assertIn('model="gpt-5.4"', host.bootstrap_codex_args)
+            self.assertIn('model="gpt-5.6-terra"', host.bootstrap_codex_args)
             self.assertIn("on-request", host.bootstrap_codex_args)
             self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
             self.assertIn("Startup behavior:", host.bootstrap_prompt)
@@ -92,7 +92,7 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             ):
                 host = pony_session_host.PonySessionHost(args)
 
-            self.assertIn('model="gpt-5.4-mini"', host.bootstrap_codex_args)
+            self.assertIn('model="gpt-5.6-luna"', host.bootstrap_codex_args)
             self.assertIn("never", host.bootstrap_codex_args)
             self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
             self.assertIn("Startup behavior:", host.bootstrap_prompt)
@@ -115,7 +115,7 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             ):
                 host = pony_session_host.PonySessionHost(args)
 
-            self.assertIn('model="gpt-5.4-mini"', host.bootstrap_codex_args)
+            self.assertIn('model="gpt-5.6-luna"', host.bootstrap_codex_args)
             self.assertIn("never", host.bootstrap_codex_args)
             self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
             self.assertIn("Startup behavior:", host.bootstrap_prompt)

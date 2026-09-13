@@ -19,8 +19,9 @@ Notes:
 - Plan B for runtime transport: unify `/tell` delivery so project-local runtime logs and any legacy global `/tmp/codex-pony-*.jsonl` lane cannot diverge silently
 - approved policy direction: ambiguous `/tell` aliases stay team-local by default, while fully qualified generated-roster aliases such as `<project>:Twilight Sparkle` may cross repo boundaries; Celestia remains the unique global governance identity
 - restart capsule:
-  - task: harden startup prompt-compliance guidance and propagate it into installed runtimes
-  - why: on Wednesday, August 26, 2026, Twilight reported that Applejack treated the required no-tool startup self-brief as a stopping point despite a concrete Current condition task; source guidance now explicitly requires immediate post-brief initialization and immediate correction of non-file-changing mistakes, and the installed runtimes for EVH, Handshake, and Codex were refreshed from source in the same run
-  - files: pony/launch.prompts/{aj,fs,pinkie,rarity,rd,spike,twi}.txt; pony/scripts/{enter-worker-and-codex.sh,pony-session-host.py,start-session.sh}; docs/{project-installation.md,runtime-loop.md}; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
-  - next: verify the refreshed installed runtimes surface the hardened startup wording during actual worker launches in EVH, Handshake, and Codex
+  - task: source-governance pony-tell subject/body enhancement landed and distributed; clipboard-read support remains pending design/implementation
+  - why: on Thursday, August 28, 2026, the user directed the source-first governance path; `pony-tell` now uses a 40-character implicit subject cap and direct `Subject:`/`Body:` parsing, with refreshed installs sent to EVH, Handshake, and Codex
+  - files: pony/bin/pony-tell; tests/test_pony_tell.py; pony/memory/celestia.md; pony/work/governor-celestia.md
+  - next: await the next governance task; if clipboard support is assigned, design it in agenic source and distribute via managed project refresh
   - blocker: none recorded
+  - 2026-09-13 reconciliation: source launcher and parked-host paths now select available models from the Codex cache. On the current cache, Celestia falls back from `gpt-5.4` to `gpt-5.6-terra`; ordinary workers fall back from `gpt-5.4-mini` to `gpt-5.6-luna`. The current Celestia session is healthy; this takes effect at a fresh launch. `pony-tell` cannot presently resolve the intended `codex:Twilight` recipient from the generated roster, so that receipt requires a cross-project roster repair rather than another alias attempt.

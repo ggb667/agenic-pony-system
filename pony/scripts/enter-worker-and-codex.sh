@@ -34,28 +34,93 @@ codex_profile_for_personality() {
   esac
 }
 
+select_supported_codex_model() {
+  local role="${1:?missing role}"
+  local requested="${2:?missing requested model}"
+  local fallbacks="${3:?missing fallback models}"
+
+  python3 - "$role" "$requested" "$fallbacks" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+role, requested, fallbacks_raw = sys.argv[1:]
+fallbacks = [item for item in fallbacks_raw.split() if item]
+cache_path = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "models_cache.json"
+supported: set[str] = set()
+cache_error = ""
+try:
+    payload = json.loads(cache_path.read_text(encoding="utf-8"))
+    for model in payload.get("models", []):
+        if not isinstance(model, dict):
+            continue
+        if not model.get("supported_in_api", True):
+            continue
+        if model.get("visibility") == "hide":
+            continue
+        slug = str(model.get("slug", "")).strip()
+        if slug:
+            supported.add(slug)
+except Exception as exc:
+    cache_error = str(exc)
+
+selected = requested
+reason = ""
+if supported:
+    if requested not in supported:
+        selected = next((candidate for candidate in fallbacks if candidate in supported), requested)
+        if selected != requested:
+            reason = f"requested model {requested!r} is not in the current Codex model cache"
+else:
+    selected = fallbacks[0] if fallbacks and requested.startswith("gpt-5.4") else requested
+    if selected != requested:
+        reason = f"could not verify model support from {cache_path}: {cache_error or 'models cache unavailable'}"
+
+if reason:
+    print(
+        f"WARNING: {role} requested {requested}; using {selected} instead because {reason}.",
+        file=sys.stderr,
+    )
+print(selected)
+PY
+}
+
 codex_config_args_for_personality() {
+  local model
   case "$1" in
     TWILIGHT_SPARKLE)
+      model="$(select_supported_codex_model \
+        "TWILIGHT_SPARKLE" \
+        "${AGENIC_PONY_TWILIGHT_MODEL:-gpt-5.5}" \
+        "${AGENIC_PONY_TWILIGHT_MODEL_FALLBACKS:-gpt-5.6-sol gpt-5.6-terra gpt-5.5 gpt-6-astra}")"
       printf '%s\n' \
         '-c' 'model_provider="openai"' \
-        '-c' 'model="gpt-5.5"' \
+        '-c' "model=\"$model\"" \
         '-c' 'model_reasoning_effort="high"' \
         '-a' 'never' \
         '-s' 'workspace-write'
       ;;
     PRINCESS_CELESTIA_SOL_INVICTUS)
+      model="$(select_supported_codex_model \
+        "PRINCESS_CELESTIA_SOL_INVICTUS" \
+        "${AGENIC_PONY_CELESTIA_MODEL:-gpt-5.4}" \
+        "${AGENIC_PONY_CELESTIA_MODEL_FALLBACKS:-gpt-5.6-terra gpt-5.6-sol gpt-5.5 gpt-6-astra}")"
       printf '%s\n' \
         '-c' 'model_provider="openai"' \
-        '-c' 'model="gpt-5.4"' \
+        '-c' "model=\"$model\"" \
         '-c' 'model_reasoning_effort="medium"' \
         '-a' 'on-request' \
         '-s' 'workspace-write'
       ;;
     *)
+      model="$(select_supported_codex_model \
+        "$1" \
+        "${AGENIC_PONY_WORKER_MODEL:-gpt-5.4-mini}" \
+        "${AGENIC_PONY_WORKER_MODEL_FALLBACKS:-gpt-5.6-luna gpt-5.6-terra gpt-5.5 gpt-6-astra}")"
       printf '%s\n' \
         '-c' 'model_provider="openai"' \
-        '-c' 'model="gpt-5.4-mini"' \
+        '-c' "model=\"$model\"" \
         '-c' 'model_reasoning_effort="low"' \
         '-a' 'never' \
         '-s' 'workspace-write'
