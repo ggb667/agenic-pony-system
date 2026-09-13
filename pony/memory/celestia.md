@@ -6,9 +6,9 @@ Status snapshot: active
 Last updated: 2026-09-13T00:00:00-04:00
 
 Memory capsule:
-- task: make startup orientation read-only and retain crash-recovery output tails across Codex-agent relaunches
-- why: startup context was causing ponies to self-start work; agents also need recent terminal output after an unclean restart
-- files: pony/launch.prompts/*; pony/scripts/{enter-worker-and-codex.sh,pony-session-host.py,codex-tmux-monitor.sh,output-tail.py}; docs/{runtime-loop.md,project-installation.md}; tests/test_output_tail.py
-- next: await the next source-governance assignment; fresh pony launches will activate the transcript relay and read-only startup orientation
-- blocker: none
-- handoff: source commits `e07380e` and `f3a3a8e` are pushed. Handshake, EVH, and Codex were refreshed and passed installed-runtime validation. Direct launches use a TTY-preserving `script` relay to retain a private 1,000-line transcript; parked tmux sessions capture the last 1,000 pane lines. Startup instructions now permit read-only orientation, then require an explicit user or Twilight instruction before action. Codex Twilight received the direct update (`133dc8c9-3cea-4021-898e-dbfccacdebd8`).
+- task: establish durable versus ephemeral `/tell` semantics for offline inter-project delivery
+- why: the Codex TUI does append to a configured offline recipient inbox, but current messages expire after one hour and unread messages coalesce by sender—incorrect for governance/enhancement requests
+- files: pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}; docs/runtime-loop.md; pony/memory/celestia.md
+- next: route a Codex TUI IPC change defining a durable delivery class with acknowledgement-based retention; source-side docs/policy must then adopt the class
+- blocker: the source launcher cannot create true durable `/tell` semantics alone because the existing TUI storage/read/cleanup implementation owns expiry and coalescing
+- handoff: source policy now records that configured `messageLogPath` delivery works while the recipient is offline, but only for ephemeral traffic. Do not rely on it for durable governance or enhancement handoff until the TUI protocol changes.

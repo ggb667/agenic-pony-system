@@ -8,10 +8,10 @@ BRANCH: main
 WORKTREE: /home/ggb66/dev/agenic-pony-system
 BRANCH_VERIFIED: yes
 STATUS: ACTIVE
-PUSH_STATUS: clean_pushed
+PUSH_STATUS: source_policy_pending_commit
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
-BLOCKERS: none
-NEXT_STEP: await the next source-governance assignment; source startup/continuity policy is installed and validated in Handshake, EVH, and Codex
+BLOCKERS: durable inter-project `/tell` requires a Codex TUI IPC delivery-class change; the existing one-hour/coalesced chat lane is ephemeral only
+NEXT_STEP: commit source policy documentation, then route the exact durable `/tell` protocol request to Codex Twilight when its target endpoint is available
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none

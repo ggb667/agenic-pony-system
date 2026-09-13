@@ -191,6 +191,7 @@ Special worker-launch exception:
 - if a worker memory capsule exists, the worker should refresh it whenever durable restart context materially changes, not only at shutdown; that includes changes to task, direction, branch or worktree, files in play, exact next step, open problem, or handoff
 - a good worker memory capsule is a compact restart map containing the current task, overall direction or why, branch and worktree, specific files in play, exact next step, open problem or uncertainty if any, blocker only if one truly exists, handoff note if relevant, and a real last-updated timestamp
 - every Codex launcher should additionally retain a private rolling transcript of the latest 1,000 terminal-output lines for that agent in the project-local runtime directory; it is crash-recovery evidence, not shared coordination authority, and should be read during orientation after an unclean restart
+- `/tell` transport has two required semantic classes: **ephemeral** live conversation may expire and coalesce, while **durable** governance, enhancement, blocker, approval, or exact-write requests must survive recipient downtime and remain queued until acknowledgement. The current Codex TUI only implements the ephemeral class; do not misrepresent its one-hour live-chat retention as durable handoff storage.
 - when the user says the project is shutting down, Twilight should fan out a save-memory-and-report-status request to the live agents, then save Twilight's own memory capsule after the status fan-in
 
 Examples that are not stopping points:
