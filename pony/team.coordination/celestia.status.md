@@ -11,7 +11,7 @@ STATUS: ACTIVE
 PUSH_STATUS: clean_pushed
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
-BLOCKERS: Codex Twilight is present in its own roster, but absent from Celestia's reciprocal generated cross-project `/tell` roster; both `codex:Twilight` and `codex:Twilight Sparkle` delivery fail locally until registration is repaired
-NEXT_STEP: have Twilight repair Codex cross-project roster registration before relying on `/tell` acknowledgements; refresh any installed target runtime that needs the launcher fallback
+BLOCKERS: none
+NEXT_STEP: refresh any installed target runtime that needs the launcher fallback; reciprocal `/tell` delivery with Codex Twilight is verified
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none

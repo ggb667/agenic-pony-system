@@ -10,5 +10,5 @@ Memory capsule:
 - why: the active model cache contains `gpt-5.6-*` and not the historical defaults; launcher and parked-host paths now select supported configured fallbacks
 - files: pony/scripts/{enter-worker-and-codex.sh,pony-session-host.py}; tests/test_pony_session_host.py
 - next: refresh any installed target-project runtimes that need the supported-model launcher fallback
-- blocker: Codex Twilight reports itself in its own roster, but Celestia's generated roster does not include the reciprocal target: both `codex:Twilight` and `codex:Twilight Sparkle` fail locally. Repair reciprocal cross-project roster registration before relying on its acknowledgement path.
-- handoff: committed and pushed `b21e7dc` (`Select supported Codex launch models`). Celestia resolves to `gpt-5.6-terra` and ordinary workers to `gpt-5.6-luna` against the current cache. The active session is already functioning; the launcher change applies to fresh launches.
+- blocker: none
+- handoff: committed and pushed `b21e7dc` (`Select supported Codex launch models`). Celestia resolves to `gpt-5.6-terra` and ordinary workers to `gpt-5.6-luna` against the current cache. The active session is already functioning; the launcher change applies to fresh launches. Codex Twilight's inbound letter supplied the live cross-project target; Celestia replied successfully to `codex:Twilight Sparkle` (receipt `1911df60-9f5c-49d0-8141-d74309c3f84c`).
