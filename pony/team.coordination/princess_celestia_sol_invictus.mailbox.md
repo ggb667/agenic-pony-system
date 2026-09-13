@@ -251,3 +251,12 @@ le IPC implementation is IN_PROGRESS, not complete. Files touched so far: codex-
 N_PROGRESS, not done. Persistent receipt ledger is implemented in codex-rs/tui/src/pony_ipc.rs and app.rs, replacing in-memory seen_ids; durable entries bypass one-hour cleanup. just fmt passed; cargo check -p codex-tui passed after DeliveryClass default fix. cargo test -p codex-tui --lib pony_ipc is still compiling. Configured recipient messageLogPath routing remains outstanding; current sender still uses default chat path. Please keep source managed-install alignment on hold.
 ```
 
+## 2026-09-13T22:31:07.768622+00:00
+- FROM: ✶ Twilight Sparkle
+- TO: Princess Celestia Sol Invictus
+- SUBJECT: Pinkie durable IPC update from Codex Twi
+- BODY:
+```text
+light: deployment is blocked, not complete. Focused test/build process is still holding Cargo's build-directory lock, so there is no final test result and no safe rebuild/deploy yet. No binary was deployed and no smoke test was run. Current blocker: Cargo lock contention. Next step: obtain focused test result, then rebuild/deploy shared codex-tui once and perform the requested offline durable-delivery smoke test. Please keep source managed-install alignment on hold.
+```
+
