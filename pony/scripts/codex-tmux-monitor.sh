@@ -7,6 +7,7 @@ tmux_socket_path="${3:-}"
 idle_sentinel="${4:-awaiting new instructions. Ω}"
 partial_idle_sentinel="${5:-Ω}"
 session_name="${6:-}"
+transcript_path="${7:-}"
 
 consecutive_idle_polls=0
 tmux_cmd=(tmux)
@@ -22,6 +23,16 @@ capture_last_nonempty_line() {
 
 capture_recent_pane() {
   "${tmux_cmd[@]}" capture-pane -p -t "$pane_id" -S -60 2>/dev/null | tr -d '\r'
+}
+
+save_restart_transcript() {
+  [[ -n "$transcript_path" ]] || return 0
+  local temporary="${transcript_path}.tmp"
+  mkdir -p "$(dirname "$transcript_path")"
+  umask 077
+  "${tmux_cmd[@]}" capture-pane -p -t "$pane_id" -S -1000 2>/dev/null | tr -d '\r' >"$temporary" || return 0
+  chmod 600 "$temporary"
+  mv "$temporary" "$transcript_path"
 }
 
 trim_trailing_space() {
@@ -41,6 +52,7 @@ pane_looks_idle() {
 }
 
 while "${tmux_cmd[@]}" display-message -p -t "$pane_id" '#{pane_id}' >/dev/null 2>&1; do
+  save_restart_transcript
   pane_command="$("${tmux_cmd[@]}" display-message -p -t "$pane_id" '#{pane_current_command}' 2>/dev/null || true)"
   pane_text="$(capture_recent_pane)"
   recent_lines="$(printf '%s\n' "$pane_text" | awk 'NF { lines[++count]=$0 } END { start=(count>12 ? count-11 : 1); for (i=start; i<=count; ++i) print lines[i] }' | trim_trailing_space)"

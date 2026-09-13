@@ -21,10 +21,11 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
         for prompt_name in worker_prompts:
             text = (PROMPTS_DIR / f"{prompt_name}.txt").read_text(encoding="utf-8")
             self.assertIn("First-turn startup rule", text)
-            self.assertIn("Post-brief initialization rule", text)
+            self.assertIn("Post-brief orientation rule", text)
             self.assertIn("Memory authority rule", text)
             self.assertIn("Memory persistence rule", text)
             self.assertIn("Memory content rule", text)
+            self.assertIn("Crash-recovery transcript rule", text)
             self.assertIn("telling Twilight in the same run", text)
             self.assertIn("workspace artifacts", text)
             self.assertIn("shared coordination mechanism", text)
@@ -38,6 +39,7 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
     def test_twilight_prompt_uses_shared_coordination_mechanism(self) -> None:
         text = (PROMPTS_DIR / "twi.txt").read_text(encoding="utf-8")
         self.assertIn("shared Twilight-managed coordination mechanism", text)
+        self.assertIn("private rolling 1,000-line terminal-output transcript", text)
         self.assertIn("source.runtime.summary.md", text)
         self.assertNotIn("README.md", text)
         self.assertNotIn("docs/runtime-loop.md", text)

@@ -34,6 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--monitor-script", required=True)
     parser.add_argument("--idle-sentinel", default="")
     parser.add_argument("--partial-idle-sentinel", default="Ω")
+    parser.add_argument("--transcript-path", default="")
     return parser.parse_args()
 
 
@@ -78,8 +79,9 @@ def startup_brief_prompt(state_hint: str = "") -> str:
         "prompt symbol, terminal title, accent color, and live interoperation mechanisms such as "
         "/tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your "
         "full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief. "
-        "After that first-turn self-brief, if there is an actual task, routing question, or follow-up action, begin post-brief initialization immediately "
-        "by reading your assigned memory capsule first when present, then your assigned workfile and authoritative local pony state before acting, answering, or asking permission. "
+        "After that first-turn self-brief, if startup context names a task, routing question, or follow-up, perform read-only orientation "
+        "by reading your assigned memory capsule first when present, then your assigned workfile and authoritative local pony state. "
+        "Do not execute work, change files, send coordination messages, or remedy a preflight solely from startup context; report readiness and await an explicit user or Twilight instruction. "
         "If the user points out a non-file-changing mistake, correct it immediately instead of asking whether to proceed."
     )
     if state_hint:
@@ -245,6 +247,8 @@ class PonySessionHost:
         self.draft_path = Path(args.draft_path)
         self.notice_path = Path(args.notice_path)
         self.history_path = Path(args.history_path)
+        transcript_arg = getattr(args, "transcript_path", "")
+        self.transcript_path = Path(transcript_arg) if transcript_arg else self.rootdir / "pony/runtime" / f"{args.personality.lower()}.output.tail.log"
         self.session_name = args.session_name
         self.socket_path = Path(args.socket_path)
         self.queue_script = args.queue_script
@@ -341,6 +345,7 @@ class PonySessionHost:
                 self.args.idle_sentinel,
                 self.args.partial_idle_sentinel,
                 self.session_name,
+                str(self.transcript_path),
             ],
             cwd=self.rootdir,
         )

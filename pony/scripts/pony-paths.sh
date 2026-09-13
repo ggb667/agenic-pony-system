@@ -454,6 +454,13 @@ pony_chat_log_path() {
   printf '%s\n' "$AGENIC_PROJECT_PONY_RUNTIME_DIR/pony.chat.jsonl"
 }
 
+pony_output_tail_path() {
+  local personality="${1:?missing personality}"
+  local slug
+  slug="$(worker_slug_for_personality "$personality")"
+  printf '%s\n' "$AGENIC_PROJECT_PONY_RUNTIME_DIR/${slug}.output.tail.log"
+}
+
 pony_registry_log_path() {
   printf '%s\n' "$AGENIC_PROJECT_PONY_RUNTIME_DIR/pony.registry.jsonl"
 }

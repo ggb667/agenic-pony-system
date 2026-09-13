@@ -28,8 +28,8 @@ Coordinator focus for agenic-pony-system on main:
 - keep generated `Twilight review needed`-style snippets out of durable coordinator history; they belong in a review queue or todo surface, not in canonical event history
 - require blockers caused by missing connection strings, secrets, endpoints, approvals, or other external prerequisites to name the exact missing artifact, the expected owner, and the next unblock step in canonical worker state before idle
 - require every worker stopping point to leave behind a concise restart capsule in the assigned workfile, and when that capsule implies shared durable coordination changes, require the matching exact `/tell` update to Twilight in the same run
-- keep first-turn startup self-briefs cheap, but require workers to begin post-brief initialization from their assigned memory capsules when present before reconciling the assigned workfile and authoritative coordination state
-- if the startup handoff already includes a concrete `Current condition` task, routing issue, or follow-up action, do not let workers treat the self-brief as a stopping point; they must immediately perform that post-brief initialization before answering or asking permission
+- keep first-turn startup self-briefs cheap, but require read-only post-brief orientation from assigned memory capsules when present, then the assigned workfile and authoritative coordination state; startup context alone never authorizes task execution
+- if the startup handoff includes a concrete `Current condition`, do not let workers treat the self-brief as a stopping point: they must perform read-only post-brief orientation before replying, but must not treat that context as standing authorization for task execution, file changes, messages, or preflight remediation
 - when a memory capsule is blank, stale, malformed, or contradictory, require workers and Twilight to prefer the richer authoritative workfile, status, and coordinator state, continue from it, and refresh the capsule instead of blocking
 - if the user points out a non-file-changing mistake, require the pony to correct it immediately instead of asking whether to proceed
 - require workers to refresh memory capsules whenever durable restart context materially changes, not just at graceful shutdown; shutdown is the last safety pass, not the primary save point
@@ -38,5 +38,6 @@ Coordinator focus for agenic-pony-system on main:
 - implement the queue/input runtime behavior from `docs/runtime-loop.md`
 - keep shell launch startup robust by invoking `start-session.sh` directly rather than typing a synthesized command into the interactive buffer
 - prefer lightweight parked hosts over disposable direct Codex launches so tmux scrollback, editor history, and restart continuity survive ordinary relaunches for more than just Celestia
+- retain a private rolling restart transcript of the most recent 1,000 terminal-output lines per Codex agent under the project-local runtime directory; refresh it during live output or tmux monitoring, read it only as crash-recovery context, and never treat it as durable coordinator authority
 - do not treat per-worker local `pony/work/*.md` or `pony/team.coordination/*.status.md` files as shared authority in the current runtime; they are workspace artifacts unless Twilight is explicitly assigned to maintain them
 - allow concise letters to Princess Celestia through `pony/team.coordination/celestia.mailbox.md` for source-repo governance or shared-system requests, while leaving day-to-day coordination with Twilight

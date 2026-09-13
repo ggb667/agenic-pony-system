@@ -804,6 +804,7 @@ for managed_script in \
   launch-team-member.sh \
   pony-line-editor.py \
   pony-session-host.py \
+  output-tail.py \
   prepare-team-launch.sh \
   resolve-system-root.sh \
   start-session.sh \

@@ -145,7 +145,7 @@ additional_codex_args_for_rootdir() {
 
 startup_brief_prompt() {
   local state_hint="${1-}"
-  local prompt="Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief. Cover your pony identity, role, active project and workspace, current state and scope, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief. After that first-turn self-brief, if there is an actual task, routing question, or follow-up action, begin post-brief initialization immediately by reading your assigned memory capsule first when present, then your assigned workfile and authoritative local pony state before acting, answering, or asking permission. If the user points out a non-file-changing mistake, correct it immediately instead of asking whether to proceed."
+  local prompt="Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief. Cover your pony identity, role, active project and workspace, current state and scope, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief. After that first-turn self-brief, if a task, routing question, or follow-up is present, perform read-only orientation: read the assigned memory capsule first when present, then the assigned workfile and authoritative local pony state. Do not begin task execution, alter files, send coordination messages, or remedy a preflight solely because startup context mentions it; report that you are oriented and await an explicit user or Twilight instruction. If the user points out a non-file-changing mistake, correct it immediately instead of asking whether to proceed."
   if [[ -n "$state_hint" ]]; then
     printf '%s Current condition: %s\n' "$prompt" "$state_hint"
   else
@@ -248,8 +248,16 @@ case "$preflight_result" in
 
 pony_launch_debug "worker handoff direct codex launch: personality=$PERSONALITY codex_args_count=${#codex_args[@]} prompt_length=${#prompt} rootdir=$rootdir repo_codex_pony=$repo_codex_pony"
 
+codex_command=("$repo_codex_pony" "${codex_args[@]}")
 if [[ -n "$prompt" ]]; then
-  exec "$repo_codex_pony" "${codex_args[@]}" "$prompt"
+  codex_command+=("$prompt")
 fi
 
-exec "$repo_codex_pony" "${codex_args[@]}"
+transcript_path="$(pony_output_tail_path "$PERSONALITY")"
+if command -v script >/dev/null 2>&1 && [[ -t 0 && -t 1 ]]; then
+  command_line="$(printf '%q ' "${codex_command[@]}")"
+  script -q -e -f -c "$command_line" /dev/null | python3 "$script_dir/output-tail.py" "$transcript_path"
+  exit "${PIPESTATUS[0]}"
+fi
+
+exec "${codex_command[@]}"

@@ -8,10 +8,10 @@ BRANCH: main
 WORKTREE: /home/ggb66/dev/agenic-pony-system
 BRANCH_VERIFIED: yes
 STATUS: ACTIVE
-PUSH_STATUS: clean_pushed
+PUSH_STATUS: source_change_pending_commit
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
-FILES_TOUCHED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
+FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
 BLOCKERS: none
-NEXT_STEP: refresh any installed target runtime that needs the launcher fallback; reciprocal `/tell` delivery with Codex Twilight is verified
+NEXT_STEP: commit and validate source startup/continuity policy, then refresh Handshake, EVH, and Codex managed runtimes
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none

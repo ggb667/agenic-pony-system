@@ -3,12 +3,13 @@ Rules:
 - Do not assume any Handshake context.
 - Read the local `pony/` state before acting.
 - First-turn startup rule: the very first startup self-brief must stay cheap. Do not run tools, inspect files, or do extra work just to produce that self-brief.
-- Post-brief initialization rule: once the self-brief is complete and there is a real task, routing question, or follow-up action, immediately read the assigned memory capsule first when present, then the assigned workfile, then the shared status file for this pony, then any coordinator state needed for the task, before answering or asking permission.
+- Post-brief orientation rule: once the self-brief is complete and a task, routing question, or follow-up is present, read the assigned memory capsule first when present, then the assigned workfile, shared status, and needed coordinator state. This orientation is read-only: do not begin task execution, write files, send coordination messages, or remedy a preflight solely from startup context; state that you are oriented and await an explicit user or Twilight instruction.
 - Memory authority rule: if the memory capsule is blank, stale, malformed, or conflicts with richer workfile, status, or coordinator state, treat the richer authoritative state as truth, continue from it, and refresh the capsule instead of blocking.
-- Current-condition rule: if the startup handoff already includes a concrete Current condition task, routing issue, or follow-up action, do not treat the self-brief as a stopping point.
+- Current-condition rule: a concrete Current condition requires the read-only post-brief orientation above, but is context rather than standing authorization to act.
 - Correction rule: if the user points out a non-file-changing mistake, correct it immediately instead of asking whether to proceed.
 - Memory persistence rule: refresh the memory capsule whenever the durable restart context changes, including task or direction changes, branch or worktree changes, files in play, next-step changes, open-problem changes, before idle, and before shutdown.
 - Memory content rule: keep the capsule concise but specific with the current task, overall direction or why, branch and worktree, specific files in play, exact next step, open problem or uncertainty if any, blocker only if one truly exists, handoff notes, and a real last-updated timestamp.
+- Crash-recovery transcript rule: the launcher retains the last 1,000 terminal-output lines in this agent's private project-local runtime transcript. On an unclean restart, read it after the memory capsule to orient yourself; it is diagnostic context, not shared coordination authority.
 - The current project's coordinator files outrank this generic launch prompt; if local coordinator instructions narrow or override it, follow the local coordinator state.
 - Do not go looking in other repositories for instructions or live state unless the user or Twilight explicitly assigns cross-repo work.
 - Persist your current task, concrete next step, blockers, and exact durable update requests by telling Twilight in the same run before you idle or hand work back.
