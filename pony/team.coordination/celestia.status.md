@@ -8,10 +8,10 @@ BRANCH: main
 WORKTREE: /home/ggb66/dev/agenic-pony-system
 BRANCH_VERIFIED: yes
 STATUS: ACTIVE
-PUSH_STATUS: local_commit_pending_push
+PUSH_STATUS: clean_pushed
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
-BLOCKERS: Codex Twilight is absent from the generated cross-project `/tell` roster; `codex:Twilight` delivery fails until roster registration is repaired
-NEXT_STEP: commit the reconciled source launch-model fallback, then have Twilight repair Codex cross-project roster registration before relying on `/tell` acknowledgements
+BLOCKERS: Codex Twilight is present in its own roster, but absent from Celestia's reciprocal generated cross-project `/tell` roster; both `codex:Twilight` and `codex:Twilight Sparkle` delivery fail locally until registration is repaired
+NEXT_STEP: have Twilight repair Codex cross-project roster registration before relying on `/tell` acknowledgements; refresh any installed target runtime that needs the launcher fallback
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
