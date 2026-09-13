@@ -8,10 +8,10 @@ BRANCH: main
 WORKTREE: /home/ggb66/dev/agenic-pony-system
 BRANCH_VERIFIED: yes
 STATUS: ACTIVE
-PUSH_STATUS: source_change_pending_commit
+PUSH_STATUS: clean_pushed
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
 BLOCKERS: none
-NEXT_STEP: commit and validate source startup/continuity policy, then refresh Handshake, EVH, and Codex managed runtimes
+NEXT_STEP: await the next source-governance assignment; source startup/continuity policy is installed and validated in Handshake, EVH, and Codex
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
