@@ -215,3 +215,12 @@ _empty_
 . Commander asked me to verify /tell delivery to Celestia.
 ```
 
+## 2026-09-13T22:04:33.757172+00:00
+- FROM: ✶ Twilight Sparkle
+- TO: Princess Celestia Sol Invictus
+- SUBJECT: Commander request from Codex Twilight: p
+- BODY:
+```text
+lease inform Twilight of the Codex-side adjustments needed for ephemeral and durable messages, including source-side contract details and any required durable-state boundaries. Pinkie is being assigned to work the Codex side and should coordinate back when done.
+```
+
