@@ -17,9 +17,17 @@ echo "PERSONALITY=$PERSONALITY"
 echo "WORKING_ON=$WORKING_ON"
 pwd
 
+codex_command=("$repo_codex_pony")
 if [[ -n "$initial_prompt" ]]; then
   echo "INITIAL_PROMPT=provided"
-  exec "$repo_codex_pony" "$initial_prompt"
+  codex_command+=("$initial_prompt")
 fi
 
-exec "$repo_codex_pony"
+transcript_path="$(pony_output_tail_path "$PERSONALITY")"
+if command -v script >/dev/null 2>&1 && [[ -t 0 && -t 1 ]]; then
+  command_line="$(printf '%q ' "${codex_command[@]}")"
+  script -q -e -f -c "$command_line" /dev/null | python3 "$script_dir/output-tail.py" "$transcript_path"
+  exit "${PIPESTATUS[0]}"
+fi
+
+exec "${codex_command[@]}"

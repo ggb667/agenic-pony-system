@@ -20,6 +20,7 @@ installed_shell_launcher="$resolved_target_root/pony/scripts/launch-in-pony-shel
 installed_entry_launcher="$resolved_target_root/pony/scripts/enter-worker-from-prompt-file.sh"
 installed_direct_launcher="$resolved_target_root/pony/scripts/enter-worker-and-codex.sh"
 installed_host="$resolved_target_root/pony/scripts/pony-session-host.py"
+installed_output_tail="$resolved_target_root/pony/scripts/output-tail.py"
 installed_wrapper="$resolved_target_root/pony/bin/codex-pony"
 installed_pony_tell="$resolved_target_root/pony/bin/pony-tell"
 legacy_pony_mail="$resolved_target_root/pony/bin/pony-mail"
@@ -71,6 +72,7 @@ require_file "$installed_shell_launcher" "installed shell launcher"
 require_file "$installed_entry_launcher" "installed worker entry launcher"
 require_file "$installed_direct_launcher" "installed direct worker launcher"
 require_file "$installed_host" "installed pony session host"
+require_file "$installed_output_tail" "installed output-tail helper"
 require_file "$installed_wrapper" "installed codex-pony wrapper"
 require_file "$installed_pony_tell" "installed pony-tell"
 require_file "$source_codex_pony" "source codex-pony"
@@ -146,10 +148,14 @@ if [[ -f "$installed_entry_launcher" ]]; then
 fi
 
 if [[ -f "$installed_direct_launcher" ]]; then
-  expect_contains "$installed_direct_launcher" 'exec "$repo_codex_pony" "${codex_args[@]}" "$prompt"' "installed direct worker launcher"
+  expect_contains "$installed_direct_launcher" 'script -q -e -f -c "$command_line" /dev/null | python3 "$script_dir/output-tail.py" "$transcript_path"' "installed direct worker launcher"
   expect_contains "$installed_direct_launcher" 'Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief.' "installed direct worker launcher"
-  expect_contains "$installed_direct_launcher" 'After that first-turn self-brief, if there is an actual task, routing question, or follow-up action' "installed direct worker launcher"
+  expect_contains "$installed_direct_launcher" 'perform read-only orientation' "installed direct worker launcher"
   expect_absent "$installed_direct_launcher" 'clean_stale_tmux_state_for_direct_launch' "installed direct worker launcher"
+fi
+
+if [[ -f "$installed_output_tail" ]]; then
+  expect_contains "$installed_output_tail" 'MAX_LINES = 1000' "installed output-tail helper"
 fi
 
 if [[ -f "$installed_host" ]]; then
