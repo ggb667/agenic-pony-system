@@ -187,7 +187,7 @@ def codex_config_args_for(personality: str) -> list[str]:
     if personality == "PRINCESS_CELESTIA_SOL_INVICTUS":
         model = _select_supported_codex_model(
             "PRINCESS_CELESTIA_SOL_INVICTUS",
-            os.environ.get("AGENIC_PONY_CELESTIA_MODEL", "gpt-5.4"),
+            os.environ.get("AGENIC_PONY_CELESTIA_MODEL", "gpt-5.6-terra"),
             os.environ.get(
                 "AGENIC_PONY_CELESTIA_MODEL_FALLBACKS",
                 "gpt-5.6-terra gpt-5.6-sol gpt-5.5 gpt-6-astra",

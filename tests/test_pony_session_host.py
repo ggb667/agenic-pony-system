@@ -15,6 +15,16 @@ pony_session_host = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(pony_session_host)
 
 
+class PonySessionHostModelDefaultsTests(unittest.TestCase):
+    def test_celestia_default_is_gpt_5_6_terra(self) -> None:
+        with patch.dict(pony_session_host.os.environ, {}, clear=True), patch.object(
+            pony_session_host, "_supported_codex_models_from_cache", return_value={"gpt-5.6-terra"}
+        ):
+            args = pony_session_host.codex_config_args_for("PRINCESS_CELESTIA_SOL_INVICTUS")
+
+        self.assertIn('model="gpt-5.6-terra"', args)
+
+
 class PonySessionHostPreflightTests(unittest.TestCase):
     def make_args(self, rootdir: Path, promptfile: Path) -> argparse.Namespace:
         return argparse.Namespace(

@@ -104,7 +104,7 @@ codex_config_args_for_personality() {
     PRINCESS_CELESTIA_SOL_INVICTUS)
       model="$(select_supported_codex_model \
         "PRINCESS_CELESTIA_SOL_INVICTUS" \
-        "${AGENIC_PONY_CELESTIA_MODEL:-gpt-5.4}" \
+        "${AGENIC_PONY_CELESTIA_MODEL:-gpt-5.6-terra}" \
         "${AGENIC_PONY_CELESTIA_MODEL_FALLBACKS:-gpt-5.6-terra gpt-5.6-sol gpt-5.5 gpt-6-astra}")"
       printf '%s\n' \
         '-c' 'model_provider="openai"' \
