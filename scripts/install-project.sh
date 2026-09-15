@@ -24,6 +24,11 @@ cleanup_install_lock() {
 
 if [[ "${AGENIC_PONY_INSTALL_LOCK_HELD:-0}" != "1" ]]; then
   mkdir -p "$(dirname "$install_lock_dir")"
+  # An interrupted install can leave an empty lock directory behind.  Empty
+  # means no owner has been recorded, so it is safe to reclaim before waiting.
+  if [[ -d "$install_lock_dir" && ! -e "$install_lock_info_file" ]]; then
+    rmdir "$install_lock_dir" 2>/dev/null || true
+  fi
   while ! mkdir "$install_lock_dir" 2>/dev/null; do
     sleep 0.1
   done

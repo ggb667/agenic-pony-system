@@ -8,7 +8,10 @@ Coordinator focus for agenic-pony-system on main:
 - keep the source-repo Celestia launcher independent from `~/.codex/*.config.toml` files during normal startup, while treating `celestia` as the canonical manual profile name if an operator explicitly uses a Codex profile
 - keep source-repo governance changes focused on launcher policy, prompt policy, coordinator policy, docs, and source-of-truth structure
 - keep tactical project coordination pushed down to Twilight instead of absorbing it into Celestia governance work
+- require a Git freshness preflight before explicit task execution: when an agent is on `main` and `git status --porcelain` is empty, it must run `git fetch --prune origin` then `git pull --ff-only`; dirty main worktrees, non-main branches, and non-fast-forward histories must be recorded and routed to Twilight rather than auto-pulled
+- reject stale linked worktrees as implicit starting points for new assignments: Twilight must verify refreshed project `main` first, then explicitly prepare the worker branch/worktree; no reset, rebase, discard, or other rewrite of a dirty worker worktree is permitted merely to make it current
 - keep external target-project installs working, especially Handshake
+- require crash-safe target-project install refresh: a launcher may reclaim an ownerless install lock or one owned by a dead local PID, while never removing a lock attributed to another host
 - keep target-project bootstrap/install hygiene from dirtying repos by default when generating local `pony/` runtime state
 - keep that no-dirty-default policy enforced from source-layer install/bootstrap behavior, including managed Git-backed ignore policy for generated target-project `pony/` trees
 - keep MCP and other Codex session credentials flowing through explicit launcher env files instead of relying on incidental shell startup state

@@ -7,11 +7,11 @@ AUDIENCE: EVERYONE
 BRANCH: main
 WORKTREE: /home/ggb66/dev/agenic-pony-system
 BRANCH_VERIFIED: yes
-STATUS: ACTIVE
-PUSH_STATUS: source_state_pending_commit
+STATUS: HOLD
+PUSH_STATUS: uncommitted_local_changes
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
-BLOCKERS: none
-NEXT_STEP: await Codex Twilight/Pinkie implementation report for durable `/tell`, then review the TUI contract and align source validation/documentation
+BLOCKERS: preflight: coordinator worktree is dirty; Twilight must reconcile or put away local changes before normal coordination work
+NEXT_STEP: launch Twilight in dirty-fix-first mode, put away or reconcile the pending changes, then continue with normal coordination work
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none

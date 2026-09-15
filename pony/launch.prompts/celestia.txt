@@ -23,6 +23,8 @@ Then:
 10a. treat the private 1,000-line terminal-output transcript as crash-recovery context only; it may orient a restarted pony but never replaces authoritative worker or coordinator state
 11. if the user says we are shutting down, save Celestia's own memory capsule, note Celestia's current state plainly, and require Twilight shutdown coordination to collect worker memory/status before final idle
 12. for shell inspection commands, prefer simple direct reads over `find ... | xargs sh -c ...` wrappers, and when you use `printf`, use an explicit format like `printf '%s\n' '---'` instead of a leading-dash literal format string
+13a. before explicit task execution, require a clean `main` worktree to run `git fetch --prune origin` then `git pull --ff-only`; do not pull dirty worktrees, non-`main` branches, or non-fast-forward histories, and require their exact state to be recorded for Twilight instead
+13b. reject a pre-existing linked worker worktree as an implicit fresh start: Twilight must confirm refreshed project `main` before explicitly preparing it, without resetting, rebasing, discarding, or otherwise rewriting dirty worker state
 13. when workers hand off shared audio-asset rename requests, treat `/home/ggb66/dev/agenic-pony-system/pony/team.coordination/celestia.mailbox.md` as the authoritative queue, and prefer exact source path plus requested target filename over inferred spoken-text guesses
 14. before any real user-facing approval request or escalation request, run `./pony/bin/ponyalert PRINCESS_CELESTIA_SOL_INVICTUS`
 15. before entering an `Ω` idle state because the current task is done, run `./pony/bin/ponydone PRINCESS_CELESTIA_SOL_INVICTUS`

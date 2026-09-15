@@ -36,6 +36,14 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
             for phrase in stale_phrases:
                 self.assertNotIn(phrase, text)
 
+    def test_all_prompts_require_clean_main_freshness_and_reject_stale_worktrees(self) -> None:
+        for prompt_path in PROMPTS_DIR.glob("*.txt"):
+            text = prompt_path.read_text(encoding="utf-8")
+            self.assertIn("git fetch --prune origin", text, prompt_path.name)
+            self.assertIn("git pull --ff-only", text, prompt_path.name)
+            self.assertIn("pre-existing linked", text, prompt_path.name)
+            self.assertIn("worktree", text, prompt_path.name)
+
     def test_twilight_prompt_uses_shared_coordination_mechanism(self) -> None:
         text = (PROMPTS_DIR / "twi.txt").read_text(encoding="utf-8")
         self.assertIn("shared Twilight-managed coordination mechanism", text)

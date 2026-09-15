@@ -170,6 +170,31 @@ if (( install_required )); then
   install_lock_dir="$target_project_root/pony/runtime/install-project.lock"
   install_lock_info_file="$install_lock_dir/owner"
   mkdir -p "$(dirname "$install_lock_dir")"
+
+  # A launcher can be interrupted after mkdir succeeds but before its EXIT trap
+  # runs.  An ownerless lock has no live holder to protect, so remove it rather
+  # than leaving every later launch in the wait loop forever.
+  if [[ -d "$install_lock_dir" && ! -e "$install_lock_info_file" ]]; then
+    if rmdir "$install_lock_dir" 2>/dev/null; then
+      pony_launch_debug "recovered ownerless install-project lock: lock_dir=$install_lock_dir"
+    fi
+  fi
+
+  # When the owner recorded a local PID that no longer exists, recover the
+  # lock as well.  Do not infer ownership across hosts: a remote lock must be
+  # left for its host to release.
+  if [[ -f "$install_lock_info_file" ]]; then
+    install_lock_owner_pid="$(sed -n 's/^pid=//p' "$install_lock_info_file" | head -n 1)"
+    install_lock_owner_host="$(sed -n 's/^host=//p' "$install_lock_info_file" | head -n 1)"
+    install_lock_local_host="$(hostname 2>/dev/null || printf 'unknown-host')"
+    if [[ -n "$install_lock_owner_pid" && ( -z "$install_lock_owner_host" || "$install_lock_owner_host" == "$install_lock_local_host" ) ]] && ! kill -0 "$install_lock_owner_pid" 2>/dev/null; then
+      rm -f "$install_lock_info_file"
+      if rmdir "$install_lock_dir" 2>/dev/null; then
+        pony_launch_debug "recovered stale install-project lock: lock_dir=$install_lock_dir owner_pid=$install_lock_owner_pid"
+      fi
+    fi
+  fi
+
   reported_wait=0
   while ! mkdir "$install_lock_dir" 2>/dev/null; do
     if (( ! reported_wait )); then

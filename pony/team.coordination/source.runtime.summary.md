@@ -24,6 +24,8 @@ Contract: Distills the stable source-repo rules from `README.md`, `docs/runtime-
 - if a worker memory capsule exists, the worker should read it at startup before acting and refresh it when shutdown or restart context materially changes
 - if the startup handoff already contains a concrete `Current condition` task, routing issue, or follow-up action, the worker should treat the self-brief only as phase zero and then immediately read memory, workfile, status, and relevant coordinator state before answering or asking permission
 - if the user points out a non-file-changing mistake, the pony should correct it immediately instead of pausing to ask whether to proceed
+- before explicit task execution, an agent on a clean `main` worktree must run `git fetch --prune origin` then `git pull --ff-only`; it must not pull a dirty worktree, a non-`main` branch, or non-fast-forward history, and should record the exact state for Twilight instead
+- a pre-existing linked worker worktree is not a fresh assignment start: Twilight must first confirm refreshed project `main`, then explicitly prepare that worker branch/worktree without resetting, rebasing, discarding, or otherwise rewriting dirty worker state
 - when the user says the project is shutting down, Twilight should collect save-memory and status reports from the live agents before saving Twilight's own memory capsule
 - direct `/tell` transport should keep ambiguous targets local by default so live teams in different repos do not cross-deliver same-named pony traffic by accident
 - generated agent roster config may also expose explicit cross-repo targets such as `<project>:Twilight Sparkle`; those fully qualified targets may route across repo boundaries when the active registry/message bus includes both live sessions
@@ -41,6 +43,7 @@ Contract: Distills the stable source-repo rules from `README.md`, `docs/runtime-
 
 - source changes land in `agenic-pony-system`
 - installed copies under `<project-root>/pony/` should be refreshed when managed prompts, scripts, or runtime files change
+- install-refresh locks must not strand later launches: reclaim an ownerless lock or one whose recorded local PID is dead, but leave locks attributed to another host alone
 - project-local `pony/runtime/runtime.state` should use `ready` as the canonical parked token; stale `idle` values should be normalized or treated as drift
 - lightweight parked-host behavior and editor/tmux continuity should not be Celestia-only; ordinary pony relaunches should preserve local draft/history state unless the operator explicitly resets them or the runtime is removing stale transport state
 - runtime validation should happen from the installed target project's `pony/` tree
