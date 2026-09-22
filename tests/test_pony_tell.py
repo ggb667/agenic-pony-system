@@ -86,7 +86,7 @@ class PonyTellTests(unittest.TestCase):
                         json.dumps(
                             {
                                 "uuid": "twi-uuid",
-                                "pony_name": "TWILIGHT_SPARKLE",
+                                "agent_name": "TWILIGHT_SPARKLE",
                                 "path": str(project_root),
                                 "git_branch": "main",
                                 "pid": 100,
@@ -96,7 +96,7 @@ class PonyTellTests(unittest.TestCase):
                         json.dumps(
                             {
                                 "uuid": "aj-uuid",
-                                "pony_name": "APPLEJACK",
+                                "agent_name": "APPLEJACK",
                                 "path": str(project_root),
                                 "git_branch": "main",
                                 "pid": 101,
@@ -560,6 +560,7 @@ class PonyTellTests(unittest.TestCase):
 
             subprocess.run(
                 ["bash", str(PONY_TELL), "EVH:Twilight Sparkle", "cross-project-ready ping"],
+                cwd=project_root,
                 check=True,
                 capture_output=True,
                 text=True,
@@ -587,9 +588,10 @@ class PonyTellTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             project_root = tmp / "project"
-            project_root.mkdir()
-            chat_log = tmp / "chat.jsonl"
-            registry_log = tmp / "registry.jsonl"
+            runtime_dir = project_root / "pony" / "runtime"
+            runtime_dir.mkdir(parents=True)
+            chat_log = runtime_dir / "chat.jsonl"
+            registry_log = runtime_dir / "registry.jsonl"
             registry_log.write_text(
                 "\n".join(
                     [
@@ -621,6 +623,7 @@ class PonyTellTests(unittest.TestCase):
 
             result = subprocess.run(
                 ["bash", str(PONY_TELL), "twi", "ping from AJ"],
+                cwd=project_root,
                 check=True,
                 capture_output=True,
                 text=True,
@@ -637,7 +640,8 @@ class PonyTellTests(unittest.TestCase):
             payload = json.loads(chat_log.read_text(encoding="utf-8").strip())
             self.assertEqual(payload["project_root"], str(project_root))
             self.assertEqual(payload["from_instance_id"], "aj-uuid")
-            self.assertEqual(payload["from_pony_name"], "APPLEJACK")
+            self.assertEqual(payload["from_agent_name"], "APPLEJACK")
+            self.assertNotIn("from_pony_name", payload)
             self.assertEqual(payload["to"], "TWILIGHT_SPARKLE")
             self.assertEqual(payload["subject"], "ping from AJ")
 
@@ -702,8 +706,9 @@ class PonyTellTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             project_root = tmp / "project"
-            project_root.mkdir()
-            registry_log = tmp / "registry.jsonl"
+            runtime_dir = project_root / "pony" / "runtime"
+            runtime_dir.mkdir(parents=True)
+            registry_log = runtime_dir / "registry.jsonl"
             registry_log.write_text(
                 json.dumps(
                     {
@@ -721,6 +726,7 @@ class PonyTellTests(unittest.TestCase):
 
             result = subprocess.run(
                 ["bash", str(PONY_TELL), "list"],
+                cwd=project_root,
                 check=True,
                 capture_output=True,
                 text=True,
@@ -823,6 +829,7 @@ class PonyTellTests(unittest.TestCase):
 
             subprocess.run(
                 ["bash", str(PONY_TELL), "twi", "team-local ping"],
+                cwd=project_root,
                 check=True,
                 capture_output=True,
                 text=True,
@@ -898,6 +905,7 @@ class PonyTellTests(unittest.TestCase):
 
             subprocess.run(
                 ["bash", str(PONY_TELL), "Princess Celestia Sol Invictus", "policy ping"],
+                cwd=project_root,
                 check=True,
                 capture_output=True,
                 text=True,
@@ -989,6 +997,7 @@ class PonyTellTests(unittest.TestCase):
 
             subprocess.run(
                 ["bash", str(PONY_TELL), "Celestia", "routing receipt test"],
+                cwd=sender_root,
                 check=True,
                 capture_output=True,
                 text=True,

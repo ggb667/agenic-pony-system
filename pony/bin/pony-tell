@@ -95,11 +95,14 @@ for raw in path.read_text(encoding="utf-8").splitlines():
         continue
     if seen < cutoff:
         continue
-    latest[entry["pony_name"]] = entry
+    agent_name = entry.get("agent_name") or entry.get("pony_name")
+    if not agent_name:
+        continue
+    latest[agent_name] = entry
 
-for pony_name in sorted(latest):
-    entry = latest[pony_name]
-    print(f'{pony_name}\t{entry.get("path", "")}\t{entry.get("git_branch", "")}')
+for agent_name in sorted(latest):
+    entry = latest[agent_name]
+    print(f'{agent_name}\t{entry.get("path", "")}\t{entry.get("git_branch", "")}')
 PY
     ;;
   *)
@@ -301,7 +304,8 @@ if registry_path.exists():
             continue
         if seen < cutoff:
             continue
-        if entry.get("pony_name") == sender["agentId"] and entry.get("path") == project_root:
+        entry_agent_name = entry.get("agent_name") or entry.get("pony_name")
+        if entry_agent_name == sender["agentId"] and entry.get("path") == project_root:
             sender_instance_id = entry.get("uuid") or sender_instance_id
             break
 
@@ -314,7 +318,7 @@ entry = {
     "from_agent_id": sender["agentId"],
     "from_route_id": sender.get("routeId", sender["agentId"]),
     "from_label": sender.get("label", sender["agentId"]),
-    "from_pony_name": sender["agentId"],
+    "from_agent_name": sender["agentId"],
     "from_symbol": sender.get("icon", ""),
     "to_agent_id": recipient["agentId"],
     "to_route_id": recipient.get("routeId", recipient["agentId"]),

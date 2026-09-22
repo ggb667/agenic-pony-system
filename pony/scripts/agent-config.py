@@ -147,7 +147,7 @@ def read_live_registry(registry_path: Path, roster: dict[str, AgentMeta]) -> lis
             continue
         if not isinstance(entry, dict):
             continue
-        personality = normalize(entry.get("pony_name", ""))
+        personality = normalize(entry.get("agent_name") or entry.get("pony_name", ""))
         if personality not in roster:
             continue
         try:
