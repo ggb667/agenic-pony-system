@@ -92,7 +92,7 @@ codex_config_args_for_personality() {
     TWILIGHT_SPARKLE)
       model="$(select_supported_codex_model \
         "TWILIGHT_SPARKLE" \
-        "${AGENIC_PONY_TWILIGHT_MODEL:-gpt-5.5}" \
+        "${AGENIC_PONY_TWILIGHT_MODEL:-gpt-5.6-sol}" \
         "${AGENIC_PONY_TWILIGHT_MODEL_FALLBACKS:-gpt-5.6-sol gpt-5.6-terra gpt-5.5 gpt-6-astra}")"
       printf '%s\n' \
         '-c' 'model_provider="openai"' \
@@ -104,8 +104,8 @@ codex_config_args_for_personality() {
     PRINCESS_CELESTIA_SOL_INVICTUS)
       model="$(select_supported_codex_model \
         "PRINCESS_CELESTIA_SOL_INVICTUS" \
-        "${AGENIC_PONY_CELESTIA_MODEL:-gpt-5.6-terra}" \
-        "${AGENIC_PONY_CELESTIA_MODEL_FALLBACKS:-gpt-5.6-terra gpt-5.6-sol gpt-5.5 gpt-6-astra}")"
+        "${AGENIC_PONY_CELESTIA_MODEL:-gpt-5.6-sol}" \
+        "${AGENIC_PONY_CELESTIA_MODEL_FALLBACKS:-gpt-5.6-sol gpt-5.6-terra gpt-5.5 gpt-6-astra}")"
       printf '%s\n' \
         '-c' 'model_provider="openai"' \
         '-c' "model=\"$model\"" \
@@ -116,7 +116,7 @@ codex_config_args_for_personality() {
     *)
       model="$(select_supported_codex_model \
         "$1" \
-        "${AGENIC_PONY_WORKER_MODEL:-gpt-5.4-mini}" \
+        "${AGENIC_PONY_WORKER_MODEL:-gpt-5.6-luna}" \
         "${AGENIC_PONY_WORKER_MODEL_FALLBACKS:-gpt-5.6-luna gpt-5.6-terra gpt-5.5 gpt-6-astra}")"
       printf '%s\n' \
         '-c' 'model_provider="openai"' \
