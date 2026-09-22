@@ -12,6 +12,6 @@ PUSH_STATUS: unpushed_local_commit
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
 BLOCKERS: none
-NEXT_STEP: Codex Twilight coordinates AJ's Step 2 implementation from prerequisite commit bf5fdfe0e2: remove Pony-specific Codex agent_ipc policy in favor of Agenic-generated CODEX_AGENT_CONFIG, beginning with the hard-coded Celestia singleton fallback
+NEXT_STEP: Codex Twilight coordinates AJ beyond reviewed commit cd5542ec7b: consume Agenic-configured mailboxPath and remove remaining Pony-specific errors, names, and default layout from generic agent_ipc while preserving wire compatibility
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
