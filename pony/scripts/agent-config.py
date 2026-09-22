@@ -103,6 +103,7 @@ class AgentMeta:
     runtime_role: str
     terminal_title: str
     prompt_label: str
+    mailbox_file: str
     aliases: list[str]
     global_singleton: bool = False
 
@@ -123,6 +124,7 @@ def load_roster(script_path: Path) -> dict[str, AgentMeta]:
             runtime_role=raw["runtimeRole"],
             terminal_title=raw["terminalTitle"],
             prompt_label=raw["promptLabel"],
+            mailbox_file=raw["mailboxFile"],
             aliases=list(raw["aliases"]),
             global_singleton=bool(raw.get("globalSingleton", False)),
         )
@@ -267,6 +269,9 @@ def session_entry(
         "branchLabel": branch_label,
         "registryPath": str(registry_path),
         "messageLogPath": str(message_log_path),
+        "mailboxPath": str(
+            project_root / "pony" / "team.coordination" / meta.mailbox_file
+        ),
         "runtimeRole": meta.runtime_role,
         "terminalTitle": meta.terminal_title,
         "promptLabel": meta.prompt_label,

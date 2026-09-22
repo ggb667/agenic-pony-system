@@ -112,6 +112,14 @@ class PromptGlyphTests(unittest.TestCase):
             agent_config = json.loads(captured_agent_config_path.read_text(encoding="utf-8"))
             self.assertTrue(agent_config["globalSingleton"])
             self.assertEqual(
+                agent_config["mailboxPath"],
+                str(
+                    project_root
+                    / "pony/team.coordination"
+                    / "celestia.mailbox.md"
+                ),
+            )
+            self.assertEqual(
                 [
                     agent["agentId"]
                     for agent in agent_config["agents"]

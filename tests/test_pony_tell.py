@@ -52,9 +52,19 @@ class PonyTellTests(unittest.TestCase):
                 )
                 payload = json.loads(config_path.read_text(encoding="utf-8"))
                 self.assertIsInstance(payload["globalSingleton"], bool)
+                self.assertEqual(
+                    payload["mailboxPath"],
+                    str(
+                        project_root
+                        / "pony"
+                        / "team.coordination"
+                        / agent["mailboxFile"]
+                    ),
+                )
                 self.assertTrue(
                     all(isinstance(entry["globalSingleton"], bool) for entry in payload["agents"])
                 )
+                self.assertTrue(all(entry["mailboxPath"] for entry in payload["agents"]))
                 singleton_ids = {
                     entry["agentId"]
                     for entry in payload["agents"]
