@@ -72,16 +72,20 @@ class PromptGlyphTests(unittest.TestCase):
             )
 
             captured_args_path = project_root / "captured-args.json"
+            captured_agent_config_path = project_root / "captured-agent-config.json"
             stub_codex = project_root / "stub-codex.py"
             stub_codex.write_text(
                 textwrap.dedent(
                     f"""\
                     #!/usr/bin/env python3
                     import json
+                    import os
                     import sys
                     from pathlib import Path
 
                     Path({str(captured_args_path)!r}).write_text(json.dumps(sys.argv[1:]))
+                    config_path = Path(os.environ["CODEX_AGENT_CONFIG"])
+                    Path({str(captured_agent_config_path)!r}).write_text(config_path.read_text())
                     """
                 ),
                 encoding="utf-8",
@@ -105,6 +109,16 @@ class PromptGlyphTests(unittest.TestCase):
             captured_args = json.loads(captured_args_path.read_text(encoding="utf-8"))
             self.assertIn('tui.prompt_glyph="☀︎"', captured_args)
             self.assertIn("tui.terminal_title=[]", captured_args)
+            agent_config = json.loads(captured_agent_config_path.read_text(encoding="utf-8"))
+            self.assertTrue(agent_config["globalSingleton"])
+            self.assertEqual(
+                [
+                    agent["agentId"]
+                    for agent in agent_config["agents"]
+                    if agent["globalSingleton"]
+                ],
+                ["PRINCESS_CELESTIA_SOL_INVICTUS"],
+            )
 
     def test_installed_wrappers_are_shell_valid(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

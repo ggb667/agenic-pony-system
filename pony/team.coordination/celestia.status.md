@@ -11,7 +11,7 @@ STATUS: ACTIVE
 PUSH_STATUS: unpushed_local_commit
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
-BLOCKERS: none; AJ's original exit cause remains unproven because no launcher exit-status/stderr artifact survived
-NEXT_STEP: Codex Twilight owns follow-up for custom-build update-notice implementation and launcher exit-status/stderr capture; do not perform the 0.154.0 -> 0.155.1 upgrade without separate authorization
+BLOCKERS: none
+NEXT_STEP: Codex Twilight coordinates AJ's Step 2 implementation from prerequisite commit bf5fdfe0e2: remove Pony-specific Codex agent_ipc policy in favor of Agenic-generated CODEX_AGENT_CONFIG, beginning with the hard-coded Celestia singleton fallback
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
