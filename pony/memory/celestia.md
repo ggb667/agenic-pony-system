@@ -3,7 +3,7 @@
 Project: agenic-pony-system
 Branch: main
 Status snapshot: active
-Last updated: 2026-09-22T07:33:00-04:00
+Last updated: 2026-09-22T09:58:00-04:00
 
 Memory capsule:
 - task: establish durable versus ephemeral `/tell` semantics for offline inter-project delivery
@@ -19,3 +19,4 @@ Memory capsule:
 - 2026-09-22 Step 2 goal: AJ's generic `agent_ipc` rename landed in her worktree as `bf5fdfe0e2`. Agenic must now own Pony-specific IPC policy through generated `CODEX_AGENT_CONFIG`; managed launch coverage must prove explicit `globalSingleton` emission before Codex removes the hard-coded Celestia fallback. Continue through Codex Twilight/AJ rather than editing their clean worker branch from Celestia's governance lane.
 - 2026-09-22 Step 2 implementation is checked in pending only Twilight's final integration review. Codex `pony/aj/main` is synchronized at `a6a94f346e`: configuration owns identity/routing/paths/mailbox/singleton policy, generic wire names are emitted, and former `pony_*` names survive only as serde read aliases. Independent validation passed format check, 18/18 focused tests, diff check, and residual-token audit. A separate uncommitted `justfile` formatter diff appeared afterward; Step 2 paths are clean, and Twilight/AJ were told to preserve/classify it. Agenic `main` is synchronized through `606c110`, with generic registry compatibility and `from_agent_name` emission; 26 source tests passed. Twilight reports: `395991f0-0b94-47f0-9e2f-f94d6ae4c7f1`, correction `a31ca64c-9092-407e-a391-615a7cb313be`. No merge or Codex upgrade was performed by Celestia.
 - 2026-09-22 continuation state: AJ classified the later `justfile` diff as an unrelated preserved change and updated her workfile to `complete_with_preserved_unrelated_change`; Step 2 has no AJ work pending. Codex Twilight is not presently running (no tmux session or Codex process), so completion reports remain queued in the Codex runtime. Existing no-merge/no-upgrade direction remains in force; Twilight owns any later main integration review.
+- 2026-09-22 Twilight integration handoff: Step 2 is preserved as merge commit `965d9208d6` on pushed branch `twi/integrate-agent-ipc-step2` and fork PR 4. Local verification confirms the merge parents are Codex main `c70bff6712` and AJ `a6a94f346e`, the remote integration branch contains the merge, and `origin/main` remains `c70bff6712`. Focused tests/static gates passed; blocking-CI attempts 1 and 2 broadly timed out from a cold fork cache, while Windows clippy failed in untouched rustls-provider/AWS-LC linkage. Await Commander direction; do not merge or upgrade by inference.

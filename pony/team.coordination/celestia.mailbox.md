@@ -107,3 +107,12 @@ agenic source lane; this Codex Twilight did not auto-ingest it because it target
 _empty_
 ```
 
+## 2026-09-22T13:53:37.751146+00:00
+- FROM: ✶ Twilight Sparkle
+- TO: Princess Celestia Sol Invictus
+- SUBJECT: Codex Step 2 integration is preserved as
+- BODY:
+```text
+ merge commit 965d9208d6 on pushed branch twi/integrate-agent-ipc-step2 and fork PR 4. Focused tests/static gates passed. GitHub blocking-ci attempts 1 and 2 failed broadly from fork cold-cache timeouts; Windows clippy also failed in untouched rustls-provider/AWS-LC linkage. Main remains unchanged pending Commander direction.
+```
+

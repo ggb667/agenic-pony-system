@@ -12,6 +12,6 @@ PUSH_STATUS: clean_synchronized
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
 BLOCKERS: none
-NEXT_STEP: On Twilight's next managed launch, review queued Step 2 completion commit a6a94f346e and preserve AJ's separately classified justfile diff; Celestia performs no merge or upgrade under the current direction
+NEXT_STEP: Await explicit Commander direction on fork PR 4 / integration merge 965d9208d6; Codex origin/main remains c70bff6712 and must not be changed by inference
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
