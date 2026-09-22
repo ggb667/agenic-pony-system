@@ -122,7 +122,7 @@ codex_config_args_for_personality() {
         '-c' 'model_provider="openai"' \
         '-c' "model=\"$model\"" \
         '-c' 'model_reasoning_effort="low"' \
-        '-a' 'never' \
+        '-a' 'on-request' \
         '-s' 'workspace-write'
       ;;
   esac
