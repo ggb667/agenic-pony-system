@@ -12,6 +12,56 @@ AGENT_CONFIG = REPO_ROOT / "pony/scripts/agent-config.py"
 
 
 class PonyTellTests(unittest.TestCase):
+    def test_agent_config_explicitly_emits_singleton_policy_for_every_personality(self) -> None:
+        roster = json.loads(
+            (REPO_ROOT / "pony/launch.configs/pony-agent-roster.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            runtime_dir = project_root / "pony" / "runtime"
+            runtime_dir.mkdir(parents=True)
+            (project_root / "pony" / "pony.system.config.yaml").write_text(
+                "project_name: TEST\nproject_root: " + str(project_root) + "\n",
+                encoding="utf-8",
+            )
+            registry_path = runtime_dir / "pony.registry.jsonl"
+            message_log_path = runtime_dir / "pony.chat.jsonl"
+
+            for agent in roster["agents"]:
+                config_path = runtime_dir / f"{agent['workerSlug']}.agent-session.json"
+                subprocess.run(
+                    [
+                        "python3",
+                        str(AGENT_CONFIG),
+                        "write-session",
+                        "--agent",
+                        agent["personality"],
+                        "--project-root",
+                        str(project_root),
+                        "--output",
+                        str(config_path),
+                        "--registry-path",
+                        str(registry_path),
+                        "--message-log-path",
+                        str(message_log_path),
+                    ],
+                    check=True,
+                    cwd=project_root,
+                )
+                payload = json.loads(config_path.read_text(encoding="utf-8"))
+                self.assertIsInstance(payload["globalSingleton"], bool)
+                self.assertTrue(
+                    all(isinstance(entry["globalSingleton"], bool) for entry in payload["agents"])
+                )
+                singleton_ids = {
+                    entry["agentId"]
+                    for entry in payload["agents"]
+                    if entry["globalSingleton"]
+                }
+                self.assertEqual(singleton_ids, {"PRINCESS_CELESTIA_SOL_INVICTUS"})
+
     def test_pony_tell_uses_explicit_subject_and_body_headers(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
