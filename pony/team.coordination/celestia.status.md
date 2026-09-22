@@ -7,11 +7,11 @@ AUDIENCE: EVERYONE
 BRANCH: main
 WORKTREE: /home/ggb66/dev/agenic-pony-system
 BRANCH_VERIFIED: yes
-STATUS: HOLD
-PUSH_STATUS: uncommitted_local_changes
+STATUS: ACTIVE
+PUSH_STATUS: unpushed_local_commit
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
-BLOCKERS: preflight: coordinator worktree is dirty; Twilight must reconcile or put away local changes before normal coordination work
-NEXT_STEP: launch Twilight in dirty-fix-first mode, put away or reconcile the pending changes, then continue with normal coordination work
+BLOCKERS: none; AJ's original exit cause remains unproven because no launcher exit-status/stderr artifact survived
+NEXT_STEP: Codex Twilight owns follow-up for custom-build update-notice implementation and launcher exit-status/stderr capture; do not perform the 0.154.0 -> 0.155.1 upgrade without separate authorization
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none

@@ -17,6 +17,8 @@ Notes:
 - prefer updating the governance summary in `pony/team.coordination/multi.agent.control.md` when policy changes
 - Plan A for Codex de-ponying: keep generic launcher/runtime Codex configuration in `agenic-pony-system`, but treat in-Codex pony IPC and `/tell` behavior as the removable or feature-gateable layer inside `codex-rs`
 - Plan B for runtime transport: unify `/tell` delivery so project-local runtime logs and any legacy global `/tmp/codex-pony-*.jsonl` lane cannot diverge silently
+- pending Codex-fork work item (2026-09-22): preserve upstream-version detection, but when the running binary is a customized/source build, replace the unsafe `npm install -g @openai/codex` update instruction with guidance to update the custom Codex source branch and rebuild; do not perform the 0.154.0 -> 0.155.1 upgrade until it is separately authorized
+- AJ unexpected-exit investigation (2026-09-22): session `01a0c783-1e90-7902-b560-86c33545d371` completed its final recorded task normally at 2026-09-22T05:23:35Z, but its process was absent by 05:41Z. No panic, core dump, OOM kill, or journal signal was found. The rolling terminal tail was overwritten by later launches and no launcher exit-status/stderr artifact survives, so the original exit cause is not yet provable; manual `codex resume` permission failures are secondary.
 - approved policy direction: ambiguous `/tell` aliases stay team-local by default, while fully qualified generated-roster aliases such as `<project>:Twilight Sparkle` may cross repo boundaries; Celestia remains the unique global governance identity
 - restart capsule:
   - task: source-governance pony-tell subject/body enhancement landed and distributed; clipboard-read support remains pending design/implementation
