@@ -3,7 +3,7 @@
 Project: agenic-pony-system
 Branch: main
 Status snapshot: active
-Last updated: 2026-09-14T02:45:00-04:00
+Last updated: 2026-09-22T07:25:00-04:00
 
 Memory capsule:
 - task: establish durable versus ephemeral `/tell` semantics for offline inter-project delivery
@@ -17,4 +17,4 @@ Memory capsule:
 - 2026-09-15 EVH launcher incident: an interrupted managed refresh left `pony/runtime/install-project.state=failed` and an empty `install-project.lock/`; all subsequent launches waited indefinitely before Codex. Recovery removed the stale lock and restored EVH to `complete`. Source now reclaims ownerless locks and locks owned by dead local PIDs (never another host); source files are dirty alongside pre-existing coordination changes, and the focused lock-policy tests pass.
 - 2026-09-22 active governance item: custom/source Codex builds must retain upstream-version detection but replace the unsafe global npm upgrade instruction with custom-source update-and-rebuild guidance. Upgrade 0.154.0 -> 0.155.1 is not authorized yet. AJ's original `agent_ipc`-refactor exit remains unproven: session records end after a normal task completion, with no panic/core/OOM/journal evidence and no preserved launcher exit status or stderr; later manual-resume permission failures are secondary.
 - 2026-09-22 Step 2 goal: AJ's generic `agent_ipc` rename landed in her worktree as `bf5fdfe0e2`. Agenic must now own Pony-specific IPC policy through generated `CODEX_AGENT_CONFIG`; managed launch coverage must prove explicit `globalSingleton` emission before Codex removes the hard-coded Celestia fallback. Continue through Codex Twilight/AJ rather than editing their clean worker branch from Celestia's governance lane.
-- 2026-09-22 Step 2 checkpoint: source commits `7834278`, `5760b6d`, and `40a4213` verify managed `CODEX_AGENT_CONFIG` generation for every personality and add explicit `globalSingleton` plus `mailboxPath`. AJ commit `cd5542ec7b` passed review and 17/17 focused tests, removing the Codex hard-coded Celestia singleton fallback. The goal remains active for configured mailbox consumption and removal of remaining Pony-specific policy/defaults from generic `agent_ipc`.
+- 2026-09-22 Step 2 implementation is checked in pending only Twilight's final integration review. Codex `pony/aj/main` is clean/synchronized at `a6a94f346e`: configuration owns identity/routing/paths/mailbox/singleton policy, generic wire names are emitted, and former `pony_*` names survive only as serde read aliases. Independent validation passed format check, 18/18 focused tests, diff check, and residual-token audit. Agenic `main` is synchronized through `06c96c7`, with generic registry compatibility and `from_agent_name` emission; 26 source tests passed. Twilight report: `395991f0-0b94-47f0-9e2f-f94d6ae4c7f1`. No merge or Codex upgrade was performed by Celestia.
