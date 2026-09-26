@@ -3,15 +3,15 @@
 Project: agenic-pony-system
 Branch: main
 Status snapshot: hold
-Last updated: 2026-09-26T08:56:06-04:00
+Last updated: 2026-09-26T12:52:40-04:00
 
 Memory capsule:
-- task: remove mutable worker-state serialization from launcher-generated startup prompts
-- why: immutable/high-priority startup prompts must establish identity and safety without injecting stale tasks, statuses, blockers, handoffs, scopes, next actions, deploy directions, or work summaries
-- files: pony/scripts/{start-session.sh,enter-worker-and-codex.sh,pony-session-host.py}; pony/launch.prompts/*; tests/{test_prompt_glyph.py,test_pony_session_host.py,test_coordination_prompt_policy.py,test_validate_installed_runtime.py}; docs/{runtime-loop.md,project-installation.md}; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
-- next: await Twilight review and managed target-project refresh; no installed target runtime was changed in this run
+- task: grant commit-capable pony sessions the entire shared repository Git common directory as writable
+- why: ponies are trusted collaborators who normally use assigned worktrees but may exchange code, commits, and artifacts across them; shared `.git` access is a polite coordination boundary rather than security isolation
+- files: pony/bin/codex-pony; tests/test_prompt_glyph.py; docs/project-installation.md; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
+- next: await the next governance task; managed target-project refreshes will consume the pushed source change when authorized or launched
 - blocker: none
-- handoff: startup now uses neutral `ORIENTATION_REQUIRED`, reads memory/workfile/Twilight-managed state only during post-brief read-only orientation, requires exact conflict reporting and parking, and waits for an explicit post-start user or Twilight instruction. All 51 source tests pass, including generated-prompt coverage for all eight ponies and the EVH Rainbow Dash v58/v32 leak fixture.
+- handoff: `codex-pony` now resolves and grants the complete `git rev-parse --git-common-dir` path, with absolute-path support and a compatibility fallback. Commit `7171008` is pushed on `origin/main`. All 52 source tests pass after push, including an all-eight-pony linked-worktree regression proving `<project>/.git` appears in `sandbox_workspace_write.writable_roots`. Worktree ownership and destructive-history rules remain coordination safeguards.
 - 2026-09-14 governance decision: before explicit task execution, every clean `main` worktree must run `git fetch --prune origin` then `git pull --ff-only`; dirty/non-main/non-fast-forward state is recorded for Twilight rather than auto-pulled. Existing linked worker worktrees are not fresh assignment starts—Twilight must confirm refreshed `main` and explicitly prepare them without rewriting dirty worker state.
 - 2026-09-14 restart handoff: Twilight delivered three correctly routed messages to `pony/runtime/pony.chat.jsonl`; the durable rollout handoff is entry `e87d8f89-70ca-4e07-ab6f-1508fdd08d4d`. Pinkie IPC changes are in Codex commit `a8b48089ac`; the shared `codex-tui` rebuild is complete. This Celestia process started before that rebuild and did not surface the queued lane automatically. User authorized a restart after state was saved.
 - 2026-09-15 EVH launcher incident: an interrupted managed refresh left `pony/runtime/install-project.state=failed` and an empty `install-project.lock/`; all subsequent launches waited indefinitely before Codex. Recovery removed the stale lock and restored EVH to `complete`. Source now reclaims ownerless locks and locks owned by dead local PIDs (never another host); source files are dirty alongside pre-existing coordination changes, and the focused lock-policy tests pass.
