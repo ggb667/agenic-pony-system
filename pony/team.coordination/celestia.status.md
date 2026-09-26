@@ -7,11 +7,11 @@ AUDIENCE: EVERYONE
 BRANCH: main
 WORKTREE: /home/ggb66/dev/agenic-pony-system
 BRANCH_VERIFIED: yes
-STATUS: HOLD
-PUSH_STATUS: clean_synchronized
+STATUS: ACTIVE
+PUSH_STATUS: uncommitted_local_changes
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
 BLOCKERS: none
-NEXT_STEP: Await explicit Commander direction on fork PR 4 / integration merge 965d9208d6; Codex origin/main remains c70bff6712 and must not be changed by inference
+NEXT_STEP: remove mutable worker-state serialization from generated startup prompts, add all-pony prompt-content regressions including the EVH Rainbow Dash failure, and align source governance documentation
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
