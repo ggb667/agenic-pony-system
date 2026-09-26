@@ -12,6 +12,6 @@ PUSH_STATUS: clean_synchronized
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
 BLOCKERS: none
-NEXT_STEP: await the next governance task; shared-Git writable-root source commit 7171008 is pushed and validated 52/52, while managed target-project refresh remains coordinator-controlled
+NEXT_STEP: await the next governance task; EVH, Handshake, and Codex managed runtimes are refreshed and independently validated, with no worker relaunch performed
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
