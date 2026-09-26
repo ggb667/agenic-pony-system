@@ -46,6 +46,7 @@ Contract: Distills the stable source-repo rules from `README.md`, `docs/runtime-
 ## Install And Validation Boundaries
 
 - source changes land in `agenic-pony-system`
+- commit-capable pony sessions receive the entire repository Git common directory (normally `<project>/.git`) as writable under `workspace-write`; this is a trusted, polite coordination boundary that permits cross-worktree code, commit, and artifact exchange, while destructive history rewrites still require explicit direction
 - installed copies under `<project-root>/pony/` should be refreshed when managed prompts, scripts, or runtime files change
 - install-refresh locks must not strand later launches: reclaim an ownerless lock or one whose recorded local PID is dead, but leave locks attributed to another host alone
 - project-local `pony/runtime/runtime.state` should use `ready` as the canonical parked token; stale `idle` values should be normalized or treated as drift

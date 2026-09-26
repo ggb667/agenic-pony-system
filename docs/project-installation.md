@@ -123,14 +123,15 @@ For git-backed installs, the default worker policy is:
 - ordinary worker branch names default to `pony/<slug>/main`
 - those worker worktrees are the paths recorded in `pony/team.coordination/assignment.registry.tsv`
 - when a worker launches from a linked worktree, its Codex sandbox must also add the project root as an extra writable directory so `pony/team.coordination/*` and `pony/work/*` remain writable from that session
-- commit-capable worker or Twilight sessions must also mount the active linked-worktree gitdir and the repository git common dir as writable roots; for a linked worktree that normally means both `<project>/.git/worktrees/<slug>/` and `<project>/.git/`
-- prefer this narrow writable-root expansion over `danger-full-access`; the launcher should grant only the active worktree, project-local pony shared-state paths, and the exact git metadata directories needed for `git add`, `git commit`, and `git push`
+- commit-capable worker or Twilight sessions must mount the entire repository Git common directory as a writable root; for ordinary and linked worktrees this normally means `<project>/.git/`, which already contains linked-worktree indexes and shared refs/objects
+- this shared `.git` access is a deliberate trusted-collaborator capability and a polite coordination boundary, not branch-level security isolation; assigned worktrees remain the normal place to work, but ponies may exchange code, commits, and artifacts across worktrees when coordination requires it
+- retain `workspace-write` rather than `danger-full-access`; destructive history rewriting, resetting, rebasing, or discarding another pony's dirty state still requires explicit direction even though the sandbox can write the shared Git directory
 - source-governance Celestia sessions are the broader exception: they should still remain on `workspace-write`, but may add writable roots for live project runtime logs, registries, and project roots that appear in Celestia's generated cross-repo agent roster so governance `/tell` traffic and exact follow-up writes are not blocked by a read-only recipient lane
 - Twilight has the narrower singleton exception: when her generated agent config exposes `Princess Celestia Sol Invictus`, Twilight's launcher should add only that resolved Celestia `messageLogPath` as an extra writable root so `/tell Celestia` works without turning Twilight into a general cross-repo writer
 
 If that root is not writable, workers should still publish the exact state delta to Twilight in the same run so Twilight can write or reconcile the shared authoritative state. Do not treat the worktree mirror as the source of truth.
 
-This keeps coordinator control and worker execution separated without requiring separate top-level clones outside the project-local pony tree.
+This preserves ordinary worktree ownership and coordinator routing without pretending that trusted ponies sharing one Git common directory are isolated from one another.
 
 Before a new assignment begins, treat Git freshness as a preflight: when the agent is checked out on `main` and `git status --porcelain` is empty, run `git fetch --prune origin` followed by `git pull --ff-only`. Do not pull a dirty worktree, a non-`main` branch, or non-fast-forward history; record that exact condition for Twilight instead. A pre-existing linked worker worktree is not inherently a current starting point. Twilight must confirm refreshed project `main` before explicitly preparing a worker branch/worktree, and must never reset, rebase, discard, or otherwise rewrite dirty worker state simply to make it current.
 

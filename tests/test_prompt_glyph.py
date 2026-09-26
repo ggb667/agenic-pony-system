@@ -128,6 +128,78 @@ class PromptGlyphTests(unittest.TestCase):
                 ["PRINCESS_CELESTIA_SOL_INVICTUS"],
             )
 
+    def test_every_pony_receives_entire_shared_git_directory_as_writable(self) -> None:
+        personalities = {
+            "celestia": ("PRINCESS_CELESTIA_SOL_INVICTUS", None),
+            "twi": ("TWILIGHT_SPARKLE", None),
+            "aj": ("APPLEJACK", "aj"),
+            "pinkie": ("PINKIE_PIE", "pinkie"),
+            "fs": ("FLUTTERSHY", "fs"),
+            "rarity": ("RARITY", "rarity"),
+            "rd": ("RAINBOW_DASH", "rd"),
+            "spike": ("SPIKE", "spike"),
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+            subprocess.run(["git", "init", "-b", "main"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.name", "Test User"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], check=True, cwd=project_root)
+            (project_root / "README.md").write_text("shared git test\n", encoding="utf-8")
+            subprocess.run(["git", "add", "README.md"], check=True, cwd=project_root)
+            subprocess.run(["git", "commit", "-m", "init"], check=True, cwd=project_root)
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            captured_args_path = project_root / "captured-args.json"
+            stub_codex = project_root / "stub-codex.py"
+            stub_codex.write_text(
+                textwrap.dedent(
+                    """\
+                    #!/usr/bin/env python3
+                    import json
+                    import os
+                    import sys
+                    from pathlib import Path
+
+                    Path(os.environ["CAPTURED_ARGS_PATH"]).write_text(json.dumps(sys.argv[1:]))
+                    """
+                ),
+                encoding="utf-8",
+            )
+            stub_codex.chmod(0o755)
+
+            shared_git_dir = str((project_root / ".git").resolve())
+            for slug, (personality, worker_slug) in personalities.items():
+                cwd = project_root if worker_slug is None else project_root / "pony/worktrees" / worker_slug
+                subprocess.run(
+                    ["bash", str(project_root / "pony/bin/codex-pony"), "launch smoke"],
+                    check=True,
+                    cwd=cwd,
+                    env={
+                        **os.environ,
+                        "PATH": "/usr/bin:/bin",
+                        "CAPTURED_ARGS_PATH": str(captured_args_path),
+                        "CODEX_PONY_BIN": str(stub_codex),
+                        "PERSONALITY": personality,
+                        "USER": os.environ.get("USER", "test-user"),
+                    },
+                )
+
+                captured_args = json.loads(captured_args_path.read_text(encoding="utf-8"))
+                writable_config = next(
+                    arg
+                    for arg in captured_args
+                    if arg.startswith("sandbox_workspace_write.writable_roots=")
+                )
+                writable_roots = json.loads(writable_config.split("=", 1)[1])
+                self.assertIn(shared_git_dir, writable_roots, slug)
+
     def test_installed_wrappers_are_shell_valid(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir) / "project"
