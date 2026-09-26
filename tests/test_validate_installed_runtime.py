@@ -18,6 +18,7 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
         (self.project_root / "pony" / "launch.prompts").mkdir(parents=True)
         (self.project_root / "pony" / "scripts").mkdir(parents=True)
         (self.project_root / "pony" / "bin").mkdir(parents=True)
+        (self.project_root / "pony" / "memory").mkdir(parents=True)
 
         self.source_fingerprint = subprocess.run(
             [str(FINGERPRINT)],
@@ -66,6 +67,12 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
             REPO_ROOT / "pony" / "scripts" / "pony-session-host.py",
             self.project_root / "pony" / "scripts" / "pony-session-host.py",
         )
+        shutil.copy2(
+            REPO_ROOT / "pony" / "scripts" / "output-tail.py",
+            self.project_root / "pony" / "scripts" / "output-tail.py",
+        )
+        (self.project_root / "pony" / "memory" / "twi.md").write_text("# Twilight memory\n", encoding="utf-8")
+        (self.project_root / "pony" / "memory" / "aj.md").write_text("# Applejack memory\n", encoding="utf-8")
 
         (self.project_root / "pony" / "scripts" / "resolve-system-root.sh").write_text(
             "#!/usr/bin/env bash\nprintf '%s\\n' '/tmp/source-root'\n",

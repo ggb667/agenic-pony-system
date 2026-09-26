@@ -427,11 +427,95 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn("- Runtime role: source-repo governance pony.", prompt_text)
             self.assertIn(f"- Active project: {project_root} on branch no-git-branch.", prompt_text)
             self.assertIn(f"- Active workspace: {project_root}.", prompt_text)
-            self.assertIn("- Runtime state: ACTIVE; scope source governance; assigned workfile", prompt_text)
-            self.assertIn("- Prompt and title: prompt label Princess Celestia Sol Invictus ☀︎ ›; terminal title Celestia · project.", prompt_text)
+            self.assertIn("- Startup phase: ORIENTATION_REQUIRED; assigned workfile", prompt_text)
+            self.assertNotIn("- Runtime state:", prompt_text)
+            self.assertIn("- Prompt and title: prompt label Princess Celestia Sol Invictus ☀︎ ›; terminal title Celestia · source-repo governance.", prompt_text)
             self.assertIn(f"- Interoperation: direct live messaging via {project_root / 'pony/bin/pony-tell'}", prompt_text)
             self.assertIn(f"- Feedback and handoff: approval alert via {project_root / 'pony/bin/ponyalert'} PRINCESS_CELESTIA_SOL_INVICTUS", prompt_text)
             self.assertIn("- Startup rule: begin from this pony identity and live runtime context before summarizing any broader developer instructions.", prompt_text)
+
+    def test_generated_prompts_for_every_pony_exclude_mutable_work_state(self) -> None:
+        personalities = {
+            "celestia": ("PRINCESS_CELESTIA_SOL_INVICTUS", "governor-celestia.md"),
+            "twi": ("TWILIGHT_SPARKLE", "coordinator-twi.md"),
+            "aj": ("APPLEJACK", "aj.md"),
+            "fs": ("FLUTTERSHY", "fs.md"),
+            "pinkie": ("PINKIE_PIE", "pinkie.md"),
+            "rarity": ("RARITY", "rarity.md"),
+            "rd": ("RAINBOW_DASH", "rd.md"),
+            "spike": ("SPIKE", "spike.md"),
+        }
+        leaked_values = (
+            "EVH-RD-v58-current-task",
+            "EVH-RD-v32-branch-handoff",
+            "BLOCKED_ON_DEPLOY_TOKEN",
+            "deploy-production-next",
+            "historical-implementation-summary",
+            "v61-local-authoritative-state",
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "EVH"
+            project_root.mkdir()
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            for launcher in ("enter-worker-and-codex.sh", "enter-twi-session.sh"):
+                path = project_root / "pony/scripts" / launcher
+                path.write_text("#!/usr/bin/env bash\nset -euo pipefail\nexit 0\n", encoding="utf-8")
+                path.chmod(0o755)
+
+            for slug, (personality, workfile_name) in personalities.items():
+                workfile = project_root / "pony/work" / workfile_name
+                workfile.write_text(
+                    "Status: EVH-RD-v58-current-task\n"
+                    "Scope: EVH-RD-v32-branch-handoff\n"
+                    "Blocker: BLOCKED_ON_DEPLOY_TOKEN\n"
+                    "Next: deploy-production-next\n"
+                    "Summary: historical-implementation-summary\n",
+                    encoding="utf-8",
+                )
+                status_file = project_root / "pony/team.coordination" / f"{slug}.status.md"
+                status_file.write_text(
+                    "STATUS: EVH-RD-v58-current-task\n"
+                    "BLOCKERS: BLOCKED_ON_DEPLOY_TOKEN\n"
+                    "NEXT_STEP: deploy-production-next\n",
+                    encoding="utf-8",
+                )
+                memory_file = project_root / "pony/memory" / f"{slug}.md"
+                memory_file.parent.mkdir(parents=True, exist_ok=True)
+                memory_file.write_text("v61-local-authoritative-state\n", encoding="utf-8")
+
+                subprocess.run(
+                    [
+                        "bash",
+                        str(project_root / "pony/scripts/start-session.sh"),
+                        personality,
+                        str(project_root),
+                    ],
+                    check=True,
+                    cwd=project_root,
+                    env=os.environ.copy(),
+                )
+
+                prompt_text = (project_root / "pony/runtime" / f"{slug}.launch.prompt.txt").read_text(encoding="utf-8")
+                self.assertIn("- Startup phase: ORIENTATION_REQUIRED", prompt_text)
+                self.assertIn("Orientation-conflict rule:", prompt_text)
+                self.assertIn("exact sources and conflicting values", prompt_text)
+                self.assertIn("remain parked", prompt_text)
+                self.assertIn("explicit post-start instruction", prompt_text)
+                self.assertNotIn("Current condition:", prompt_text)
+                self.assertNotIn("- Runtime state:", prompt_text)
+                for leaked_value in leaked_values:
+                    self.assertNotIn(leaked_value, prompt_text, f"{slug} leaked mutable state")
+
+                if slug == "rd":
+                    self.assertNotIn("v58", prompt_text)
+                    self.assertNotIn("v32", prompt_text)
+                    self.assertNotIn("v61-local-authoritative-state", prompt_text)
 
     def test_start_session_contains_runtime_contract_validation(self) -> None:
         script_text = (REPO_ROOT / "pony/scripts/start-session.sh").read_text(encoding="utf-8")

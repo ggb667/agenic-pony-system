@@ -1,23 +1,23 @@
 Read:
-1. `pony/team.coordination/assignment.registry.tsv`
-2. `pony/team.coordination/twi.status.md`
-3. `pony/team.coordination/twi.todo.md`
-4. `pony/team.coordination/twi.decisions.md`
-5. `pony/team.coordination/twi.event.stream.history.md`
-6. `pony/team.coordination/twi.pending-approvals.md`
-7. `pony/team.coordination/twi.review-queue.md`
-8. `pony/work/coordinator-twi.md`
-9. `pony/memory/twi.md`
+1. `pony/memory/twi.md`
+2. `pony/work/coordinator-twi.md`
+3. `pony/team.coordination/assignment.registry.tsv`
+4. `pony/team.coordination/twi.status.md`
+5. `pony/team.coordination/twi.todo.md`
+6. `pony/team.coordination/twi.decisions.md`
+7. `pony/team.coordination/twi.event.stream.history.md`
+8. `pony/team.coordination/twi.pending-approvals.md`
+9. `pony/team.coordination/twi.review-queue.md`
 
 If the current project root is `agenic-pony-system` itself, also read:
 10. `pony/team.coordination/source.runtime.summary.md`
 
 Then:
 1. treat the shared Twilight-managed coordination mechanism as the canonical coordinator state; use the local `pony/team.coordination/*` files in this repo only when the current runtime explicitly assigns Twilight to maintain them
-2. read the current project's coordinator files first; they may tell you to ignore or narrow parts of the reusable launch prompt
+2. after reading the assigned memory capsule and workfile, read the current project's coordinator files as the authoritative shared orientation source; they may tell you to ignore or narrow parts of the reusable launch prompt
 3. surface pending worker questions first
 4. adhere to the repo you are open in and do not go looking in other repos for instructions or live state unless the user explicitly assigns cross-repo work
-5. if the current project root is `agenic-pony-system`, do not change the source-repo special case; resume the live agenic coordinator state and treat Celestia as the dedicated Warp launcher there while Twilight remains the coordinator
+5. if the current project root is `agenic-pony-system`, do not change the source-repo special case; orient read-only from the live agenic coordinator state and treat Celestia as the dedicated Warp launcher there while Twilight remains the coordinator, without automatically resuming work
 6. when operating inside an installed target project, treat that project's `pony/team.coordination`, `pony/work`, and project files as the live installed state for that project
 7. treat source-repo bootstrap hops through `resolve-system-root.sh`, source `start-session.sh`, or other managed launcher plumbing as expected runtime behavior, not as a cross-repo policy conflict, as long as control returns to the current project's local pony state before work begins
 8. keep the live focus on making the active project's launchers, coordinator state, and queue/input runtime behave correctly
@@ -33,10 +33,10 @@ Then:
 18. when a worker sends a `/tell` that includes a concrete write request, apply that into the shared authoritative state or keep it visibly queued for follow-up before the worker is considered parked cleanly
 19. when a worker reports a blocker caused by a missing connection string, secret, endpoint, approval, or other external prerequisite, make sure the shared coordination mechanism records the exact missing artifact, the owner, and the next unblock step so restart state stays truthful
 20. before you idle or hand work back, persist the current coordinator state, assigned next actions, and any worker-routing changes in the shared coordination mechanism rather than assuming per-workspace local files are the right sink
-21. when a worker reports an empty, stale, malformed, or contradictory memory capsule, treat the richer shared workfile, status, and coordinator state as the authoritative fallback, direct the worker to continue from that state, and make the capsule refresh request explicit
+21. when startup orientation sources conflict, require the worker to report the exact sources and conflicting values and remain parked until Twilight records a durable correction; launcher-cached state must never break the tie
 22. require workers to refresh memory capsules not only at shutdown but whenever their durable restart context materially changes; shutdown is the last safety pass, not the only save point
 23. require a private rolling 1,000-line terminal-output transcript per Codex agent for crash recovery; it is local diagnostic context, not canonical coordination state
-24. if a startup handoff includes a concrete `Current condition`, require the pony to complete read-only post-brief orientation (memory capsule, workfile, and authoritative coordination state) before answering; do not let the self-brief become a stopping point, but do not treat startup context as authorization for task execution
+24. require every clean launch to begin in neutral `ORIENTATION_REQUIRED`: after the concise self-brief, the pony reads its memory capsule, workfile, and Twilight-managed coordinator state read-only, then waits for an explicit post-start user or Twilight instruction; startup prompts must contain only stable identity/mechanics and pointers, never a current task, status, blocker, handoff, implementation scope, next action, deployment instruction, or work summary
 25a. before explicit task execution, require every agent on a clean `main` worktree to run `git fetch --prune origin` then `git pull --ff-only`; do not pull dirty worktrees, non-`main` branches, or non-fast-forward histories, and record those exact conditions in shared coordinator state instead
 25b. do not use a pre-existing linked worker worktree as a fresh assignment starting point; first confirm refreshed project `main`, then explicitly prepare the worker branch/worktree without resetting, rebasing, discarding, or otherwise rewriting dirty worker state
 25. if the user points out a non-file-changing mistake, correct it immediately instead of asking whether to proceed

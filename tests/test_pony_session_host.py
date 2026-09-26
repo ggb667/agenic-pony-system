@@ -63,7 +63,8 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
             self.assertIn("Startup behavior:", host.bootstrap_prompt)
             self.assertIn("Do not run tools, inspect files, call ponydone, or perform extra work", host.bootstrap_prompt)
-            self.assertIn("Dirty-worktree preflight", host.bootstrap_prompt)
+            self.assertIn("ORIENTATION_REQUIRED", host.bootstrap_prompt)
+            self.assertNotIn("Dirty-worktree preflight", host.bootstrap_prompt)
 
     def test_celestia_uses_explicit_codex_args_for_escalate_twi(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -84,7 +85,8 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
             self.assertIn("Startup behavior:", host.bootstrap_prompt)
             self.assertIn("Do not run tools, inspect files, call ponydone, or perform extra work", host.bootstrap_prompt)
-            self.assertIn("Coordinator-routing issue", host.bootstrap_prompt)
+            self.assertIn("ORIENTATION_REQUIRED", host.bootstrap_prompt)
+            self.assertNotIn("Coordinator-routing issue", host.bootstrap_prompt)
 
     def test_worker_escalate_twi_still_launches_codex(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -107,7 +109,8 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
             self.assertIn("Startup behavior:", host.bootstrap_prompt)
             self.assertIn("Do not run tools, inspect files, call ponydone, or perform extra work", host.bootstrap_prompt)
-            self.assertIn("Coordinator-routing issue", host.bootstrap_prompt)
+            self.assertIn("ORIENTATION_REQUIRED", host.bootstrap_prompt)
+            self.assertNotIn("Coordinator-routing issue", host.bootstrap_prompt)
 
     def test_worker_ready_no_llm_still_launches_codex(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -130,7 +133,8 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
             self.assertIn("Startup behavior:", host.bootstrap_prompt)
             self.assertIn("Do not run tools, inspect files, call ponydone, or perform extra work", host.bootstrap_prompt)
-            self.assertIn("no immediate active coding slice", host.bootstrap_prompt)
+            self.assertIn("ORIENTATION_REQUIRED", host.bootstrap_prompt)
+            self.assertNotIn("no immediate active coding slice", host.bootstrap_prompt)
 
     def test_worker_worktree_gets_project_root_writable_dir(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -174,4 +178,5 @@ class PonySessionHostPreflightTests(unittest.TestCase):
             self.assertIn(f'model_instructions_file="{promptfile}"', host.bootstrap_codex_args)
             self.assertIn("Startup behavior:", host.bootstrap_prompt)
             self.assertIn("Do not run tools, inspect files, call ponydone, or perform extra work", host.bootstrap_prompt)
-            self.assertIn("No concrete task is assigned yet", host.bootstrap_prompt)
+            self.assertIn("ORIENTATION_REQUIRED", host.bootstrap_prompt)
+            self.assertNotIn("No concrete task is assigned yet", host.bootstrap_prompt)

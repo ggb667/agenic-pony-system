@@ -123,7 +123,9 @@ fi
 if [[ -f "$installed_prompt" ]]; then
   expect_contains "$installed_prompt" "simple \`/tell\` ping, greeting, acknowledgement, or short live coordination note" "installed Twilight prompt"
   expect_contains "$installed_prompt" "still applies when Twilight is otherwise WAITING, unassigned" "installed Twilight prompt"
-  expect_contains "$installed_prompt" "empty, stale, malformed, or contradictory memory capsule" "installed Twilight prompt"
+  expect_contains "$installed_prompt" "startup orientation sources conflict" "installed Twilight prompt"
+  expect_contains "$installed_prompt" "exact sources and conflicting values" "installed Twilight prompt"
+  expect_contains "$installed_prompt" "ORIENTATION_REQUIRED" "installed Twilight prompt"
   expect_contains "$installed_prompt" "shutdown is the last safety pass, not the only save point" "installed Twilight prompt"
   expect_contains "$installed_prompt" "source.runtime.summary.md" "installed Twilight prompt"
   expect_contains "$installed_prompt" "pony/memory/twi.md" "installed Twilight prompt"

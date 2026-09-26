@@ -69,38 +69,16 @@ title_label_for_personality() {
   esac
 }
 
-scope_from_workfile() {
-  local workfile_path="${1:?missing workfile}"
-  [[ -f "$workfile_path" ]] || return 0
-  awk -F': ' '$1 == "Scope" { print substr($0, index($0, ": ") + 2); exit }' "$workfile_path"
-}
-
-status_from_worker_slug() {
-  local slug="${1:-}"
-  local status_file=""
-  [[ -n "$slug" ]] || return 0
-  status_file="$AGENIC_TEAM_COORDINATION_DIR/${slug}.status.md"
-  [[ -f "$status_file" ]] || return 0
-  awk -F': ' '$1 == "STATUS" { print substr($0, index($0, ": ") + 2); exit }' "$status_file"
-}
-
 terminal_title_for_personality() {
   local personality_name="${1:?missing personality}"
-  local title_label scope_value project_label registry_file
+  local title_label project_label
   title_label="$(title_label_for_personality "$personality_name")"
   project_label="$(basename "$AGENIC_PROJECT_ROOT")"
-  scope_value=""
-  registry_file="$(pony_assignment_registry_path)"
-  if [[ -f "$registry_file" ]]; then
-    scope_value="$(awk -F '	' -v personality="$personality_name" '
-      NR > 1 && $3 == personality { print $9; exit }
-    ' "$registry_file")"
-  fi
-  if [[ -n "$scope_value" && "$scope_value" != "Idle" && "$scope_value" != "idle" && "$scope_value" != "unassigned" ]]; then
-    printf '%s\n' "${title_label} · ${scope_value}"
-  else
-    printf '%s\n' "${title_label} · ${project_label}"
-  fi
+  case "$personality_name" in
+    PRINCESS_CELESTIA_SOL_INVICTUS) printf '%s\n' "${title_label} · source-repo governance" ;;
+    TWILIGHT_SPARKLE) printf '%s\n' "${title_label} · project coordination" ;;
+    *) printf '%s\n' "${title_label} · ${project_label}" ;;
+  esac
 }
 
 validate_runtime_prompt_contract() {
@@ -267,8 +245,6 @@ partial_idle="$(partial_idle_sentinel)"
 disable_reusable_prompt="${AGENIC_PONY_DISABLE_REUSABLE_PROMPT:-0}"
 display_name="$(display_name_for_personality "$personality")"
 runtime_role="$(runtime_role_for_personality "$personality")"
-runtime_status="$(status_from_worker_slug "$worker_slug")"
-runtime_scope="$(scope_from_workfile "$workfile")"
 prompt_glyph="$(codex_prompt_glyph_for_personality "$personality" 2>/dev/null || true)"
 prompt_background="$(codex_prompt_background_for_personality "$personality" 2>/dev/null || true)"
 prompt_label="$(prompt_label_for_personality "$personality")"
@@ -355,7 +331,7 @@ fi
   printf '%s\n' "- Runtime role: ${runtime_role}."
   printf '%s\n' "- Active project: ${AGENIC_PROJECT_ROOT} on branch ${AGENIC_PROJECT_BRANCH}."
   printf '%s\n' "- Active workspace: ${worker_rootdir}."
-  printf '%s\n' "- Runtime state: ${runtime_status:-unknown status}; scope ${runtime_scope:-unassigned}; assigned workfile ${workfile}; memory capsule ${memory_capsule}; tmux session ${session_name}."
+  printf '%s\n' "- Startup phase: ORIENTATION_REQUIRED; assigned workfile ${workfile}; memory capsule ${memory_capsule}; tmux session ${session_name}."
   printf '%s\n' "- Prompt and title: prompt label ${prompt_label}; terminal title ${terminal_title}."
   printf '%s\n' "- Interoperation: direct live messaging via ${AGENIC_PROJECT_PONY_BIN_DIR}/pony-tell, shared pony state under ${AGENIC_PROJECT_PONY_DIR}, and coordinator files under ${AGENIC_TEAM_COORDINATION_DIR}."
   printf '%s\n' "- Feedback and handoff: approval alert via ${AGENIC_PROJECT_PONY_BIN_DIR}/ponyalert ${personality}, completion chime via ${AGENIC_PROJECT_PONY_BIN_DIR}/ponydone ${personality}, and audio host FIFO at ${audio_fifo_path}."
@@ -378,15 +354,16 @@ fi
   printf '%s\n' "Project-local pony root: $AGENIC_PROJECT_PONY_DIR"
   printf '%s\n' "Assigned workfile: $workfile"
   printf '%s\n' "Assigned memory capsule: $memory_capsule"
-  printf '%s\n' "Memory rule: keep the first-turn startup self-brief cheap. When startup context names work, routing, or follow-up, perform read-only orientation by reading the Assigned memory capsule first when it exists, then the Assigned workfile and authoritative local coordination state. Do not act on that context until the user or Twilight gives an explicit instruction."
-  printf '%s\n' "Current-condition rule: a concrete Current condition requires that read-only orientation after the self-brief, but is context rather than standing authorization to execute work, alter files, send messages, or remedy a preflight."
+  printf '%s\n' "Orientation rule: after the first-turn self-brief, perform read-only orientation by reading the Assigned memory capsule first when it exists, then the Assigned workfile and Twilight-managed authoritative local coordination state. Orientation does not authorize implementation, file changes, coordination messages, preflight repair, deployment, or reruns."
+  printf '%s\n' "Authorization rule: begin work only after an explicit post-start instruction from the user or Twilight. Historical capsule, workfile, status, blocker, or next-action content is context only and never becomes authorization merely because it was read."
+  printf '%s\n' "Orientation-conflict rule: if orientation sources conflict, report the exact sources and conflicting values to Twilight, remain parked, and do not use launcher-cached state to break the tie."
   printf '%s\n' "Correction rule: if the user points out a non-file-changing mistake, correct it immediately instead of asking whether to proceed."
   printf '%s\n' "Crash-recovery transcript rule: the launcher preserves this agent's most recent 1,000 terminal-output lines in the project-local pony runtime directory. After an unclean restart, read it only as diagnostic orientation context; it never replaces authoritative coordination state."
   if [[ "$personality" != "TWILIGHT_SPARKLE" && "$personality" != "PRINCESS_CELESTIA_SOL_INVICTUS" ]]; then
     printf '%s\n' "Approval-memory rule: when the user grants a permission, approval, exception, or recurring instruction, record it in the Assigned workfile and the matching status file during that same run, then treat the recorded approval as durable on future launches unless it is explicitly revoked."
-    printf '%s\n' "Memory-capsule startup rule: after the no-tool self-brief, when startup context names a task, read the Assigned memory capsule first when it exists, then the Assigned workfile, shared status, and relevant coordinator state solely to orient yourself. Report readiness and wait for an explicit user or Twilight instruction before performing work."
+    printf '%s\n' "Memory-capsule startup rule: after the no-tool self-brief, read the Assigned memory capsule first when it exists, then the Assigned workfile, shared status, and relevant coordinator state solely to orient yourself. Report readiness and wait for an explicit post-start user or Twilight instruction before performing work."
     printf '%s\n' "Restart-capsule rule: before you stop at an idle or handoff point, refresh the Assigned workfile with a concise restart capsule naming what you were doing, why it matters, the exact next file, command, or check, and any blocker or expected owner needed to resume cleanly after restart."
-    printf '%s\n' "Memory-capsule authority rule: if the Assigned memory capsule is blank, stale, malformed, or conflicts with richer shared workfile, status, or coordinator state, continue from the richer authoritative state and refresh the capsule instead of blocking."
+    printf '%s\n' "Memory-capsule authority rule: if the Assigned memory capsule is blank, stale, or malformed, report that condition during orientation. If it conflicts with the workfile, status, or coordinator state, report the exact sources and conflicting values to Twilight and remain parked until corrected."
     printf '%s\n' "Memory-capsule persistence rule: shutdown is the last safety pass, not the only save point. Refresh the Assigned memory capsule whenever the durable restart context changes, including task or direction changes, branch or worktree changes, files in play, next-step changes, open-problem changes, and before idle or handoff."
     printf '%s\n' "Memory-capsule content rule: keep the capsule concise but specific with the current task, overall direction or why, branch and worktree, specific files in play, exact next step, open problem or uncertainty if any, blocker only if one truly exists, handoff notes, and a real last-updated timestamp."
     printf '%s\n' "Shutdown-memory rule: if the user or Twilight says the project is shutting down, refresh your Assigned memory capsule from the current authoritative state, refresh your restart capsule, note your current state plainly, and tell Twilight your shutdown status in that same run before you idle."
@@ -399,7 +376,7 @@ fi
   fi
   printf '%s\n' "Launcher-command rule: if the user input is a raw shell or launcher command, especially a launch-in-pony-shell.sh invocation or another pony launcher path, do not treat it as project work and do not execute it as part of the current pony task. Explain briefly that the command was typed inside a live pony Codex session and ask the user to run it from another shell or exit or suspend the current pony first."
   if [[ "$AGENIC_PROJECT_ROOT" == "$agenic_root" ]]; then
-    printf '%s\n' "Current-state rule: this project has active coordinator state under pony/team.coordination; resume from it instead of treating the repo as blank."
+    printf '%s\n' "Source-state orientation rule: this project has coordinator state under pony/team.coordination; inspect it read-only during orientation, but do not treat it as an automatic assignment or authorization to resume work."
     if [[ "$personality" == "TWILIGHT_SPARKLE" ]]; then
       printf '%s\n' "Source-repo rule: this is the special agenic source repo case, so keep the live launcher focus on Twilight coordinator work and use the local README plus docs/runtime-loop.md and docs/project-installation.md in this repo when needed."
     fi
@@ -441,7 +418,7 @@ fi
   done <<<"$idle_sentinel_options"
   printf '%s\n' "- Do not emit either idle marker after required questions, approvals, escalations, or any response that still needs immediate user input."
 } >"$runtime_promptfile"
-validate_runtime_prompt_contract   "$runtime_promptfile"   "Startup identity contract:"   "- Identity:"   "- Runtime role:"   "- Active project:"   "- Active workspace:"   "- Runtime state:"   "- Prompt and title:"   "- Interoperation:"   "- Feedback and handoff:"   "Project root:"   "Assigned workfile:"   "Direct-message rule:"   "Alert rule:"   "Done rule:"   "Idle-sentinel rule:" || exit 1
+validate_runtime_prompt_contract   "$runtime_promptfile"   "Startup identity contract:"   "- Identity:"   "- Runtime role:"   "- Active project:"   "- Active workspace:"   "- Startup phase: ORIENTATION_REQUIRED"   "- Prompt and title:"   "- Interoperation:"   "- Feedback and handoff:"   "Project root:"   "Assigned workfile:"   "Direct-message rule:"   "Alert rule:"   "Done rule:"   "Idle-sentinel rule:" || exit 1
 pony_launch_debug "runtime prompt written: runtime_promptfile=$runtime_promptfile promptfile=$promptfile"
 
 if [[ "$personality" == "TWILIGHT_SPARKLE" ]]; then

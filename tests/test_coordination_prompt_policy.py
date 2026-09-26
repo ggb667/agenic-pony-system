@@ -22,7 +22,11 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
             text = (PROMPTS_DIR / f"{prompt_name}.txt").read_text(encoding="utf-8")
             self.assertIn("First-turn startup rule", text)
             self.assertIn("Post-brief orientation rule", text)
-            self.assertIn("Memory authority rule", text)
+            self.assertIn("Orientation-conflict rule", text)
+            self.assertIn("Startup-phase rule", text)
+            self.assertIn("ORIENTATION_REQUIRED", text)
+            self.assertIn("exact sources and conflicting values", text)
+            self.assertIn("remain parked", text)
             self.assertIn("Memory persistence rule", text)
             self.assertIn("Memory content rule", text)
             self.assertIn("Crash-recovery transcript rule", text)
@@ -58,7 +62,9 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
         self.assertIn("simple `/tell` ping, greeting, acknowledgement, or short live coordination note", text)
         self.assertIn("answer immediately with a short direct `/tell` reply", text)
         self.assertIn("still applies when Twilight is otherwise WAITING, unassigned", text)
-        self.assertIn("empty, stale, malformed, or contradictory memory capsule", text)
+        self.assertIn("startup orientation sources conflict", text)
+        self.assertIn("exact sources and conflicting values", text)
+        self.assertIn("ORIENTATION_REQUIRED", text)
         self.assertIn("shutdown is the last safety pass, not the only save point", text)
         self.assertNotIn(
             "treat `pony/work/*.md` as the canonical home for worker-local task state",

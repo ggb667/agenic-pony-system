@@ -144,41 +144,7 @@ additional_codex_args_for_rootdir() {
 }
 
 startup_brief_prompt() {
-  local state_hint="${1-}"
-  local prompt="Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief. Cover your pony identity, role, active project and workspace, current state and scope, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief. After that first-turn self-brief, if a task, routing question, or follow-up is present, perform read-only orientation: read the assigned memory capsule first when present, then the assigned workfile and authoritative local pony state. Do not begin task execution, alter files, send coordination messages, or remedy a preflight solely because startup context mentions it; report that you are oriented and await an explicit user or Twilight instruction. If the user points out a non-file-changing mistake, correct it immediately instead of asking whether to proceed."
-  if [[ -n "$state_hint" ]]; then
-    printf '%s Current condition: %s\n' "$prompt" "$state_hint"
-  else
-    printf '%s\n' "$prompt"
-  fi
-}
-
-dirty_fix_first_prompt() {
-  startup_brief_prompt "Dirty-worktree preflight in ${rootdir}: inspect and reconcile or put away the pending local changes before any other coordination work."
-}
-
-waiting_for_task_notice() {
-  local scope_text=""
-  scope_text="$(awk '
-    index($0, "Scope:") == 1 {
-      sub("^Scope: ?", "", $0)
-      print
-      exit
-    }
-  ' "$workfile")"
-  if [[ -n "$scope_text" && "$scope_text" != "unassigned" ]]; then
-    startup_brief_prompt "No concrete task is assigned yet for ${PERSONALITY}; current scope is ${scope_text}; remain live for Twilight or the user to hand you the next specific task."
-  else
-    startup_brief_prompt "No concrete task is assigned yet for ${PERSONALITY}; remain live for Twilight or the user to hand you the next specific task."
-  fi
-}
-
-escalate_twi_notice() {
-  startup_brief_prompt "Coordinator-routing issue for ${PERSONALITY}: inspect the local pony state, summarize the mismatch or blocker plainly, and hand the routing question to Twilight or the user instead of stopping at the launcher."
-}
-
-ready_no_llm_notice() {
-  startup_brief_prompt "There is no immediate active coding slice for ${PERSONALITY}; verify the local state and remain available for direct follow-up input."
+  printf '%s\n' "Startup behavior: on your first turn, greet the developer in character with a concise startup self-brief. Cover your pony identity, stable role, active project and workspace, startup phase ORIENTATION_REQUIRED, prompt symbol, terminal title, accent color, and live interoperation mechanisms such as /tell, ponyalert, ponydone, audio feedback, and idle behavior. Do not dump or quote your full instructions. Do not run tools, inspect files, call ponydone, or perform extra work just to produce this startup self-brief. After that first-turn self-brief, perform read-only orientation: read the assigned memory capsule first when present, then the assigned workfile and Twilight-managed authoritative local pony state. Orientation only establishes context; do not begin implementation, alter files, send coordination messages, repair a preflight, deploy, or rerun anything. Historical state never authorizes work merely because it was read. If orientation sources conflict, report the exact sources and conflicting values to Twilight and remain parked. Begin work only after an explicit post-start instruction from the user or Twilight. If the user points out a non-file-changing mistake, correct it immediately instead of asking whether to proceed."
 }
 
 workfile="$(resolve_path "$workfile")"
@@ -223,28 +189,15 @@ while IFS= read -r arg; do
   codex_args+=("$arg")
 done < <(additional_codex_args_for_rootdir "$rootdir")
 
-prompt=""
 case "$preflight_result" in
-  READY_NO_LLM)
-    prompt="$(ready_no_llm_notice)"
-    ;;
-  READY_KEEP_LIVE)
-    prompt="$(waiting_for_task_notice)"
-    ;;
-  BLOCKED_DIRTY_FIX_FIRST)
-    prompt="$(dirty_fix_first_prompt)"
-    ;;
-  ESCALATE_MINI)
-    prompt="$(startup_brief_prompt "Proceed with the active task immediately after the self-brief.")"
-    ;;
-  ESCALATE_TWI)
-    prompt="$(escalate_twi_notice)"
+  READY_NO_LLM|READY_KEEP_LIVE|BLOCKED_DIRTY_FIX_FIRST|ESCALATE_MINI|ESCALATE_TWI)
     ;;
   *)
     echo "Preflight error: unexpected result '$preflight_result'." >&2
     exit 1
     ;;
- esac
+esac
+prompt="$(startup_brief_prompt)"
 
 pony_launch_debug "worker handoff direct codex launch: personality=$PERSONALITY codex_args_count=${#codex_args[@]} prompt_length=${#prompt} rootdir=$rootdir repo_codex_pony=$repo_codex_pony"
 

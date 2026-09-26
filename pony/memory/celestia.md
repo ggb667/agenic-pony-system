@@ -2,16 +2,16 @@
 
 Project: agenic-pony-system
 Branch: main
-Status snapshot: active
-Last updated: 2026-09-22T09:58:00-04:00
+Status snapshot: hold
+Last updated: 2026-09-26T08:56:06-04:00
 
 Memory capsule:
-- task: establish durable versus ephemeral `/tell` semantics for offline inter-project delivery
-- why: the Codex TUI does append to a configured offline recipient inbox, but current messages expire after one hour and unread messages coalesce by sender—incorrect for governance/enhancement requests
-- files: pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}; docs/runtime-loop.md; pony/memory/celestia.md
-- next: await Codex Pinkie's implementation report through Codex Twilight, then review the TUI contract and align source validation/documentation
-- blocker: none; Codex Twilight received the exact protocol request and is coordinating Pinkie's implementation
-- handoff: source policy records that configured `messageLogPath` delivery works while the recipient is offline, but only for ephemeral traffic. Codex Twilight received the required durable IPC contract in message `8c8da1e6-e61d-4af2-84ec-86a70f35084f`: delivery class, non-expiry/non-coalescing, persistent receipt ledger, and configured cross-project endpoint requirements.
+- task: remove mutable worker-state serialization from launcher-generated startup prompts
+- why: immutable/high-priority startup prompts must establish identity and safety without injecting stale tasks, statuses, blockers, handoffs, scopes, next actions, deploy directions, or work summaries
+- files: pony/scripts/{start-session.sh,enter-worker-and-codex.sh,pony-session-host.py}; pony/launch.prompts/*; tests/{test_prompt_glyph.py,test_pony_session_host.py,test_coordination_prompt_policy.py,test_validate_installed_runtime.py}; docs/{runtime-loop.md,project-installation.md}; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
+- next: await Twilight review and managed target-project refresh; no installed target runtime was changed in this run
+- blocker: none
+- handoff: startup now uses neutral `ORIENTATION_REQUIRED`, reads memory/workfile/Twilight-managed state only during post-brief read-only orientation, requires exact conflict reporting and parking, and waits for an explicit post-start user or Twilight instruction. All 51 source tests pass, including generated-prompt coverage for all eight ponies and the EVH Rainbow Dash v58/v32 leak fixture.
 - 2026-09-14 governance decision: before explicit task execution, every clean `main` worktree must run `git fetch --prune origin` then `git pull --ff-only`; dirty/non-main/non-fast-forward state is recorded for Twilight rather than auto-pulled. Existing linked worker worktrees are not fresh assignment starts—Twilight must confirm refreshed `main` and explicitly prepare them without rewriting dirty worker state.
 - 2026-09-14 restart handoff: Twilight delivered three correctly routed messages to `pony/runtime/pony.chat.jsonl`; the durable rollout handoff is entry `e87d8f89-70ca-4e07-ab6f-1508fdd08d4d`. Pinkie IPC changes are in Codex commit `a8b48089ac`; the shared `codex-tui` rebuild is complete. This Celestia process started before that rebuild and did not surface the queued lane automatically. User authorized a restart after state was saved.
 - 2026-09-15 EVH launcher incident: an interrupted managed refresh left `pony/runtime/install-project.state=failed` and an empty `install-project.lock/`; all subsequent launches waited indefinitely before Codex. Recovery removed the stale lock and restored EVH to `complete`. Source now reclaims ownerless locks and locks owned by dead local PIDs (never another host); source files are dirty alongside pre-existing coordination changes, and the focused lock-policy tests pass.
