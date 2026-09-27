@@ -3,15 +3,15 @@
 Project: agenic-pony-system
 Branch: main
 Status snapshot: hold
-Last updated: 2026-09-26T22:06:28-04:00
+Last updated: 2026-09-26T22:33:22-04:00
 
 Memory capsule:
-- task: fix transient recursive worktree preparation during managed worker launch
-- why: an EVH Rainbow Dash launch briefly resolved its own checkout as a project root, created a nested Applejack worktree, then collided with the already-registered Pinkie branch
-- files: pony/scripts/pony-paths.sh; tests/test_prompt_glyph.py; docs/project-installation.md; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
-- next: await Twilight review and explicit authorization for target refresh/relaunch verification; the source fix is pushed but no target cleanup or rollout was performed
+- task: enforce complete-unit execution and narrow valid dependency blockers in launcher/runtime governance
+- why: EVH Rainbow Dash stopped after inspection and treated an ordinary buildable OCR dependency as a blocker despite an explicit end-to-end instruction and interim-silence direction
+- files: pony/scripts/start-session.sh; pony/launch.prompts/*.txt; tests/{test_coordination_prompt_policy.py,test_prompt_glyph.py}; docs/{runtime-loop.md,project-installation.md}; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
+- next: await Twilight review and any separately authorized managed target refresh; no EVH refresh, relaunch, deploy, or target-state mutation was performed
 - blocker: none
-- handoff: `detect_project_root` now walks ancestor managed configs and chooses the outermost matching owner for `<project>/pony/worktrees/*`, so a missing local config or stale recursive inner config normalizes back to the true project root. Source commit `f22edc2` is pushed; 53/53 tests pass, including missing-config and stale-nested-config installation regressions plus live read-only resolution of both EVH RD and its preserved nested AJ checkout to `/home/ggb66/dev/EVH`. The original failure log was replaced by the successful retry log; existing EVH worktrees and dirty state were not cleaned, reset, stashed, or rewritten.
+- handoff: source commit `dbeec87` is pushed. All generated prompts and role templates now define ordinary dependency discovery/acquisition/build/integration as part of a complete unit, require bounded fix/test/build/deploy/retest loops to reach their success criterion, suppress premature commentary under an explicit no-response-until-complete instruction, and reserve blocker escalation for genuinely unavailable external prerequisites named with owner and unblock step. The full suite passes 53/53. Existing EVH state was preserved and no target rollout was inferred.
 - 2026-09-14 governance decision: before explicit task execution, every clean `main` worktree must run `git fetch --prune origin` then `git pull --ff-only`; dirty/non-main/non-fast-forward state is recorded for Twilight rather than auto-pulled. Existing linked worker worktrees are not fresh assignment starts—Twilight must confirm refreshed `main` and explicitly prepare them without rewriting dirty worker state.
 - 2026-09-14 restart handoff: Twilight delivered three correctly routed messages to `pony/runtime/pony.chat.jsonl`; the durable rollout handoff is entry `e87d8f89-70ca-4e07-ab6f-1508fdd08d4d`. Pinkie IPC changes are in Codex commit `a8b48089ac`; the shared `codex-tui` rebuild is complete. This Celestia process started before that rebuild and did not surface the queued lane automatically. User authorized a restart after state was saved.
 - 2026-09-15 EVH launcher incident: an interrupted managed refresh left `pony/runtime/install-project.state=failed` and an empty `install-project.lock/`; all subsequent launches waited indefinitely before Codex. Recovery removed the stale lock and restored EVH to `complete`. Source now reclaims ownerless locks and locks owned by dead local PIDs (never another host); source files are dirty alongside pre-existing coordination changes, and the focused lock-policy tests pass.

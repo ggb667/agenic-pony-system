@@ -12,6 +12,6 @@ PUSH_STATUS: clean_synchronized
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
 BLOCKERS: none
-NEXT_STEP: await Twilight review and explicit authorization for managed target refresh/relaunch verification of source fix f22edc2; preserve all existing EVH worktrees and dirty state
+NEXT_STEP: await Twilight review and any separately authorized managed target refresh for complete-unit governance source commit dbeec87; preserve EVH state and do not infer refresh, relaunch, deploy, or target mutation
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
