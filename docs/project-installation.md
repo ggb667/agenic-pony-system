@@ -122,6 +122,7 @@ For git-backed installs, the default worker policy is:
 - ordinary workers get linked git worktrees under `pony/worktrees/<slug>/`
 - ordinary worker branch names default to `pony/<slug>/main`
 - those worker worktrees are the paths recorded in `pony/team.coordination/assignment.registry.tsv`
+- if a managed worktree's local `pony/pony.system.config.yaml` is missing during a concurrent or interrupted refresh, root detection must recover through the owning project's ancestor config and the reserved `<project>/pony/worktrees/*` layout; installation must normalize to the owner rather than creating recursive worktrees inside the worker checkout
 - when a worker launches from a linked worktree, its Codex sandbox must also add the project root as an extra writable directory so `pony/team.coordination/*` and `pony/work/*` remain writable from that session
 - commit-capable worker or Twilight sessions must mount the entire repository Git common directory as a writable root; for ordinary and linked worktrees this normally means `<project>/.git/`, which already contains linked-worktree indexes and shared refs/objects
 - this shared `.git` access is a deliberate trusted-collaborator capability and a polite coordination boundary, not branch-level security isolation; assigned worktrees remain the normal place to work, but ponies may exchange code, commits, and artifacts across worktrees when coordination requires it

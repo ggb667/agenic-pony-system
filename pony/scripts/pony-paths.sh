@@ -42,8 +42,10 @@ pony_launch_prompts_dir="$pony_root/launch.prompts"
 detect_project_root() {
   local start_dir="${1:-$PWD}"
   local candidate_root=""
+  local probe_root=""
   local config_path=""
   local configured_project_root=""
+  local resolved_project_root=""
 
   if git -C "$start_dir" rev-parse --show-toplevel >/dev/null 2>&1; then
     candidate_root="$(git -C "$start_dir" rev-parse --show-toplevel)"
@@ -51,13 +53,33 @@ detect_project_root() {
     candidate_root="$(cd "$start_dir" && pwd)"
   fi
 
-  config_path="$candidate_root/pony/pony.system.config.yaml"
-  if [[ -f "$config_path" ]]; then
-    configured_project_root="$(awk -F': ' '$1 == "project_root" {print substr($0, index($0, ": ") + 2); exit}' "$config_path")"
-    if [[ -n "$configured_project_root" && -d "$configured_project_root" ]]; then
-      cd "$configured_project_root" && pwd
-      return 0
+  # A managed linked worktree normally carries a tiny pony config pointing
+  # back to its owning project. During a concurrent or interrupted refresh,
+  # that local file may briefly be absent. Walk upward and recognize the
+  # reserved <project>/pony/worktrees/* layout so a worker launch can never
+  # bootstrap another pony runtime recursively inside its own worktree.
+  probe_root="$candidate_root"
+  while [[ -n "$probe_root" ]]; do
+    config_path="$probe_root/pony/pony.system.config.yaml"
+    if [[ -f "$config_path" ]]; then
+      configured_project_root="$(awk -F': ' '$1 == "project_root" {print substr($0, index($0, ": ") + 2); exit}' "$config_path")"
+      if [[ -n "$configured_project_root" && -d "$configured_project_root" ]]; then
+        configured_project_root="$(cd "$configured_project_root" && pwd)"
+        if [[ "$candidate_root" == "$configured_project_root" || "$candidate_root" == "$configured_project_root"/pony/worktrees/* ]]; then
+          # Keep walking. A partially bootstrapped recursive worktree may
+          # contain a stale inner config; the outermost matching owner is the
+          # authoritative managed project root.
+          resolved_project_root="$configured_project_root"
+        fi
+      fi
     fi
+    [[ "$probe_root" != "/" ]] || break
+    probe_root="$(dirname "$probe_root")"
+  done
+
+  if [[ -n "$resolved_project_root" ]]; then
+    printf '%s\n' "$resolved_project_root"
+    return 0
   fi
 
   printf '%s\n' "$candidate_root"

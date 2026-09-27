@@ -49,6 +49,7 @@ Contract: Distills the stable source-repo rules from `README.md`, `docs/runtime-
 - commit-capable pony sessions receive the entire repository Git common directory (normally `<project>/.git`) as writable under `workspace-write`; this is a trusted, polite coordination boundary that permits cross-worktree code, commit, and artifact exchange, while destructive history rewrites still require explicit direction
 - installed copies under `<project-root>/pony/` should be refreshed when managed prompts, scripts, or runtime files change
 - install-refresh locks must not strand later launches: reclaim an ownerless lock or one whose recorded local PID is dead, but leave locks attributed to another host alone
+- launcher/install root resolution must remain idempotent when a managed worktree's local config is missing during refresh: resolve `<project>/pony/worktrees/*` through the owning project's ancestor config so bootstrap never creates recursive worker worktrees inside another worker checkout
 - project-local `pony/runtime/runtime.state` should use `ready` as the canonical parked token; stale `idle` values should be normalized or treated as drift
 - lightweight parked-host behavior and editor/tmux continuity should not be Celestia-only; ordinary pony relaunches should preserve local draft/history state unless the operator explicitly resets them or the runtime is removing stale transport state
 - runtime validation should happen from the installed target project's `pony/` tree

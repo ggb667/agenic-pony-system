@@ -358,6 +358,7 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn(f"pony/aj/main\t{project_root / 'pony/worktrees/aj'}", registry_text)
             self.assertIn(f"main\t{project_root}", registry_text)
             self.assertTrue((project_root / "pony/worktrees/aj/.git").exists())
+
             self.assertIn(
                 f'project_root="{project_root}"',
                 (project_root / "pony/worktrees/aj/pony/scripts/start-session.sh").read_text(encoding="utf-8"),
@@ -411,6 +412,84 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn("No pending user approvals.", pending_approvals)
             self.assertIn("Generated helper output only.", review_queue)
             self.assertIn("durable_coordination_history: none", event_history)
+
+    def test_install_from_worker_worktree_without_local_config_reuses_owning_project(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+            subprocess.run(["git", "init", "-b", "main"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.name", "Test User"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], check=True, cwd=project_root)
+            (project_root / "README.md").write_text("idempotent worktree install\n", encoding="utf-8")
+            subprocess.run(["git", "add", "README.md"], check=True, cwd=project_root)
+            subprocess.run(["git", "commit", "-m", "init"], check=True, cwd=project_root)
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            rd_worktree = project_root / "pony/worktrees/rd"
+            local_config = rd_worktree / "pony/pony.system.config.yaml"
+            local_config.unlink()
+            before = subprocess.run(
+                ["git", "worktree", "list", "--porcelain"],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+            ).stdout
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/install-project.sh"), str(rd_worktree)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            after = subprocess.run(
+                ["git", "worktree", "list", "--porcelain"],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+            ).stdout
+            self.assertEqual(after, before)
+            self.assertFalse((rd_worktree / "pony/worktrees").exists())
+            self.assertTrue(local_config.exists())
+            self.assertIn(f"project_root: {project_root}", local_config.read_text(encoding="utf-8"))
+            self.assertEqual(
+                (project_root / "pony/runtime/install-project.state").read_text(encoding="utf-8"),
+                "complete\n",
+            )
+
+            nested_root = rd_worktree / "pony/worktrees/aj"
+            nested_root.mkdir(parents=True)
+            subprocess.run(["git", "init", "-b", "pony/aj/main"], check=True, cwd=nested_root)
+            nested_config = nested_root / "pony/pony.system.config.yaml"
+            nested_config.parent.mkdir(parents=True)
+            nested_config.write_text(
+                f"project_name: stale-inner-runtime\nproject_root: {rd_worktree}\n",
+                encoding="utf-8",
+            )
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/install-project.sh"), str(nested_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+            after_stale_nested_config = subprocess.run(
+                ["git", "worktree", "list", "--porcelain"],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+            ).stdout
+            self.assertEqual(after_stale_nested_config, before)
+            self.assertEqual(
+                (project_root / "pony/runtime/install-project.state").read_text(encoding="utf-8"),
+                "complete\n",
+            )
 
     def test_git_project_bootstrap_keeps_generated_pony_tree_out_of_status_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
