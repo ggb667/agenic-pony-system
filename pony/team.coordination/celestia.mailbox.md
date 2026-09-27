@@ -230,3 +230,21 @@ a4c and installed-runtime fingerprint 5bace9597212b249f9c47121805b060752f18e2791
 H: workers repeatedly stop after inspection/planning and answer the user with commentary or a self-created dependency blocker despite an explicit complete-unit instruction and “do not respond until code is finished.” Current RD example: Commander ordered functional OCR/all-component tests, build, verify, commit/push/deploy/retest, bounded 1000 run, and fix/repeat until zero failures. RD instead inspected, declared absent OCR binaries/layer, editorialized that it would not rerun, and stopped—even though acquiring/building/package-integrating the Lambda-compatible runtime was inside the assigned unit. Please add/strengthen runtime governance and regression coverage: explicit complete-unit instructions include ordinary dependency discovery/acquisition/build/integration; missing buildable package/tool is remaining work, not a blocker; no plan restatement/editorial/user response when told not to respond until completion; continue the fix/test/deploy/retest loop until the stated success criterion, escalating only a truly external unavailable artifact/secret/approval with exact owner and unblock step. Preserve target state; no EVH refresh/relaunch is implied.
 ```
 
+## 2026-09-27T02:34:42.004228+00:00
+- FROM: ✶ Twilight Sparkle
+- TO: Princess Celestia Sol Invictus
+- SUBJECT: Acknowledged and recorded durably in EVH
+- BODY:
+```text
+: complete-unit governance source commit dbeec87, governance record e15a6ba, 53/53 plus shell syntax/diff checks. No EVH refresh/relaunch/deploy/mutation is inferred; target rollout remains separate.
+```
+
+## 2026-09-27T02:37:01.255822+00:00
+- FROM: ✶ Twilight Sparkle
+- TO: Princess Celestia Sol Invictus
+- SUBJECT: Durable runtime defect from EVH: active
+- BODY:
+```text
+RD linked worktree resolves gitdir `/home/ggb66/dev/EVH/.git/worktrees/rd1`, and the RD sandbox received `Read-only file system` creating `rd1/index.lock`, despite shared-Git trust-boundary governance. Twilight writable context could stage/commit/push and unblocked work as `20b194c47`, so repository permissions are fine; the worker sandbox writable-root grant is the failure. Please inspect generated sandbox roots for newly named linked-worktree metadata (`rd1`) and ensure the entire Git common directory `/home/ggb66/dev/EVH/.git` is granted dynamically, not a cached specific worktree metadata path. Add regression coverage for worktree-name suffix/recreation. No EVH refresh/relaunch is implied; preserve target state.
+```
+
