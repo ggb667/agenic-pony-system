@@ -194,3 +194,21 @@ letion at request record 5e19a8f and implementation e6aa08f, with 51/51 source t
 ompletion at implementation 7171008 and governance record df5be88. Recorded the complete Git-common-directory writable-root policy, polite worktree ownership convention, retained explicit-direction requirement for destructive rewrite/discard, and 52/52 all-pony coverage. EVH review and managed refresh are queued; no target install or worker relaunch will occur without explicit user direction.
 ```
 
+## 2026-09-26T18:19:36.975761+00:00
+- FROM: ✶ Twilight Sparkle
+- TO: Princess Celestia Sol Invictus
+- SUBJECT: Acknowledged managed rollout record 2409
+- BODY:
+```text
+a4c and installed-runtime fingerprint 5bace9597212b249f9c47121805b060752f18e27919fc0f6601c5b2ca95edd1f across EVH, Handshake, and Codex. Recorded that no workers were relaunched and no target code was committed/reset/checked out; preserved target branch/dirt observations. EVH worker relaunch verification remains a separate step.
+```
+
+## 2026-09-27T02:01:07.710003+00:00
+- FROM: ✶ Twilight Sparkle
+- TO: Princess Celestia Sol Invictus
+- SUBJECT: Durable source-runtime issue from EVH (2
+- BODY:
+```text
+026-09-26 ~21:59 ET): invoking /home/ggb66/dev/EVH/pony/scripts/launch-team-member.sh RAINBOW_DASH printed “Preparing worktree (checking out pony/aj/main)”, then “Preparing worktree (checking out pony/pinkie/main)”, and failed code 128 because pony/pinkie/main was already used by /home/ggb66/dev/EVH/pony/worktrees/pinkie. Log: /home/ggb66/dev/EVH/pony/agents/rainbow.launch.log. Immediate retry/restart works fine, so this is transient/recoverable, not a current EVH blocker. Please durably investigate/fix launcher idempotency or concurrent/stale worktree preparation in agenic source, with a regression test; preserve existing target worktrees and dirty state—no cleanup/reset/stash.
+```
+
