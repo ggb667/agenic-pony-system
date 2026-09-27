@@ -12,6 +12,6 @@ PUSH_STATUS: clean_synchronized
 FILES_PLANNED: pony/bin/*; pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; tests/*
 FILES_TOUCHED: pony/launch.prompts/*; pony/scripts/*; pony/team.coordination/*; pony/work/*; scripts/*; docs/*; tests/*
 BLOCKERS: none
-NEXT_STEP: await Twilight review and any separately authorized managed target refresh for complete-unit governance source commit dbeec87; preserve EVH state and do not infer refresh, relaunch, deploy, or target mutation
+NEXT_STEP: await Twilight review and any separately authorized managed EVH refresh/relaunch verification for dynamic gitdir source commit ae9cc65; preserve target state and do not infer rollout
 QUESTIONS_FOR_TWI: none
 DECISION_NEEDED: none
