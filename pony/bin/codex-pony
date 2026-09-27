@@ -104,7 +104,8 @@ write_agent_session_config "${PERSONALITY:-${AGENIC_LAUNCH_PERSONALITY:-}}"
 workspace_writable_root_args() {
   local personality="${1:-}"
   local session_config="${CODEX_AGENT_CONFIG:-${AGENIC_AGENT_CONFIG_PATH:-}}"
-  python3 - "$personality" "${AGENIC_PROJECT_ROOT:-}" "$session_config" <<'PY'
+  local active_worktree="${PWD}"
+  python3 - "$personality" "${AGENIC_PROJECT_ROOT:-}" "$session_config" "$active_worktree" <<'PY'
 import json
 import subprocess
 import sys
@@ -113,6 +114,7 @@ from pathlib import Path
 personality = sys.argv[1].strip()
 project_root_arg = sys.argv[2].strip()
 session_config_arg = sys.argv[3].strip()
+active_worktree_arg = sys.argv[4].strip()
 roots: list[str] = []
 
 
@@ -138,33 +140,44 @@ def add_runtime_path(path: str | Path | None) -> None:
     add_dir(resolved.parent)
 
 
-def add_shared_git_directory(root: Path) -> None:
-    # Ponies are trusted collaborators. The shared Git directory is a polite
-    # coordination boundary, not branch-level security isolation. Grant the
-    # complete common directory so workers can exchange commits and artifacts
-    # across linked worktrees when coordination requires it.
+def resolve_git_directory(root: Path, absolute_flag: str, fallback_flag: str) -> Path | None:
     result = subprocess.run(
-        ["git", "-C", str(root), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        ["git", "-C", str(root), "rev-parse", "--path-format=absolute", absolute_flag],
         text=True,
         capture_output=True,
         check=False,
     )
     if result.returncode != 0:
         result = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "--git-common-dir"],
+            ["git", "-C", str(root), "rev-parse", fallback_flag],
             text=True,
             capture_output=True,
             check=False,
         )
     if result.returncode != 0:
-        return
+        return None
     candidate = result.stdout.strip()
     if not candidate:
-        return
-    git_dir = Path(candidate).expanduser()
-    if not git_dir.is_absolute():
-        git_dir = root / git_dir
-    add_dir(git_dir)
+        return None
+    git_path = Path(candidate).expanduser()
+    if not git_path.is_absolute():
+        git_path = root / git_path
+    return git_path
+
+
+def add_git_directories(root: Path) -> None:
+    # Ponies are trusted collaborators. The shared Git directory is a polite
+    # coordination boundary, not branch-level security isolation. Grant the
+    # complete common directory so workers can exchange commits and artifacts
+    # across linked worktrees when coordination requires it. Also grant the
+    # active worktree's dynamically resolved administrative directory. Codex
+    # protects linked-worktree metadata as a more-specific path, so this exact
+    # grant must follow worktree recreation (for example rd -> rd1) rather than
+    # being cached by worker slug.
+    common_dir = resolve_git_directory(root, "--git-common-dir", "--git-common-dir")
+    worktree_dir = resolve_git_directory(root, "--absolute-git-dir", "--git-dir")
+    add_dir(common_dir)
+    add_dir(worktree_dir)
 
 
 def add_project_scope(root: Path) -> None:
@@ -172,11 +185,14 @@ def add_project_scope(root: Path) -> None:
     add_dir(root / "pony" / "runtime")
     add_dir(root / "pony" / "team.coordination")
     add_dir(root / "pony" / "work")
-    add_shared_git_directory(root)
+    add_git_directories(root)
 
 
 if project_root_arg:
     add_project_scope(Path(project_root_arg))
+
+if active_worktree_arg:
+    add_git_directories(Path(active_worktree_arg))
 
 if session_config_arg:
     config_path = Path(session_config_arg).expanduser()

@@ -199,6 +199,96 @@ class PromptGlyphTests(unittest.TestCase):
                 )
                 writable_roots = json.loads(writable_config.split("=", 1)[1])
                 self.assertIn(shared_git_dir, writable_roots, slug)
+                active_git_dir = subprocess.run(
+                    ["git", "rev-parse", "--path-format=absolute", "--absolute-git-dir"],
+                    check=True,
+                    cwd=cwd,
+                    text=True,
+                    capture_output=True,
+                ).stdout.strip()
+                self.assertIn(active_git_dir, writable_roots, slug)
+
+    def test_recreated_worker_resolves_suffixed_gitdir_dynamically(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+            subprocess.run(["git", "init", "-b", "main"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.name", "Test User"], check=True, cwd=project_root)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], check=True, cwd=project_root)
+            (project_root / "README.md").write_text("dynamic gitdir test\n", encoding="utf-8")
+            subprocess.run(["git", "add", "README.md"], check=True, cwd=project_root)
+            subprocess.run(["git", "commit", "-m", "init"], check=True, cwd=project_root)
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            worktrees = project_root / "pony/worktrees"
+            original_rd = worktrees / "rd"
+            recovery_rd = worktrees / "rd-recovery"
+            subprocess.run(
+                ["git", "worktree", "move", str(original_rd), str(recovery_rd)],
+                check=True,
+                cwd=project_root,
+            )
+            subprocess.run(
+                ["git", "worktree", "add", "-b", "pony/rd/recreated", str(original_rd), "main"],
+                check=True,
+                cwd=project_root,
+            )
+
+            active_git_dir = subprocess.run(
+                ["git", "rev-parse", "--path-format=absolute", "--absolute-git-dir"],
+                check=True,
+                cwd=original_rd,
+                text=True,
+                capture_output=True,
+            ).stdout.strip()
+            self.assertEqual(active_git_dir, str(project_root / ".git/worktrees/rd1"))
+
+            captured_args_path = project_root / "captured-args.json"
+            stub_codex = project_root / "stub-codex.py"
+            stub_codex.write_text(
+                textwrap.dedent(
+                    """\
+                    #!/usr/bin/env python3
+                    import json
+                    import os
+                    import sys
+                    from pathlib import Path
+
+                    Path(os.environ["CAPTURED_ARGS_PATH"]).write_text(json.dumps(sys.argv[1:]))
+                    """
+                ),
+                encoding="utf-8",
+            )
+            stub_codex.chmod(0o755)
+
+            subprocess.run(
+                ["bash", str(project_root / "pony/bin/codex-pony"), "launch smoke"],
+                check=True,
+                cwd=original_rd,
+                env={
+                    **os.environ,
+                    "PATH": "/usr/bin:/bin",
+                    "CAPTURED_ARGS_PATH": str(captured_args_path),
+                    "CODEX_PONY_BIN": str(stub_codex),
+                    "PERSONALITY": "RAINBOW_DASH",
+                    "USER": os.environ.get("USER", "test-user"),
+                },
+            )
+
+            captured_args = json.loads(captured_args_path.read_text(encoding="utf-8"))
+            writable_config = next(
+                arg
+                for arg in captured_args
+                if arg.startswith("sandbox_workspace_write.writable_roots=")
+            )
+            writable_roots = json.loads(writable_config.split("=", 1)[1])
+            self.assertIn(str((project_root / ".git").resolve()), writable_roots)
+            self.assertIn(active_git_dir, writable_roots)
+            self.assertNotIn(str(project_root / ".git/worktrees/rd"), writable_roots)
 
     def test_installed_wrappers_are_shell_valid(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
