@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+usage() {
+  cat <<'EOF'
+Usage:
+  tellMeWhenDone [--to <pony-name|all>] [--] <command> [args...]
+
+Run a client-side command, preserve its stdout, stderr, and exact exit status,
+then attempt exactly one structured pony completion notice. The notice subject
+is "done" and its body contains the shell-escaped command and exit status.
+Notification failure never changes the command result.
+EOF
+}
+
+target="all"
+case "${1:-}" in
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  --to)
+    [[ $# -ge 3 ]] || {
+      usage >&2
+      exit 64
+    }
+    target="$2"
+    shift 2
+    ;;
+esac
+
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
+
+[[ $# -gt 0 ]] || {
+  usage >&2
+  exit 64
+}
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+pony_tell="$script_dir/pony-tell"
+
+"$@"
+command_rc=$?
+
+printf -v command_text '%q ' "$@"
+command_text="${command_text% }"
+
+if [[ -x "$pony_tell" ]]; then
+  "$pony_tell" "$target" \
+    $'Subject: done\nBody: '"$command_text (exit=$command_rc)" \
+    >/dev/null 2>&1 || true
+fi
+
+exit "$command_rc"

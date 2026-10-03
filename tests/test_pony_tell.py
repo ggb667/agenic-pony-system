@@ -515,6 +515,80 @@ class PonyTellTests(unittest.TestCase):
                 str(codex_root / "pony" / "runtime" / "pony.chat.jsonl"),
             )
 
+    def test_cross_project_route_survives_offline_after_historical_discovery(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            source_root = tmp / "agenic-pony-system"
+            codex_root = tmp / "codex"
+            source_runtime = source_root / "pony" / "runtime"
+            source_runtime.mkdir(parents=True)
+            (source_root / "pony" / "pony.system.config.yaml").write_text(
+                "project_name: agenic-pony-system\nproject_root: " + str(source_root) + "\n",
+                encoding="utf-8",
+            )
+            (codex_root / "pony").mkdir(parents=True)
+            (codex_root / "pony" / "pony.system.config.yaml").write_text(
+                "project_name: codex\nproject_root: " + str(codex_root) + "\n",
+                encoding="utf-8",
+            )
+            registry_log = source_runtime / "pony.registry.jsonl"
+            registry_log.write_text("", encoding="utf-8")
+            message_log = source_runtime / "pony.chat.jsonl"
+            message_log.write_text(
+                json.dumps(
+                    {
+                        "id": "historical-message",
+                        "project_root": str(codex_root),
+                        "from_instance_id": "old-twi-codex",
+                        "from_agent_id": "TWILIGHT_SPARKLE",
+                        "to_agent_id": "PRINCESS_CELESTIA_SOL_INVICTUS",
+                        "created_at": "2000-01-01T00:00:00Z",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            config_path = source_runtime / "celestia.agent-session.json"
+            command = [
+                "python3",
+                str(AGENT_CONFIG),
+                "write-session",
+                "--agent",
+                "PRINCESS_CELESTIA_SOL_INVICTUS",
+                "--project-root",
+                str(source_root),
+                "--output",
+                str(config_path),
+                "--registry-path",
+                str(registry_log),
+                "--message-log-path",
+                str(message_log),
+            ]
+
+            subprocess.run(command, check=True, capture_output=True, text=True, env=os.environ)
+            route_table = source_runtime / "agent.routes.json"
+            self.assertTrue(route_table.exists())
+            first_payload = json.loads(config_path.read_text(encoding="utf-8"))
+            self.assertEqual(first_payload["routeTablePath"], str(route_table))
+            self.assertIn(
+                "CODEX:TWILIGHT_SPARKLE",
+                [agent["routeId"] for agent in first_payload["agents"]],
+            )
+
+            message_log.write_text("", encoding="utf-8")
+            subprocess.run(command, check=True, capture_output=True, text=True, env=os.environ)
+            second_payload = json.loads(config_path.read_text(encoding="utf-8"))
+            offline_twilight = next(
+                agent
+                for agent in second_payload["agents"]
+                if agent["routeId"] == "CODEX:TWILIGHT_SPARKLE"
+            )
+            self.assertEqual(offline_twilight["projectRoot"], str(codex_root))
+            self.assertEqual(
+                offline_twilight["messageLogPath"],
+                str(codex_root / "pony" / "runtime" / "pony.chat.jsonl"),
+            )
+
     def test_pony_tell_uses_source_agent_config_when_project_copy_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)

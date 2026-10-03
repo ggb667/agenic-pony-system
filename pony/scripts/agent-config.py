@@ -168,7 +168,7 @@ def read_live_registry(registry_path: Path, roster: dict[str, AgentMeta]) -> lis
     return list(latest.values())
 
 
-def read_live_chat_targets(
+def read_chat_targets(
     message_log_path: Path,
     roster: dict[str, AgentMeta],
     *,
@@ -176,7 +176,6 @@ def read_live_chat_targets(
 ) -> list[dict[str, str]]:
     if not message_log_path.exists():
         return []
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=6)
     latest: dict[tuple[str, str], dict[str, str]] = {}
     for raw in message_log_path.read_text(encoding="utf-8").splitlines():
         raw = raw.strip()
@@ -187,12 +186,6 @@ def read_live_chat_targets(
         except json.JSONDecodeError:
             continue
         if not isinstance(entry, dict):
-            continue
-        try:
-            created_at = datetime.fromisoformat(entry["created_at"].replace("Z", "+00:00"))
-        except Exception:
-            continue
-        if created_at < cutoff:
             continue
         remote_personality = normalize(entry.get("from_agent_id", ""))
         remote_project_root = entry.get("project_root", "")
@@ -217,6 +210,66 @@ def read_live_chat_targets(
             "instance_id": remote_instance_id,
         }
     return list(latest.values())
+
+
+def read_route_table(
+    route_table_path: Path,
+    roster: dict[str, AgentMeta],
+    *,
+    current_project_root: Path,
+) -> list[dict[str, str]]:
+    if not route_table_path.exists():
+        return []
+    try:
+        payload = json.loads(route_table_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
+    if not isinstance(payload, dict) or not isinstance(payload.get("routes"), list):
+        return []
+
+    result: list[dict[str, str]] = []
+    for raw in payload["routes"]:
+        if not isinstance(raw, dict):
+            continue
+        personality = normalize(str(raw.get("personality", "")))
+        project_root_raw = str(raw.get("projectRoot", ""))
+        if personality not in roster or not project_root_raw:
+            continue
+        project_root = Path(project_root_raw).expanduser().resolve()
+        if project_root == current_project_root:
+            continue
+        result.append(
+            {
+                "personality": personality,
+                "project_root": str(project_root),
+                "branch_label": str(raw.get("branchLabel") or "no-git-branch"),
+                "instance_id": str(raw.get("instanceId") or ""),
+            }
+        )
+    return result
+
+
+def write_route_table(route_table_path: Path, routes: list[dict[str, str]]) -> None:
+    serialized = []
+    for route in sorted(
+        routes,
+        key=lambda item: (item["project_root"].casefold(), item["personality"]),
+    ):
+        serialized.append(
+            {
+                "personality": route["personality"],
+                "projectRoot": route["project_root"],
+                "branchLabel": route.get("branch_label") or "no-git-branch",
+                "instanceId": route.get("instance_id") or "",
+            }
+        )
+    route_table_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = route_table_path.with_suffix(route_table_path.suffix + ".tmp")
+    temporary_path.write_text(
+        json.dumps({"version": 1, "routes": serialized}, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    temporary_path.replace(route_table_path)
 
 
 def alias_set(meta: AgentMeta, project_label: str, include_unqualified: bool) -> list[str]:
@@ -291,6 +344,7 @@ def build_session_config(args: argparse.Namespace, roster: dict[str, AgentMeta])
     branch_label = read_branch(project_root)
     registry_path = Path(args.registry_path).expanduser()
     message_log_path = Path(args.message_log_path).expanduser()
+    route_table_path = Path(args.output).expanduser().resolve().parent / "agent.routes.json"
     current_meta = roster[current_personality]
     source_repo_session = (
         current_personality == "PRINCESS_CELESTIA_SOL_INVICTUS"
@@ -330,32 +384,44 @@ def build_session_config(args: argparse.Namespace, roster: dict[str, AgentMeta])
         agents.append(entry)
         seen_routes.add(entry["routeId"])
 
-    live_entries = read_live_registry(registry_path, roster)
-    live_entries.extend(
-        read_live_chat_targets(
+    known_routes = read_route_table(
+        route_table_path,
+        roster,
+        current_project_root=project_root,
+    )
+    discovered_routes = read_live_registry(registry_path, roster)
+    discovered_routes.extend(
+        read_chat_targets(
             message_log_path,
             roster,
             current_project_root=project_root,
         )
     )
-    for live in live_entries:
-        personality = live["personality"]
+    route_inventory: dict[tuple[str, str], dict[str, str]] = {}
+    for route in [*known_routes, *discovered_routes]:
+        if Path(route["project_root"]).resolve() == project_root:
+            continue
+        route_inventory[(route["personality"], route["project_root"])] = route
+    write_route_table(route_table_path, list(route_inventory.values()))
+
+    for route in route_inventory.values():
+        personality = route["personality"]
         meta = roster[personality]
-        live_project_root = Path(live["project_root"]).resolve()
-        live_project_label = read_project_label(live_project_root)
-        route_id = route_id_for(meta, live_project_label)
+        remote_project_root = Path(route["project_root"]).resolve()
+        remote_project_label = read_project_label(remote_project_root)
+        route_id = route_id_for(meta, remote_project_label)
         if route_id in seen_routes:
             continue
         agents.append(
             session_entry(
                 meta,
-                project_root=live_project_root,
-                project_label=live_project_label,
-                branch_label=live["branch_label"],
-                registry_path=default_runtime_registry_path(live_project_root),
-                message_log_path=default_runtime_message_log_path(live_project_root),
+                project_root=remote_project_root,
+                project_label=remote_project_label,
+                branch_label=route["branch_label"],
+                registry_path=default_runtime_registry_path(remote_project_root),
+                message_log_path=default_runtime_message_log_path(remote_project_root),
                 include_unqualified=meta.global_singleton,
-                instance_id=live["instance_id"],
+                instance_id=route["instance_id"],
             )
         )
         seen_routes.add(route_id)
@@ -393,6 +459,7 @@ def build_session_config(args: argparse.Namespace, roster: dict[str, AgentMeta])
 
     return {
         **current_entry,
+        "routeTablePath": str(route_table_path),
         "agents": agents,
     }
 

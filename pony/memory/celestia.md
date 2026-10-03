@@ -2,16 +2,16 @@
 
 Project: agenic-pony-system
 Branch: main
-Status snapshot: hold
-Last updated: 2026-09-26T22:42:35-04:00
+Status snapshot: implementation complete; source check-in pending
+Last updated: 2026-10-03T12:50:00-04:00
 
 Memory capsule:
-- task: make linked-worktree Git sandbox grants survive Git metadata-name suffixes and recreation
-- why: EVH Rainbow Dash's recreated checkout uses `.git/worktrees/rd1`; the runtime granted the common `.git` directory, but Codex's protected-metadata projection still mounted the more-specific active gitdir read-only
-- files: pony/bin/codex-pony; tests/test_prompt_glyph.py; docs/project-installation.md; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
-- next: await Twilight review and any separately authorized managed EVH refresh/relaunch verification; no target rollout or mutation was performed
+- task: integrate `tellMeWhenDone`, persistent offline route discovery, and the single-owner pre-idle message-drain contract
+- why: every managed pony tree needs the proven client-side completion wrapper; known qualified recipients must remain addressable while offline; all messages arriving before `Ω` must be drained exactly once by one TUI-owned mechanism
+- files: pony/bin/tellMeWhenDone; pony/scripts/{agent-config.py,start-session.sh}; scripts/{bootstrap-project.sh,validate-installed-runtime.sh}; tests/{test_tell_me_when_done.py,test_pony_tell.py,test_prompt_glyph.py,test_validate_installed_runtime.py}; docs/{runtime-loop.md,project-installation.md,pre-idle-message-drain.md}; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}
+- next: commit and push the selected source paths without including pre-existing `celestia.mailbox.md` or `celestia.status.md` changes; send Twilight the exact completion record
 - blocker: none
-- handoff: source commit `ae9cc65` is pushed. Each launch now resolves both the full Git common directory and the active checkout's exact `--absolute-git-dir`; the latter is a dynamic compatibility override for Codex's more-specific protected-metadata carveout and follows recreated names such as `rd1` rather than caching a slug-derived path. Regression coverage recreates RD so Git selects `rd1`, verifies both common `.git` and active `rd1` grants, and rejects the stale `rd` metadata path. The full suite passes 54/54 plus shell syntax and diff checks. EVH remained read-only except for inspection; no refresh, relaunch, cleanup, or target mutation was performed.
+- handoff: source implementation passes 58/58 tests plus shell syntax, Python compile, installed-runtime validation, and diff checks. EVH and Codex managed runtimes were refreshed to fingerprint `cf8c13fc20ea194656e687f2ee733bc33448d49d1f212024cb8da6124e1b49fd`; all EVH linked worker trees contain the helper. Persistent `agent.routes.json` synthesis restored offline `codex:Twilight Sparkle` delivery without launching ponies. Codex Twilight received the design handoff; `docs/pre-idle-message-drain.md` makes TUI agent IPC the sole drain owner and forbids a pony-monitor duplicate.
 - 2026-09-14 governance decision: before explicit task execution, every clean `main` worktree must run `git fetch --prune origin` then `git pull --ff-only`; dirty/non-main/non-fast-forward state is recorded for Twilight rather than auto-pulled. Existing linked worker worktrees are not fresh assignment starts—Twilight must confirm refreshed `main` and explicitly prepare them without rewriting dirty worker state.
 - 2026-09-14 restart handoff: Twilight delivered three correctly routed messages to `pony/runtime/pony.chat.jsonl`; the durable rollout handoff is entry `e87d8f89-70ca-4e07-ab6f-1508fdd08d4d`. Pinkie IPC changes are in Codex commit `a8b48089ac`; the shared `codex-tui` rebuild is complete. This Celestia process started before that rebuild and did not surface the queued lane automatically. User authorized a restart after state was saved.
 - 2026-09-15 EVH launcher incident: an interrupted managed refresh left `pony/runtime/install-project.state=failed` and an empty `install-project.lock/`; all subsequent launches waited indefinitely before Codex. Recovery removed the stale lock and restored EVH to `complete`. Source now reclaims ownerless locks and locks owned by dead local PIDs (never another host); source files are dirty alongside pre-existing coordination changes, and the focused lock-policy tests pass.

@@ -448,6 +448,10 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn(f"pony/aj/main\t{project_root / 'pony/worktrees/aj'}", registry_text)
             self.assertIn(f"main\t{project_root}", registry_text)
             self.assertTrue((project_root / "pony/worktrees/aj/.git").exists())
+            route_table = json.loads(
+                (project_root / "pony/runtime/agent.routes.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(route_table, {"routes": [], "version": 1})
 
             self.assertIn(
                 f'project_root="{project_root}"',
@@ -475,6 +479,16 @@ class PromptGlyphTests(unittest.TestCase):
                     "#!/usr/bin/env bash\n"
                     "set -euo pipefail\n"
                     f'exec "{project_root}/pony/bin/ponyalert" "$@"'
+                ),
+            )
+            self.assertEqual(
+                (
+                    project_root / "pony/worktrees/aj/pony/bin/tellMeWhenDone"
+                ).read_text(encoding="utf-8"),
+                (
+                    "#!/usr/bin/env bash\n"
+                    "set -euo pipefail\n"
+                    f'exec "{project_root}/pony/bin/tellMeWhenDone" "$@"'
                 ),
             )
 
@@ -756,6 +770,9 @@ class PromptGlyphTests(unittest.TestCase):
                 self.assertIn("no plan restatement, progress commentary, editorial", prompt_text)
                 self.assertIn("External-blocker rule:", prompt_text)
                 self.assertIn("exact missing item, its expected owner, and the next unblock step", prompt_text)
+                self.assertIn("Long-command notification rule:", prompt_text)
+                self.assertIn("tellMeWhenDone -- <command>", prompt_text)
+                self.assertIn("notification failure never replaces the command result", prompt_text)
                 self.assertNotIn("Current condition:", prompt_text)
                 self.assertNotIn("- Runtime state:", prompt_text)
                 for leaked_value in leaked_values:

@@ -85,6 +85,11 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
         pony_tell = self.project_root / "pony" / "bin" / "pony-tell"
         pony_tell.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
         pony_tell.chmod(0o755)
+        shutil.copy2(
+            REPO_ROOT / "pony" / "bin" / "tellMeWhenDone",
+            self.project_root / "pony" / "bin" / "tellMeWhenDone",
+        )
+        (self.project_root / "pony" / "bin" / "tellMeWhenDone").chmod(0o755)
 
     def tearDown(self) -> None:
         self.tempdir.cleanup()
@@ -99,7 +104,7 @@ class ValidateInstalledRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Installed runtime validation passed", result.stdout)
-        self.assertIn("source and installed pony-tell are executable", result.stdout)
+        self.assertIn("source and installed pony-tell/tellMeWhenDone helpers are executable", result.stdout)
         self.assertIn("runtime state token is ready", result.stdout)
         self.assertIn("hidden model instructions, and direct interactive Codex startup for Twilight and team members", result.stdout)
 

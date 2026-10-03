@@ -386,7 +386,7 @@ exec "$AGENIC_PROJECT_ROOT/pony/bin/codex-pony" "\$@"
 EOF
 )"
 
-  for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart pony-tell; do
+  for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart pony-tell tellMeWhenDone; do
     write_managed_executable "$worktree_pony_bin_dir/$managed_bin" "$(cat <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
@@ -781,7 +781,7 @@ if ! is_agenic_source_project; then
 fi
 
 write_install_state "managed_runtime_syncing"
-for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart pony-launch-env-status pony-tell; do
+for managed_bin in codex-prompt-style.sh ponyalert ponydone codex-restart pony-launch-env-status pony-tell tellMeWhenDone; do
   if [[ -f "$source_pony_bin_dir/$managed_bin" ]]; then
     write_managed_executable "$AGENIC_PROJECT_PONY_BIN_DIR/$managed_bin" "$(cat "$source_pony_bin_dir/$managed_bin")"
   fi
@@ -848,6 +848,17 @@ exec "\$source_root/pony/scripts/start-session.sh" "\${1:?missing personality}" 
 EOF
 )"
 fi
+
+# Rebuild the coordinator session configuration during managed refresh so the
+# persistent cross-project route inventory is synthesized from any existing
+# registry/chat evidence. Fresh projects have no such evidence and therefore
+# begin with an empty route table.
+python3 "$AGENIC_PROJECT_PONY_SCRIPTS_DIR/agent-config.py" write-session \
+  --agent TWILIGHT_SPARKLE \
+  --project-root "$AGENIC_PROJECT_ROOT" \
+  --output "$AGENIC_PROJECT_PONY_RUNTIME_DIR/twi.agent-session.json" \
+  --registry-path "$AGENIC_PROJECT_PONY_RUNTIME_DIR/pony.registry.jsonl" \
+  --message-log-path "$AGENIC_PROJECT_PONY_RUNTIME_DIR/pony.chat.jsonl"
 
 write_shell_launcher_if_missing "$AGENIC_PROJECT_PONY_BIN_DIR/pony-team-twi" "TWILIGHT_SPARKLE"
 if ! is_agenic_source_project; then

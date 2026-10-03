@@ -23,9 +23,11 @@ installed_host="$resolved_target_root/pony/scripts/pony-session-host.py"
 installed_output_tail="$resolved_target_root/pony/scripts/output-tail.py"
 installed_wrapper="$resolved_target_root/pony/bin/codex-pony"
 installed_pony_tell="$resolved_target_root/pony/bin/pony-tell"
+installed_tell_when_done="$resolved_target_root/pony/bin/tellMeWhenDone"
 legacy_pony_mail="$resolved_target_root/pony/bin/pony-mail"
 source_codex_pony="$agenic_root/pony/bin/codex-pony"
 source_pony_tell="$agenic_root/pony/bin/pony-tell"
+source_tell_when_done="$agenic_root/pony/bin/tellMeWhenDone"
 source_start_session="$agenic_root/pony/scripts/start-session.sh"
 
 failures=()
@@ -75,8 +77,10 @@ require_file "$installed_host" "installed pony session host"
 require_file "$installed_output_tail" "installed output-tail helper"
 require_file "$installed_wrapper" "installed codex-pony wrapper"
 require_file "$installed_pony_tell" "installed pony-tell"
+require_file "$installed_tell_when_done" "installed tellMeWhenDone"
 require_file "$source_codex_pony" "source codex-pony"
 require_file "$source_pony_tell" "source pony-tell"
+require_file "$source_tell_when_done" "source tellMeWhenDone"
 require_file "$source_start_session" "source start-session"
 
 if [[ ! -x "$installed_pony_tell" ]]; then
@@ -85,6 +89,14 @@ fi
 
 if [[ ! -x "$source_pony_tell" ]]; then
   record_failure "source pony-tell is not executable: $source_pony_tell"
+fi
+
+if [[ ! -x "$installed_tell_when_done" ]]; then
+  record_failure "installed tellMeWhenDone is not executable: $installed_tell_when_done"
+fi
+
+if [[ ! -x "$source_tell_when_done" ]]; then
+  record_failure "source tellMeWhenDone is not executable: $source_tell_when_done"
 fi
 
 if [[ -e "$legacy_pony_mail" ]]; then
@@ -173,6 +185,7 @@ fi
 
 expect_contains "$source_codex_pony" 'tui.terminal_title=[]' "source codex-pony"
 expect_contains "$source_start_session" 'inside this project, use $AGENIC_PROJECT_PONY_BIN_DIR/pony-tell <pony|all> <message>.' "source start-session"
+expect_contains "$source_start_session" 'tellMeWhenDone -- <command>' "source start-session"
 expect_contains "$source_start_session" 'treat unqualified Celestia as the explicit agenic source-repo governance lane' "source start-session"
 
 if (( ${#failures[@]} > 0 )); then
@@ -187,6 +200,6 @@ printf '%s\n' "Installed runtime validation passed for $resolved_target_root"
 printf '%s\n' "- install state: complete"
 printf '%s\n' "- runtime state token is ready"
 printf '%s\n' "- runtime fingerprint matches source: $source_fingerprint"
-printf '%s\n' "- source and installed pony-tell are executable and legacy pony-mail is absent"
+printf '%s\n' "- source and installed pony-tell/tellMeWhenDone helpers are executable and legacy pony-mail is absent"
 printf '%s\n' "- Twilight prompt contains live ping reply guidance and compact source summary reference"
 printf '%s\n' "- launcher surfaces retain the expected title, pony-name mappings, hidden model instructions, and direct interactive Codex startup for Twilight and team members"
