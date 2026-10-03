@@ -21,7 +21,6 @@ class PromptGlyphTests(unittest.TestCase):
                 check=True,
                 cwd=REPO_ROOT,
             )
-
             result = subprocess.run(
                 [
                     "python3",
@@ -526,6 +525,18 @@ class PromptGlyphTests(unittest.TestCase):
                 check=True,
                 cwd=REPO_ROOT,
             )
+            project_config = project_root / "pony/pony.system.config.yaml"
+            self.assertIn(
+                "codex_tui_worker_start_mode: paused",
+                project_config.read_text(encoding="utf-8"),
+            )
+            project_config.write_text(
+                project_config.read_text(encoding="utf-8").replace(
+                    "codex_tui_worker_start_mode: paused",
+                    "codex_tui_worker_start_mode: active",
+                ),
+                encoding="utf-8",
+            )
 
             workfile = project_root / "pony/work/aj.md"
             workfile.write_text(
@@ -568,6 +579,10 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn(
                 "APPROVALS: production deploy approved by Commander",
                 status_file.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "codex_tui_worker_start_mode: active",
+                project_config.read_text(encoding="utf-8"),
             )
 
     def test_install_from_worker_worktree_without_local_config_reuses_owning_project(self) -> None:

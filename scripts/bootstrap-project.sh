@@ -326,6 +326,7 @@ project_name: $AGENIC_PROJECT_NAME
 project_root: $AGENIC_PROJECT_ROOT
 branch: $AGENIC_PROJECT_BRANCH
 launcher_prefix: $AGENIC_PROJECT_NAME Pony
+codex_tui_worker_start_mode: paused
 agenic_system_root: $agenic_root
 agenic_system_repo: $(git -C "$agenic_root" remote get-url origin 2>/dev/null || printf '%s' "https://github.com/ggb667/agenic-pony-system.git")
 agenic_system_ref: main
@@ -390,6 +391,7 @@ project_name: $AGENIC_PROJECT_NAME
 project_root: $AGENIC_PROJECT_ROOT
 branch: $AGENIC_PROJECT_BRANCH
 launcher_prefix: $AGENIC_PROJECT_NAME Pony
+codex_tui_worker_start_mode: paused
 agenic_system_root: $agenic_root
 agenic_system_repo: $source_repo
 agenic_system_ref: main
@@ -408,6 +410,7 @@ result = []
 seen_root = False
 seen_repo = False
 seen_ref = False
+seen_worker_start_mode = False
 
 for line in lines:
     if line.startswith("agenic_system_root:") and "agenic_system_repo:" in line:
@@ -434,6 +437,11 @@ for line in lines:
             result.append("agenic_system_ref: main")
             seen_ref = True
         continue
+    if line.startswith("codex_tui_worker_start_mode:"):
+        if not seen_worker_start_mode:
+            result.append(line)
+            seen_worker_start_mode = True
+        continue
     result.append(line)
 
 if not seen_root:
@@ -442,6 +450,8 @@ if not seen_repo:
     result.append(f"agenic_system_repo: {source_repo}")
 if not seen_ref:
     result.append("agenic_system_ref: main")
+if not seen_worker_start_mode:
+    result.append("codex_tui_worker_start_mode: paused")
 
 path.write_text("\n".join(result) + "\n", encoding="utf-8")
 PY

@@ -52,6 +52,17 @@ class PonyTellTests(unittest.TestCase):
                 )
                 payload = json.loads(config_path.read_text(encoding="utf-8"))
                 self.assertIsInstance(payload["globalSingleton"], bool)
+                expected_role = agent["lifecycleRole"]
+                expected_mode = "active" if expected_role == "coordinator" else "paused"
+                self.assertEqual(
+                    payload["launchPolicy"],
+                    {
+                        "schemaVersion": 1,
+                        "role": expected_role,
+                        "startMode": expected_mode,
+                    },
+                )
+                self.assertEqual(payload["lifecycleRole"], expected_role)
                 self.assertEqual(
                     payload["mailboxPath"],
                     str(
@@ -65,12 +76,100 @@ class PonyTellTests(unittest.TestCase):
                     all(isinstance(entry["globalSingleton"], bool) for entry in payload["agents"])
                 )
                 self.assertTrue(all(entry["mailboxPath"] for entry in payload["agents"]))
+                self.assertTrue(
+                    all(
+                        entry["lifecycleRole"] in {"coordinator", "worker"}
+                        for entry in payload["agents"]
+                    )
+                )
                 singleton_ids = {
                     entry["agentId"]
                     for entry in payload["agents"]
                     if entry["globalSingleton"]
                 }
                 self.assertEqual(singleton_ids, {"PRINCESS_CELESTIA_SOL_INVICTUS"})
+
+    def test_agent_config_resolves_project_worker_start_mode_without_pausing_coordinator(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            runtime_dir = project_root / "pony" / "runtime"
+            runtime_dir.mkdir(parents=True)
+            (project_root / "pony" / "pony.system.config.yaml").write_text(
+                "project_name: TEST\n"
+                f"project_root: {project_root}\n"
+                "codex_tui_worker_start_mode: active\n",
+                encoding="utf-8",
+            )
+
+            policies = {}
+            for personality in ("APPLEJACK", "TWILIGHT_SPARKLE"):
+                config_path = runtime_dir / f"{personality.lower()}.json"
+                subprocess.run(
+                    [
+                        "python3",
+                        str(AGENT_CONFIG),
+                        "write-session",
+                        "--agent",
+                        personality,
+                        "--project-root",
+                        str(project_root),
+                        "--output",
+                        str(config_path),
+                        "--registry-path",
+                        str(runtime_dir / "pony.registry.jsonl"),
+                        "--message-log-path",
+                        str(runtime_dir / "pony.chat.jsonl"),
+                    ],
+                    check=True,
+                    cwd=project_root,
+                )
+                policies[personality] = json.loads(
+                    config_path.read_text(encoding="utf-8")
+                )["launchPolicy"]
+
+            self.assertEqual(
+                policies["APPLEJACK"],
+                {"schemaVersion": 1, "role": "worker", "startMode": "active"},
+            )
+            self.assertEqual(
+                policies["TWILIGHT_SPARKLE"],
+                {"schemaVersion": 1, "role": "coordinator", "startMode": "active"},
+            )
+
+    def test_agent_config_rejects_unknown_worker_start_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            runtime_dir = project_root / "pony" / "runtime"
+            runtime_dir.mkdir(parents=True)
+            (project_root / "pony" / "pony.system.config.yaml").write_text(
+                "project_name: TEST\n"
+                f"project_root: {project_root}\n"
+                "codex_tui_worker_start_mode: someday\n",
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                [
+                    "python3",
+                    str(AGENT_CONFIG),
+                    "write-session",
+                    "--agent",
+                    "APPLEJACK",
+                    "--project-root",
+                    str(project_root),
+                    "--output",
+                    str(runtime_dir / "aj.json"),
+                    "--registry-path",
+                    str(runtime_dir / "pony.registry.jsonl"),
+                    "--message-log-path",
+                    str(runtime_dir / "pony.chat.jsonl"),
+                ],
+                check=False,
+                cwd=project_root,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Unsupported codex_tui_worker_start_mode", result.stderr)
 
     def test_pony_tell_uses_explicit_subject_and_body_headers(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

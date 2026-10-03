@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ggb667/agenic-pony-system/pony/launch.configs/pony-system-config.schema.json",
+  "title": "Agenic Pony managed project configuration",
+  "type": "object",
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "launcher_prefix": {
+      "type": "string",
+      "minLength": 1
+    },
+    "codex_tui_worker_start_mode": {
+      "description": "Initial Codex TUI lifecycle state for agents whose managed lifecycle role is worker. Coordinator agents always start active.",
+      "type": "string",
+      "enum": [
+        "active",
+        "paused"
+      ],
+      "default": "paused"
+    },
+    "agenic_system_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agenic_system_repo": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agenic_system_ref": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

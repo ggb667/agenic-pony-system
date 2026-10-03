@@ -101,6 +101,7 @@ class AgentMeta:
     icon: str
     accent: str
     runtime_role: str
+    lifecycle_role: str
     terminal_title: str
     prompt_label: str
     mailbox_file: str
@@ -122,6 +123,7 @@ def load_roster(script_path: Path) -> dict[str, AgentMeta]:
             icon=raw["icon"],
             accent=raw["accent"],
             runtime_role=raw["runtimeRole"],
+            lifecycle_role=raw["lifecycleRole"],
             terminal_title=raw["terminalTitle"],
             prompt_label=raw["promptLabel"],
             mailbox_file=raw["mailboxFile"],
@@ -326,6 +328,7 @@ def session_entry(
             project_root / "pony" / "team.coordination" / meta.mailbox_file
         ),
         "runtimeRole": meta.runtime_role,
+        "lifecycleRole": meta.lifecycle_role,
         "terminalTitle": meta.terminal_title,
         "promptLabel": meta.prompt_label,
         "workerSlug": meta.worker_slug,
@@ -346,6 +349,24 @@ def build_session_config(args: argparse.Namespace, roster: dict[str, AgentMeta])
     message_log_path = Path(args.message_log_path).expanduser()
     route_table_path = Path(args.output).expanduser().resolve().parent / "agent.routes.json"
     current_meta = roster[current_personality]
+    if current_meta.lifecycle_role not in {"coordinator", "worker"}:
+        raise SystemExit(
+            f"Unsupported lifecycleRole for {current_personality}: "
+            f"{current_meta.lifecycle_role!r}"
+        )
+    configured_worker_start_mode = (
+        read_config_value(project_root, "codex_tui_worker_start_mode") or "paused"
+    )
+    if configured_worker_start_mode not in {"active", "paused"}:
+        raise SystemExit(
+            "Unsupported codex_tui_worker_start_mode: "
+            f"{configured_worker_start_mode!r}; expected 'active' or 'paused'"
+        )
+    start_mode = (
+        "active"
+        if current_meta.lifecycle_role == "coordinator"
+        else configured_worker_start_mode
+    )
     source_repo_session = (
         current_personality == "PRINCESS_CELESTIA_SOL_INVICTUS"
         and project_label == "agenic-pony-system"
@@ -459,6 +480,11 @@ def build_session_config(args: argparse.Namespace, roster: dict[str, AgentMeta])
 
     return {
         **current_entry,
+        "launchPolicy": {
+            "schemaVersion": 1,
+            "role": current_meta.lifecycle_role,
+            "startMode": start_mode,
+        },
         "routeTablePath": str(route_table_path),
         "agents": agents,
     }

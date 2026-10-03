@@ -115,6 +115,11 @@ themselves.
    update, preserve all evidence, report the exact defect to Twilight, and park;
    do not crash or overwrite another source.
 
+This orientation contract begins only after Codex enters its active lifecycle.
+A project-configured pre-agent pause is governed separately by
+[`codex-launch-gate.md`](codex-launch-gate.md); a paused TUI performs no startup
+self-brief, state read, orientation, presence advertisement, or model work.
+
 ## Migration Plan
 
 1. Stop destructive installer normalization of existing permissions, capsules,
