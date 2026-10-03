@@ -517,6 +517,59 @@ class PromptGlyphTests(unittest.TestCase):
             self.assertIn("Generated helper output only.", review_queue)
             self.assertIn("durable_coordination_history: none", event_history)
 
+    def test_bootstrap_refresh_preserves_worker_permissions_capsule_and_approvals(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir) / "project"
+            project_root.mkdir()
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            workfile = project_root / "pony/work/aj.md"
+            workfile.write_text(
+                "# AJ Workfile\n\n"
+                "Project: project\n"
+                "Branch: no-git-branch\n\n"
+                "Status: active\n"
+                "Scope: preserve-state\n"
+                "Permissions granted: production deploy approved by Commander\n"
+                "Restart capsule:\n"
+                "- task: preserve this exact task\n"
+                "- why: it is current\n"
+                "- next: run the exact verification\n"
+                "- blocker: none\n"
+                "Notes:\n"
+                "- historical note\n",
+                encoding="utf-8",
+            )
+            status_file = project_root / "pony/team.coordination/aj.status.md"
+            status_text = status_file.read_text(encoding="utf-8").replace(
+                "APPROVALS: none recorded",
+                "APPROVALS: production deploy approved by Commander",
+            )
+            status_file.write_text(status_text, encoding="utf-8")
+
+            subprocess.run(
+                ["bash", str(REPO_ROOT / "scripts/bootstrap-project.sh"), str(project_root)],
+                check=True,
+                cwd=REPO_ROOT,
+            )
+
+            refreshed_workfile = workfile.read_text(encoding="utf-8")
+            self.assertIn(
+                "Permissions granted: production deploy approved by Commander",
+                refreshed_workfile,
+            )
+            self.assertIn("- task: preserve this exact task", refreshed_workfile)
+            self.assertIn("- next: run the exact verification", refreshed_workfile)
+            self.assertIn("- historical note", refreshed_workfile)
+            self.assertIn(
+                "APPROVALS: production deploy approved by Commander",
+                status_file.read_text(encoding="utf-8"),
+            )
+
     def test_install_from_worker_worktree_without_local_config_reuses_owning_project(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir) / "project"
@@ -773,6 +826,7 @@ class PromptGlyphTests(unittest.TestCase):
                 self.assertIn("Long-command notification rule:", prompt_text)
                 self.assertIn("tellMeWhenDone -- <command>", prompt_text)
                 self.assertIn("notification failure never replaces the command result", prompt_text)
+                self.assertIn("whenever the user explicitly asks to check or recover recent state or conversation", prompt_text)
                 self.assertNotIn("Current condition:", prompt_text)
                 self.assertNotIn("- Runtime state:", prompt_text)
                 for leaked_value in leaked_values:

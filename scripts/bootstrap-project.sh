@@ -164,22 +164,17 @@ import sys
 
 path = Path(sys.argv[1])
 lines = path.read_text(encoding="utf-8").splitlines()
-result = []
-inserted = False
-for line in lines:
-    if line.startswith("Permissions granted:"):
-        if inserted:
-            continue
+if not any(line.startswith("Permissions granted:") for line in lines):
+    result = []
+    inserted = False
+    for line in lines:
+        result.append(line)
+        if line.startswith("Scope:") and not inserted:
+            result.append("Permissions granted: none recorded")
+            inserted = True
+    if not inserted:
         result.append("Permissions granted: none recorded")
-        inserted = True
-        continue
-    result.append(line)
-    if line.startswith("Scope:") and not inserted:
-        result.append("Permissions granted: none recorded")
-        inserted = True
-if not inserted:
-    result.append("Permissions granted: none recorded")
-path.write_text("\n".join(result) + "\n", encoding="utf-8")
+    path.write_text("\n".join(result) + "\n", encoding="utf-8")
 PY
 }
 
@@ -193,34 +188,24 @@ import sys
 
 path = Path(sys.argv[1])
 lines = path.read_text(encoding="utf-8").splitlines()
-result = []
-inserted = False
-replacement = [
-    "Restart capsule:",
-    "- task: none recorded",
-    "- why: none recorded",
-    "- next: none recorded",
-    "- blocker: none recorded",
-]
-i = 0
-while i < len(lines):
-    line = lines[i]
-    if line.startswith("Restart capsule:"):
-        if not inserted:
+if not any(line.startswith("Restart capsule:") for line in lines):
+    result = []
+    inserted = False
+    replacement = [
+        "Restart capsule:",
+        "- task: none recorded",
+        "- why: none recorded",
+        "- next: none recorded",
+        "- blocker: none recorded",
+    ]
+    for line in lines:
+        result.append(line)
+        if line.startswith("Permissions granted:") and not inserted:
             result.extend(replacement)
             inserted = True
-        i += 1
-        while i < len(lines) and (lines[i].startswith("- ") or lines[i].strip() == ""):
-            i += 1
-        continue
-    result.append(line)
-    if line.startswith("Permissions granted:") and not inserted:
+    if not inserted:
         result.extend(replacement)
-        inserted = True
-    i += 1
-if not inserted:
-    result.extend(replacement)
-path.write_text("\n".join(result) + "\n", encoding="utf-8")
+    path.write_text("\n".join(result) + "\n", encoding="utf-8")
 PY
 }
 
@@ -542,22 +527,17 @@ import sys
 
 path = Path(sys.argv[1])
 lines = path.read_text(encoding="utf-8").splitlines()
-result = []
-inserted = False
-for line in lines:
-    if line.startswith("APPROVALS:"):
-        if inserted:
-            continue
+if not any(line.startswith("APPROVALS:") for line in lines):
+    result = []
+    inserted = False
+    for line in lines:
+        result.append(line)
+        if line.startswith("PUSH_STATUS:") and not inserted:
+            result.append("APPROVALS: none recorded")
+            inserted = True
+    if not inserted:
         result.append("APPROVALS: none recorded")
-        inserted = True
-        continue
-    result.append(line)
-    if line.startswith("PUSH_STATUS:") and not inserted:
-        result.append("APPROVALS: none recorded")
-        inserted = True
-if not inserted:
-    result.append("APPROVALS: none recorded")
-path.write_text("\n".join(result) + "\n", encoding="utf-8")
+    path.write_text("\n".join(result) + "\n", encoding="utf-8")
 PY
 }
 
