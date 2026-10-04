@@ -2,16 +2,16 @@
 
 Project: agenic-pony-system
 Branch: main
-Status snapshot: queued-input reconciliation and clean-shutdown recovery policy implementation in progress
-Last updated: 2026-10-04T17:15:00-04:00
+Status snapshot: queued-input reconciliation and clean-shutdown recovery policy complete and distributed
+Last updated: 2026-10-04T17:25:00-04:00
 
 Memory capsule:
 - task: require every pony to reconcile complete queued-input batches before acting and recover durable mail from the last clean combined drain-and-shutdown checkpoint
 - why: delivery order exposed older requests after their completion acknowledgements, and a drain receipt alone cannot prove the recipient had time to act or persist an unresolved request
 - files: pony/scripts/start-session.sh; pony/launch.prompts/*.txt; docs/{runtime-loop.md,pre-idle-message-drain.md}; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}; tests/{test_coordination_prompt_policy.py,test_prompt_glyph.py}
-- next: finish validation, commit/push source, refresh and validate EVH/Handshake/Codex, then send Twilight the exact handoff
+- next: await the next source-governance assignment
 - blocker: none
-- handoff: the intended rule has two layers: healthy live sessions process the complete unseen batch since the last drain, while restart recovery trusts only a checkpoint that combines complete drain with clean shutdown disposition of every drained durable request. Receipts prevent duplicate injection but never replace semantic rereading after an unclean save.
+- handoff: source commit `99f779e` is pushed and the full suite passes 64/64. The rule has two layers: healthy live sessions process the complete unseen batch since the last drain, while restart recovery trusts only a checkpoint that combines complete drain with clean shutdown disposition of every drained durable request. Receipts prevent duplicate injection but never replace semantic rereading after an unclean save. EVH, Handshake, and Codex were refreshed and validate at fingerprint `e22570f19c4dbf7e7557d8cf6631fb59d75f47b9c7f8dd6b0c65c392ab0db7d5`.
 - 2026-09-14 governance decision: before explicit task execution, every clean `main` worktree must run `git fetch --prune origin` then `git pull --ff-only`; dirty/non-main/non-fast-forward state is recorded for Twilight rather than auto-pulled. Existing linked worker worktrees are not fresh assignment starts—Twilight must confirm refreshed `main` and explicitly prepare them without rewriting dirty worker state.
 - 2026-09-14 restart handoff: Twilight delivered three correctly routed messages to `pony/runtime/pony.chat.jsonl`; the durable rollout handoff is entry `e87d8f89-70ca-4e07-ab6f-1508fdd08d4d`. Pinkie IPC changes are in Codex commit `a8b48089ac`; the shared `codex-tui` rebuild is complete. This Celestia process started before that rebuild and did not surface the queued lane automatically. User authorized a restart after state was saved.
 - 2026-09-15 EVH launcher incident: an interrupted managed refresh left `pony/runtime/install-project.state=failed` and an empty `install-project.lock/`; all subsequent launches waited indefinitely before Codex. Recovery removed the stale lock and restored EVH to `complete`. Source now reclaims ownerless locks and locks owned by dead local PIDs (never another host); source files are dirty alongside pre-existing coordination changes, and the focused lock-policy tests pass.
