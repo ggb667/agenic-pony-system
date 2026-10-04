@@ -24,6 +24,22 @@ If unseen messages exist, Codex must:
 If no unseen message exists, the idle transition may proceed without invoking
 the model or reparsing the entire log.
 
+Normal live delivery begins at the last successfully committed drain checkpoint
+and considers only newly appended unseen IDs. The receipt ledger prevents
+duplicate injection, but a receipt proves only that a message was surfaced; it
+does not prove that the recipient had time to act or persist its disposition.
+
+A restart baseline is trustworthy only when a complete drain is paired with a
+clean shutdown that durably records every drained request as completed,
+superseded, or unresolved with an exact next action. If either half is missing,
+incomplete, or conflicts with durable evidence, recovery begins at the last
+known-good combined drain-and-clean-shutdown checkpoint. The recipient must
+semantically reread every durable message after that checkpoint, including
+already receipted IDs, rebuild chronological request/correction/clarification/
+acknowledgement chains, and persist their dispositions before establishing a
+new combined checkpoint. Stable IDs still prevent duplicate injection.
+Messages before an intact combined checkpoint remain closed.
+
 ## Findings
 
 - `pony/scripts/codex-tmux-monitor.sh` recognizes `Ω` in pane output and
@@ -90,6 +106,11 @@ or polling loop is required.
    duplicate injection.
 10. **Direct and hosted launch parity:** the same Codex-side tests cover direct
     launches and tmux-hosted launches without a separate monitor drain.
+11. **Unclean shutdown recovery:** a clean drain without a clean disposition
+    save still replays every durable record since the last known-good combined
+    drain-and-clean-shutdown checkpoint, including receipted IDs; the recovery
+    orders the batch chronologically, prevents duplicate injection by ID, and
+    does not replay history before the intact combined checkpoint.
 
 ## Non-Goals
 

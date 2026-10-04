@@ -84,6 +84,13 @@ They are related, but they are not yet unified.
 
 Behavior rule for direct `/tell`:
 
+- treat all currently available inbound letters and queued follow-up inputs as one decision batch: drain and read the batch completely before performing work or issuing substantive per-letter replies
+- while the client indicates that more follow-up inputs are queued, do not execute, edit, run task preflight, route assignments, or mutate coordination state from an individual entry
+- after the queue is exhausted, order records by `created_at` when present and otherwise by delivery order; group each request with its corrections, clarifications, supersession notices, and acknowledgements
+- act only on the newest unresolved instruction in each chain. A later completion acknowledgement closes the earlier request, even if the UI delivers that older request last; queue presentation order must not manufacture fresh authorization
+- in a healthy live session, begin delivery at the last successful drain receipt and process only newly appended unseen IDs; the receipt ledger prevents duplicate injection, but receipt is not evidence that the recipient had time to act
+- establish a restart baseline only when a complete drain is paired with a clean shutdown that persists the disposition of every drained durable request as completed, superseded, or unresolved with its exact next action
+- if either the drain evidence or clean-shutdown disposition record is absent, incomplete, or inconsistent, semantically reread every durable record since the last known-good combined drain-and-clean-shutdown checkpoint, including already receipted IDs; use stable IDs to prevent duplicate injection, reconstruct the chronological chains, and do not cross an intact combined checkpoint
 - direct `/tell` transport should resolve ambiguous short names locally by default so same-named workers in different repos do not cross-deliver by accident
 - generated agent config may also expose explicit cross-repo aliases such as `<project>:Twilight Sparkle`; those fully qualified targets may route across repo boundaries when the selected registry/message bus includes both live sessions
 - that generated `CODEX_AGENT_CONFIG` contract should include `messageLogPath`, `registryPath`, the full current-project roster, and any live cross-project targets discovered on the same bus so Codex-side `/tell` routing matches shell-side `pony-tell`

@@ -827,6 +827,14 @@ class PromptGlyphTests(unittest.TestCase):
                 prompt_text = (project_root / "pony/runtime" / f"{slug}.launch.prompt.txt").read_text(encoding="utf-8")
                 self.assertIn("- Startup phase: ORIENTATION_REQUIRED", prompt_text)
                 self.assertIn("Orientation-conflict rule:", prompt_text)
+                self.assertIn("Queued-input batch rule:", prompt_text)
+                self.assertIn("complete currently available unseen batch", prompt_text)
+                self.assertIn("newest superseding instruction", prompt_text)
+                self.assertIn("completion acknowledgement means the older request is not fresh authorization", prompt_text)
+                self.assertIn("Queued-input recovery rule:", prompt_text)
+                self.assertIn("last known-good combined drain-and-clean-shutdown checkpoint", prompt_text)
+                self.assertIn("receipt proves delivery, not that the message was acted on", prompt_text)
+                self.assertIn("even if some IDs were already receipted", prompt_text)
                 self.assertIn("exact sources and conflicting values", prompt_text)
                 self.assertIn("remain parked", prompt_text)
                 self.assertIn("explicit post-start instruction", prompt_text)
@@ -861,6 +869,8 @@ class PromptGlyphTests(unittest.TestCase):
         self.assertIn('"Alert rule:"', script_text)
         self.assertIn('"Done rule:"', script_text)
         self.assertIn('"Idle-sentinel rule:"', script_text)
+        self.assertIn('"Queued-input batch rule:"', script_text)
+        self.assertIn('"Queued-input recovery rule:"', script_text)
 
 
 if __name__ == "__main__":

@@ -2,16 +2,16 @@
 
 Project: agenic-pony-system
 Branch: main
-Status snapshot: shared audio-host PID-namespace fix complete, pushed, and distributed
-Last updated: 2026-10-04T16:37:00-04:00
+Status snapshot: queued-input reconciliation and clean-shutdown recovery policy implementation in progress
+Last updated: 2026-10-04T17:15:00-04:00
 
 Memory capsule:
-- task: prevent tool-side audio requests from invalidating launcher-owned FIFO/PID state across PID namespaces
-- why: `kill -0` and `ps` from the sandboxed tool namespace falsely classified a healthy launcher-owned audio host as stale, unlinked shared state, and caused silent alerts
-- files: pony/scripts/pony-audio.sh; tests/test_pony_audio_bins.py
-- next: await the next source-governance assignment
+- task: require every pony to reconcile complete queued-input batches before acting and recover durable mail from the last clean combined drain-and-shutdown checkpoint
+- why: delivery order exposed older requests after their completion acknowledgements, and a drain receipt alone cannot prove the recipient had time to act or persist an unresolved request
+- files: pony/scripts/start-session.sh; pony/launch.prompts/*.txt; docs/{runtime-loop.md,pre-idle-message-drain.md}; pony/team.coordination/{multi.agent.control.md,source.runtime.summary.md}; tests/{test_coordination_prompt_policy.py,test_prompt_glyph.py}
+- next: finish validation, commit/push source, refresh and validate EVH/Handshake/Codex, then send Twilight the exact handoff
 - blocker: none
-- handoff: source commit `60d8241` is pushed. `pony_audio_request_host_play` now treats the FIFO write as the sole host-availability probe, preserves launcher-owned FIFO/PID state, and returns failure for missing/no-reader cases so callers direct-play. Shell syntax, 5 focused tests, 63/63 full tests, and live source-host playback passed. EVH, Codex, and Handshake installs validate at fingerprint `aba55cb0d313bbfde8d38b54139293fc3a915d58aa70f3a1508bbc20a4a2ae37`; Codex's no-reader smoke returned timeout 124 and entered direct fallback without deleting shared state.
+- handoff: the intended rule has two layers: healthy live sessions process the complete unseen batch since the last drain, while restart recovery trusts only a checkpoint that combines complete drain with clean shutdown disposition of every drained durable request. Receipts prevent duplicate injection but never replace semantic rereading after an unclean save.
 - 2026-09-14 governance decision: before explicit task execution, every clean `main` worktree must run `git fetch --prune origin` then `git pull --ff-only`; dirty/non-main/non-fast-forward state is recorded for Twilight rather than auto-pulled. Existing linked worker worktrees are not fresh assignment starts—Twilight must confirm refreshed `main` and explicitly prepare them without rewriting dirty worker state.
 - 2026-09-14 restart handoff: Twilight delivered three correctly routed messages to `pony/runtime/pony.chat.jsonl`; the durable rollout handoff is entry `e87d8f89-70ca-4e07-ab6f-1508fdd08d4d`. Pinkie IPC changes are in Codex commit `a8b48089ac`; the shared `codex-tui` rebuild is complete. This Celestia process started before that rebuild and did not surface the queued lane automatically. User authorized a restart after state was saved.
 - 2026-09-15 EVH launcher incident: an interrupted managed refresh left `pony/runtime/install-project.state=failed` and an empty `install-project.lock/`; all subsequent launches waited indefinitely before Codex. Recovery removed the stale lock and restored EVH to `complete`. Source now reclaims ownerless locks and locks owned by dead local PIDs (never another host); source files are dirty alongside pre-existing coordination changes, and the focused lock-policy tests pass.

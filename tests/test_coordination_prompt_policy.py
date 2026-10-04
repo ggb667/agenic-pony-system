@@ -38,6 +38,13 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
             self.assertIn("Interim-silence rule", text)
             self.assertIn("no plan restatement", text)
             self.assertIn("External-blocker rule", text)
+            self.assertIn("currently available", text)
+            self.assertIn("newest superseding instruction", text)
+            self.assertIn("completion acknowledgement", text)
+            self.assertIn("last known-good combined drain-and-clean-shutdown checkpoint", text)
+            self.assertIn("stable message ID", text)
+            self.assertIn("proof of delivery", text)
+            self.assertIn("proof of action", text)
             self.assertIn("exact missing item", text)
             self.assertIn("expected owner", text)
             self.assertIn("next unblock step", text)
@@ -58,6 +65,17 @@ class CoordinationPromptPolicyTests(unittest.TestCase):
             self.assertIn("git pull --ff-only", text, prompt_path.name)
             self.assertIn("pre-existing linked", text, prompt_path.name)
             self.assertIn("worktree", text, prompt_path.name)
+
+    def test_all_prompts_require_queued_input_batch_reconciliation(self) -> None:
+        for prompt_path in PROMPTS_DIR.glob("*.txt"):
+            text = prompt_path.read_text(encoding="utf-8")
+            self.assertIn("currently available", text, prompt_path.name)
+            self.assertIn("queued", text, prompt_path.name)
+            self.assertIn("newest superseding instruction", text, prompt_path.name)
+            self.assertIn("completion acknowledgement", text, prompt_path.name)
+            self.assertIn("last known-good combined drain-and-clean-shutdown checkpoint", text, prompt_path.name)
+            self.assertIn("stable message ID", text, prompt_path.name)
+            self.assertIn("proof of delivery", text, prompt_path.name)
 
     def test_twilight_prompt_uses_shared_coordination_mechanism(self) -> None:
         text = (PROMPTS_DIR / "twi.txt").read_text(encoding="utf-8")
