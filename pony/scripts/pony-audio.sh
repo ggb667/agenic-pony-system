@@ -300,32 +300,12 @@ pony_audio_request_host_play() {
   local clip_name="${4:-}"
   local temp_stem="${5:?missing temp stem}"
   local fifo_path="${AGENIC_PONY_AUDIO_HOST_FIFO:-}"
-  local pid_file="${AGENIC_PONY_AUDIO_HOST_PID_FILE:-}"
-  local host_pid=""
 
-  pony_audio_trace "host.request.begin" "tool=$tool_name clip=${clip_name:-none} fifo=${fifo_path:-missing} pid_file=${pid_file:-missing}"
+  pony_audio_trace "host.request.begin" "tool=$tool_name clip=${clip_name:-none} fifo=${fifo_path:-missing}"
 
-  if [[ -z "$fifo_path" || ! -p "$fifo_path" || -z "$pid_file" || ! -f "$pid_file" ]]; then
-    pony_audio_trace "host.request.missing" "tool=$tool_name fifo_present=$([[ -n "$fifo_path" && -p "$fifo_path" ]] && printf yes || printf no) pid_present=$([[ -n "$pid_file" && -f "$pid_file" ]] && printf yes || printf no)"
-    pony_audio_start_host_if_possible || true
-  fi
-
-  [[ -n "$fifo_path" && -p "$fifo_path" ]] || return 1
-  [[ -n "$pid_file" && -f "$pid_file" ]] || return 1
-  read -r host_pid <"$pid_file" || host_pid=""
-  [[ -n "$host_pid" ]] || {
-    pony_audio_trace "host.request.empty-pid" "tool=$tool_name"
-    pony_audio_clear_stale_host_state
+  if [[ -z "$fifo_path" || ! -p "$fifo_path" ]]; then
+    pony_audio_trace "host.request.missing" "tool=$tool_name fifo_present=no"
     return 1
-  }
-  if ! pony_audio_host_pid_matches "$host_pid"; then
-    pony_audio_trace "host.request.stale-pid" "tool=$tool_name pid=$host_pid"
-    pony_audio_clear_stale_host_state
-    pony_audio_start_host_if_possible || true
-    [[ -n "$pid_file" && -f "$pid_file" ]] || return 1
-    read -r host_pid <"$pid_file" || host_pid=""
-    [[ -n "$host_pid" ]] || return 1
-    pony_audio_host_pid_matches "$host_pid" || return 1
   fi
 
   pony_audio_debug "$tool_name" "requesting audio host playback via $fifo_path"
@@ -335,6 +315,6 @@ pony_audio_request_host_play() {
     printf "%s\t%s\t%s\t%s\t%s\n" "$@" >"$fifo_path"
   ' bash "$fifo_path" "$tool_name" "$prefix" "$wav_path" "$clip_name" "$temp_stem" >/dev/null 2>&1
   local write_status=$?
-  pony_audio_trace "host.request.end" "tool=$tool_name pid=$host_pid status=$write_status"
+  pony_audio_trace "host.request.end" "tool=$tool_name status=$write_status"
   return $write_status
 }
